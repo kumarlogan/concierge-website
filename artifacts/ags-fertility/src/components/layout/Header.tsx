@@ -11,8 +11,11 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 80);
+      // Close menu if user scrolls — also prevents a layout bug where
+      // position:fixed children misbehave when the parent has CSS transitions.
+      setMobileMenuOpen(false);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
