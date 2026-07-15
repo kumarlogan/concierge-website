@@ -2,7 +2,7 @@ export const hospitals = [
   {
     id: 1,
     name: 'Indira IVF',
-    location: 'Bangalore',
+    location: 'Bangalore, India',
     established: 2011,
     specialties: ['IVF', 'ICSI', 'Donor Egg Programs', 'Male Infertility'],
     accreditations: ['NABH Accredited', 'ISAR Member'],
@@ -13,7 +13,7 @@ export const hospitals = [
   {
     id: 2,
     name: 'Motherhood Fertility & IVF',
-    location: 'Bangalore',
+    location: 'Bangalore, India',
     established: 2012,
     specialties: ['IVF', 'High-Risk Pregnancy', 'Surrogacy Support', 'Genetic Counselling'],
     accreditations: ['NABH Accredited', 'NABL Accredited'],
@@ -24,7 +24,7 @@ export const hospitals = [
   {
     id: 3,
     name: 'Ovum Hospitals',
-    location: 'Bangalore',
+    location: 'Bangalore, India',
     established: 2013,
     specialties: ['IVF', 'ICSI', 'Blastocyst Transfer', 'Recurrent Implantation Failure'],
     accreditations: ['NABH Accredited', 'ISAR Member'],
@@ -35,7 +35,7 @@ export const hospitals = [
   {
     id: 4,
     name: 'Garbhagudi IVF Centre',
-    location: 'Bangalore',
+    location: 'Bangalore, India',
     established: 2011,
     specialties: ['IVF', 'IUI', 'Pre-implantation Genetic Testing (PGT)', 'Fertility Preservation'],
     accreditations: ['NABH Accredited', 'ISAR Member'],
