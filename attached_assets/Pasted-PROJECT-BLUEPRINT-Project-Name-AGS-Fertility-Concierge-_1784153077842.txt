@@ -1,0 +1,426 @@
+PROJECT BLUEPRINT
+
+Project Name
+
+AGS Fertility Concierge
+
+(Tagline can evolve later.)
+
+⸻
+
+Mission
+
+Provide Canadian intended parents with a trusted, transparent, and compassionate way to explore fertility treatment with carefully selected IVF hospitals in Bangalore, while supporting them through coordination, travel planning, and ongoing communication.
+
+The business facilitates access and logistics. Medical care is provided by licensed fertility specialists and hospitals.
+
+⸻
+
+Brand Personality
+
+The website should feel like:
+
+* Calm
+* Hopeful
+* Honest
+* Professional
+* Private
+* Caring
+* Premium
+* Modern
+
+Avoid:
+
+* Salesy language
+* Countdown timers
+* Flashing banners
+* Aggressive popups
+* “Guaranteed success”
+* Price-first marketing
+
+Visitors should leave thinking:
+
+“These people understand what we’re going through.”
+
+⸻
+
+Target Customers
+
+Primary
+
+Canadian couples
+
+Age:
+30–45
+
+Income:
+Middle to High
+
+Looking for:
+
+* Better affordability
+* Shorter waiting times
+* Experienced specialists
+* High-quality fertility care
+* Guidance through a stressful process
+
+⸻
+
+Secondary
+
+Indian Canadians
+
+Returning NRIs
+
+Single intended parents
+
+LGBTQ+ families (where supported by local regulations)
+
+⸻
+
+Visitor Journey
+
+Step 1
+
+Google Search
+
+↓
+
+Find AGS
+
+↓
+
+Read success stories
+
+↓
+
+Understand the process
+
+↓
+
+Compare treatment options
+
+↓
+
+See partner hospitals
+
+↓
+
+Book consultation
+
+↓
+
+Receive personalized recommendations
+
+↓
+
+Choose hospital
+
+↓
+
+Travel planning
+
+↓
+
+Treatment
+
+↓
+
+Return to Canada
+
+↓
+
+Follow-up support
+
+⸻
+
+Website Goals
+
+The website should answer, within the first minute:
+
+* Can I trust this company?
+* Are the hospitals reputable?
+* What does the process look like?
+* What are the approximate costs?
+* Who helps me?
+* What happens after I return home?
+
+Only then ask them to book a consultation.
+
+⸻
+
+Information Architecture
+
+Home
+
+Purpose:
+
+Create trust and motivate the visitor to explore further.
+
+Sections:
+
+* Hero
+* Why AGS
+* Why Bangalore
+* How It Works
+* Treatment Options
+* Partner Hospitals
+* Testimonials
+* FAQ
+* Consultation CTA
+
+⸻
+
+About Us
+
+Include:
+
+* Mission
+* Values
+* Why AGS exists
+* Founder story (once available)
+* Commitment to transparency
+* Ethical standards
+* What AGS does and does not do
+
+⸻
+
+IVF in Bangalore
+
+Cover:
+
+* Why Bangalore
+* Medical ecosystem
+* Technology
+* Experienced specialists
+* International patient support
+* Typical treatment journey
+* Travel considerations
+
+⸻
+
+Treatments
+
+Individual pages for:
+
+* IVF
+* ICSI
+* Egg Freezing
+* Embryo Freezing
+* Donor Programs
+* Fertility Preservation
+
+Each page should explain:
+
+* What it is
+* Who it may help
+* Typical process
+* Questions to discuss with a specialist
+* Recovery
+* FAQs
+
+Avoid giving personalized medical advice.
+
+⸻
+
+Partner Hospitals
+
+Each profile should include:
+
+* Hospital overview
+* Accreditations
+* Areas of expertise
+* Facilities
+* International patient services
+* Languages
+* Approximate treatment cost ranges (with a note that individual cases vary)
+* Map
+* Photos
+* Consultation request button
+
+⸻
+
+Cost Guide
+
+Instead of promising exact prices:
+
+Provide estimated ranges.
+
+Include:
+
+* Treatment
+* Medication
+* Flights
+* Accommodation
+* Local transportation
+* Miscellaneous
+
+Offer sample budgets (Economy, Standard, Premium) with clear disclaimers.
+
+⸻
+
+Success Stories
+
+Feature real stories only when permission is obtained.
+
+Include:
+
+* Journey summary
+* Challenges
+* Support received
+* Outcome (without implying similar results for others)
+
+⸻
+
+FAQ
+
+Cover topics such as:
+
+* How do I choose a hospital?
+* What records should I bring?
+* How long will I stay?
+* What support does AGS provide?
+* What happens after I return to Canada?
+* Is treatment guaranteed? (Answer: no.)
+
+⸻
+
+Contact
+
+Options:
+
+* Phone
+* Email
+* WhatsApp
+* Consultation form
+* Calendar booking
+
+⸻
+
+Trust Elements
+
+Include throughout the site:
+
+* Privacy commitment
+* Secure inquiry form
+* Transparent facilitator role
+* Verified partner hospitals
+* Patient-centered communication
+* Clear explanation of what AGS does and does not provide
+
+⸻
+
+Emotional Journey
+
+The user often arrives feeling anxious or uncertain.
+
+The site should guide them through:
+
+“I feel overwhelmed.”
+
+↓
+
+“I understand my options.”
+
+↓
+
+“These people seem trustworthy.”
+
+↓
+
+“I know what the next step is.”
+
+↓
+
+“I’ll book a consultation.”
+
+⸻
+
+Design Language
+
+Think:
+
+* Apple
+* Airbnb
+* Stripe
+* Mayo Clinic
+
+Avoid:
+
+* Typical medical tourism templates
+* Overly busy pages
+* Stock-photo overload
+
+⸻
+
+Color Palette
+
+Primary:
+Warm White (#FAFAF8)
+
+Secondary:
+Soft Sage
+
+Accent:
+Muted Teal
+
+Highlights:
+Champagne Gold
+
+Text:
+Charcoal
+
+⸻
+
+Typography
+
+Headings:
+Plus Jakarta Sans
+
+Body:
+Inter
+
+Large whitespace.
+
+Rounded corners.
+
+Soft shadows.
+
+Subtle animations.
+
+⸻
+
+Photography
+
+Use:
+
+* Diverse families
+* Compassionate healthcare interactions
+* Modern clinics
+* Bangalore skyline (tastefully)
+* Nature
+* Warm light
+
+Avoid:
+
+* Babies everywhere
+* Overly emotional crying imagery
+* Graphic medical procedures
+
+⸻
+
+SEO Strategy
+
+Pages should target searches such as:
+
+* IVF Bangalore for Canadians
+* Fertility treatment India
+* IVF treatment Bangalore
+* Affordable IVF India
+* IVF coordinator Canada
+* International fertility treatment
+* Fertility concierge Canada
+* IVF travel planning
+* IVF hospitals Bangalore
+
+Content should answer questions naturally rather than repeat keywords.

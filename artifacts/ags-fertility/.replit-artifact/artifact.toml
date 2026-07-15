@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "AGS Fertility Concierge"
+version = "1.0.0"
+id = "artifacts/ags-fertility"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23815
+
+[services.development]
+run = "pnpm --filter @workspace/ags-fertility run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ags-fertility", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/ags-fertility/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23815"
+BASE_PATH = "/"

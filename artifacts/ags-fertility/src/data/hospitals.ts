@@ -1,0 +1,35 @@
+export const hospitals = [
+  {
+    id: 1,
+    name: 'Cloudnine Fertility Center',
+    location: 'Jayanagar, Bangalore',
+    established: 2007,
+    specialties: ['IVF', 'ICSI', 'High-Risk Pregnancy'],
+    accreditations: ['NABH Accredited', 'Australian Council on Healthcare Standards (ACHS)'],
+    languages: ['English', 'Hindi', 'Kannada', 'Tamil'],
+    costRangeUSD: '$3,500 - $4,500',
+    description: 'Renowned for its holistic approach to maternal and reproductive care, offering state-of-the-art embryology labs and experienced specialists.',
+  },
+  {
+    id: 2,
+    name: 'Nova IVF Fertility',
+    location: 'Koramangala, Bangalore',
+    established: 2011,
+    specialties: ['Advanced Embryology', 'Male Infertility', 'Pre-implantation Genetic Testing (PGT)'],
+    accreditations: ['ISAR Accredited', 'NABH Accredited'],
+    languages: ['English', 'Hindi', 'Kannada', 'Telugu'],
+    costRangeUSD: '$3,800 - $4,800',
+    description: 'One of India\'s leading fertility chains, known for strict protocols, high success rates, and transparent practices.',
+  },
+  {
+    id: 3,
+    name: 'Milann Fertility Centre',
+    location: 'Indiranagar, Bangalore',
+    established: 1989,
+    specialties: ['Recurrent IVF Failure', 'Endometriosis', 'Donor Programs'],
+    accreditations: ['NABH Accredited', 'NABL Accredited'],
+    languages: ['English', 'Hindi', 'Kannada'],
+    costRangeUSD: '$4,000 - $5,000',
+    description: 'Pioneers in fertility treatment in India, with decades of experience handling complex clinical cases and a dedicated international patient desk.',
+  }
+];

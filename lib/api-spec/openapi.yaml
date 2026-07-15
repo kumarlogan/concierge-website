@@ -3,13 +3,16 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AGS Fertility Concierge API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: consultations
+    description: Consultation request operations
+
 paths:
   /healthz:
     get:
@@ -24,6 +27,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /consultations:
+    post:
+      operationId: submitConsultation
+      tags: [consultations]
+      summary: Submit a consultation request
+      description: Submits a new consultation enquiry from an intended parent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsultationInput"
+      responses:
+        "201":
+          description: Consultation request received
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsultationConfirmation"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /consultations/count:
+    get:
+      operationId: getConsultationCount
+      tags: [consultations]
+      summary: Get total consultation request count
+      description: Returns the total number of consultation requests submitted
+      responses:
+        "200":
+          description: Consultation count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsultationCount"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +78,80 @@ components:
       required:
         - status
 
+    ConsultationInput:
+      type: object
+      required:
+        - name
+        - email
+        - province
+        - treatmentInterest
+        - message
+      properties:
+        name:
+          type: string
+          minLength: 2
+          description: Full name of the enquiring person
+        partnerName:
+          type: ["string", "null"]
+          description: Partner name if applicable
+        email:
+          type: string
+          description: Contact email address
+        phone:
+          type: ["string", "null"]
+          description: Optional phone number (WhatsApp preferred)
+        province:
+          type: string
+          description: Canadian province or territory
+        treatmentInterest:
+          type: string
+          enum:
+            - IVF
+            - ICSI
+            - Egg Freezing
+            - Embryo Freezing
+            - Donor Programs
+            - Fertility Preservation
+            - Not Sure Yet
+          description: Treatment the person is interested in
+        howDidYouHear:
+          type: ["string", "null"]
+          description: How they heard about AGS
+        message:
+          type: string
+          minLength: 10
+          description: Additional message or questions
+        consentToContact:
+          type: boolean
+          description: Consent to be contacted
+
+    ConsultationConfirmation:
+      type: object
+      required:
+        - id
+        - message
+        - submittedAt
+      properties:
+        id:
+          type: integer
+        message:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+
+    ConsultationCount:
+      type: object
+      required:
+        - count
+      properties:
+        count:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
