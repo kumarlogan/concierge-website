@@ -27,10 +27,10 @@ export function WhyBangalore() {
 
         <FadeIn delay={0.2} className="max-w-xl">
           <h2 className="text-3xl md:text-4xl font-display font-semibold mb-6">
-            World-Class Care in Bangalore, India
+            World-Class Care in Bangalore
           </h2>
           <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-            Bangalore, India has emerged as a global hub for medical excellence, particularly in reproductive medicine. Our carefully selected partner hospitals combine advanced medical technology with profound expertise, offering a level of care that meets or exceeds international standards.
+            Bangalore has emerged as a global hub for medical excellence, particularly in reproductive medicine. Our carefully selected partner hospitals combine advanced medical technology with profound expertise, offering a level of care that meets or exceeds international standards.
           </p>
           
           <ul className="space-y-4 mb-8">

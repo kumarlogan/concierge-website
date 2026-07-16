@@ -11,7 +11,7 @@ export function HowItWorks() {
     {
       number: '02',
       title: 'Personalized Match',
-      description: 'We connect you with the right specialist and clinic in Bangalore, India tailored to your specific clinical needs.'
+      description: 'We connect you with the right specialist and clinic in Bangalore tailored to your specific clinical needs.'
     },
     {
       number: '03',
@@ -21,7 +21,7 @@ export function HowItWorks() {
     {
       number: '04',
       title: 'Travel Coordination',
-      description: 'Assistance with visas, accommodation, and local transport so you can arrive in Bangalore, India stress-free.'
+      description: 'Assistance with visas, accommodation, and local transport so you can arrive in Bangalore stress-free.'
     },
     {
       number: '05',

@@ -16,7 +16,7 @@ export default function ContactPage() {
             Let's Talk
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            Reach out for a free, confidential consultation. We are here to listen and help you understand your options for fertility care in Bangalore, India.
+            Reach out for a free, confidential consultation. We are here to listen and help you understand your options for fertility care in Bangalore.
           </p>
         </FadeIn>
       </SectionWrapper>
