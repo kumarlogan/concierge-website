@@ -36,7 +36,7 @@ export function Hero() {
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
-              Trusted fertility treatment coordination for Canadian families, connecting you with experienced specialists in Bangalore, India.
+              Trusted fertility treatment coordination for Canadian families — connecting you with experienced specialists in Bangalore, India.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center gap-4">
