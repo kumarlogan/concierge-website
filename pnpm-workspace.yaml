@@ -76,6 +76,8 @@ onlyBuiltDependencies:
 
 allowBuilds:
   esbuild: true
+  sharp: true
+  workerd: true
 
 overrides:
   # replit uses linux-x64 only, we can exclude all other platforms
@@ -162,5 +164,3 @@ overrides:
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
 
-allowBuilds:
-  esbuild: false
