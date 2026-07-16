@@ -54,6 +54,7 @@ export function ConsultationForm() {
   const submitConsultation = useSubmitConsultation();
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [submittedName, setSubmittedName] = React.useState('');
+  const topRef = React.useRef<HTMLDivElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -87,13 +88,14 @@ export function ConsultationForm() {
         setSubmittedName(data.name);
         setIsSuccess(true);
         form.reset();
+        topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     });
   };
 
   if (isSuccess) {
     return (
-      <div className="p-8 text-center bg-muted/30 rounded-2xl border border-border">
+      <div ref={topRef} className="p-8 text-center bg-muted/30 rounded-2xl border border-border">
         <h3 className="text-2xl font-display font-semibold text-foreground mb-4">
           Thank you, {submittedName}.
         </h3>
