@@ -11,7 +11,7 @@ export function Footer() {
               AGS Fertility Concierge
             </span>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-              Your trusted partner in coordinating world-class fertility care in Bangalore, India, for Canadian families.
+              Your trusted partner in coordinating world-class fertility care in Bangalore for Canadian families.
             </p>
           </div>
           
