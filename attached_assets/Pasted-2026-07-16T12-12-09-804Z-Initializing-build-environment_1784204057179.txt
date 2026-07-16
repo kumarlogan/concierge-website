@@ -1,0 +1,78 @@
+2026-07-16T12:12:09.804Z	Initializing build environment...
+2026-07-16T12:12:59.632Z	Success: Finished initializing build environment
+2026-07-16T12:13:00.329Z	Cloning repository...
+2026-07-16T12:13:04.490Z	Detected the following tools from environment: pnpm@11.13.1, nodejs@22.23.1
+2026-07-16T12:13:04.491Z	Installing nodejs 22.23.1
+2026-07-16T12:13:13.987Z	Installing project dependencies: pnpm install --frozen-lockfile
+2026-07-16T12:13:14.843Z	[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.onlyBuiltDependencies". See https://pnpm.io/settings for the new home of each setting.
+2026-07-16T12:13:14.882Z	Scope: all 9 workspace projects
+2026-07-16T12:13:15.041Z	? Verifying lockfile against supply-chain policies (477 entries)...
+2026-07-16T12:13:15.060Z	Lockfile is up to date, resolution step is skipped
+2026-07-16T12:13:15.202Z	Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-07-16T12:13:15.296Z	Packages: +475
+2026-07-16T12:13:15.296Z	++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-07-16T12:13:16.211Z	Progress: resolved 475, reused 0, downloaded 1, added 0
+2026-07-16T12:13:17.213Z	Progress: resolved 475, reused 0, downloaded 15, added 0
+2026-07-16T12:13:18.231Z	Progress: resolved 475, reused 0, downloaded 32, added 0
+2026-07-16T12:13:19.237Z	Progress: resolved 475, reused 0, downloaded 65, added 0
+2026-07-16T12:13:20.767Z	Progress: resolved 475, reused 0, downloaded 65, added 1
+2026-07-16T12:13:21.048Z	✓ Lockfile passes supply-chain policies (477 entries in 6s)
+2026-07-16T12:13:21.762Z	Progress: resolved 475, reused 0, downloaded 111, added 4
+2026-07-16T12:13:22.763Z	Progress: resolved 475, reused 0, downloaded 134, added 8
+2026-07-16T12:13:23.764Z	Progress: resolved 475, reused 0, downloaded 171, added 8
+2026-07-16T12:13:24.765Z	Progress: resolved 475, reused 0, downloaded 178, added 8
+2026-07-16T12:13:25.766Z	Progress: resolved 475, reused 0, downloaded 194, added 12
+2026-07-16T12:13:26.765Z	Progress: resolved 475, reused 0, downloaded 355, added 20
+2026-07-16T12:13:27.766Z	Progress: resolved 475, reused 0, downloaded 475, added 186
+2026-07-16T12:13:28.020Z	Progress: resolved 475, reused 0, downloaded 475, added 475, done
+2026-07-16T12:13:28.246Z	.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+2026-07-16T12:13:28.309Z	.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+2026-07-16T12:13:28.693Z	
+2026-07-16T12:13:28.696Z	dependencies:
+2026-07-16T12:13:28.696Z	+ @replit/connectors-sdk 0.4.1
+2026-07-16T12:13:28.697Z	
+2026-07-16T12:13:28.697Z	devDependencies:
+2026-07-16T12:13:28.697Z	+ prettier 3.9.5
+2026-07-16T12:13:28.698Z	+ typescript 5.9.3
+2026-07-16T12:13:28.698Z	
+2026-07-16T12:13:28.718Z	. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-07-16T12:13:28.740Z	. preinstall: Done
+2026-07-16T12:13:28.928Z	Done in 14.7s using pnpm v11.13.1
+2026-07-16T12:13:29.234Z	Executing user build command: pnpm run build
+2026-07-16T12:13:29.790Z	[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.onlyBuiltDependencies". See https://pnpm.io/settings for the new home of each setting.
+2026-07-16T12:13:29.864Z	$ pnpm run typecheck && pnpm -r --if-present run build
+2026-07-16T12:13:30.370Z	[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.onlyBuiltDependencies". See https://pnpm.io/settings for the new home of each setting.
+2026-07-16T12:13:30.381Z	$ pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+2026-07-16T12:13:30.880Z	[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.onlyBuiltDependencies". See https://pnpm.io/settings for the new home of each setting.
+2026-07-16T12:13:30.899Z	$ tsc --build
+2026-07-16T12:13:35.303Z	[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.onlyBuiltDependencies". See https://pnpm.io/settings for the new home of each setting.
+2026-07-16T12:13:35.342Z	Scope: 4 of 9 workspace projects
+2026-07-16T12:13:35.345Z	artifacts/ags-fertility typecheck$ tsc -p tsconfig.json --noEmit
+2026-07-16T12:13:35.345Z	artifacts/api-server typecheck$ tsc -p tsconfig.json --noEmit
+2026-07-16T12:13:38.498Z	artifacts/api-server typecheck: Done
+2026-07-16T12:13:38.511Z	artifacts/mockup-sandbox typecheck$ tsc -p tsconfig.json --noEmit
+2026-07-16T12:13:48.310Z	artifacts/ags-fertility typecheck: Done
+2026-07-16T12:13:48.316Z	scripts typecheck$ tsc -p tsconfig.json --noEmit
+2026-07-16T12:13:49.643Z	scripts typecheck: Done
+2026-07-16T12:13:50.154Z	artifacts/mockup-sandbox typecheck: Done
+2026-07-16T12:13:50.764Z	[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: "pnpm.onlyBuiltDependencies". See https://pnpm.io/settings for the new home of each setting.
+2026-07-16T12:13:50.809Z	Scope: 8 of 9 workspace projects
+2026-07-16T12:13:50.813Z	artifacts/mockup-sandbox build$ vite build
+2026-07-16T12:13:51.161Z	artifacts/mockup-sandbox build: failed to load config from /opt/buildhome/repo/artifacts/mockup-sandbox/vite.config.ts
+2026-07-16T12:13:51.164Z	artifacts/mockup-sandbox build: error during build:
+2026-07-16T12:13:51.164Z	artifacts/mockup-sandbox build: Error: PORT environment variable is required but was not provided.
+2026-07-16T12:13:51.164Z	artifacts/mockup-sandbox build:     at file:///opt/buildhome/repo/artifacts/mockup-sandbox/node_modules/.vite-temp/vite.config.ts.timestamp-1784204031024-50b72b46fefe7.mjs:145:9
+2026-07-16T12:13:51.164Z	artifacts/mockup-sandbox build:     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+2026-07-16T12:13:51.164Z	artifacts/mockup-sandbox build:     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+2026-07-16T12:13:51.164Z	artifacts/mockup-sandbox build:     at async loadConfigFromBundledFile (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.5_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35996:12)
+2026-07-16T12:13:51.164Z	artifacts/mockup-sandbox build:     at async bundleAndLoadConfigFile (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.5_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35884:17)
+2026-07-16T12:13:51.164Z	artifacts/mockup-sandbox build:     at async loadConfigFromFile (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.5_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35851:42)
+2026-07-16T12:13:51.164Z	artifacts/mockup-sandbox build:     at async resolveConfig (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.5_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35500:22)
+2026-07-16T12:13:51.165Z	artifacts/mockup-sandbox build:     at async createBuilder (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.5_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:33955:19)
+2026-07-16T12:13:51.165Z	artifacts/mockup-sandbox build:     at async CAC.<anonymous> (file:///opt/buildhome/repo/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.5_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/dist/node/cli.js:629:10)
+2026-07-16T12:13:51.186Z	artifacts/mockup-sandbox build: Failed
+2026-07-16T12:13:51.210Z	/opt/buildhome/repo/artifacts/mockup-sandbox:
+2026-07-16T12:13:51.210Z	[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @workspace/mockup-sandbox@2.0.0 build: `vite build`
+2026-07-16T12:13:51.210Z	Exit status 1
+2026-07-16T12:13:51.257Z	[ELIFECYCLE] Command failed with exit code 1.
+2026-07-16T12:13:51.286Z	Failed: error occurred while running build command
