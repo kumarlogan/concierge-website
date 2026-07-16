@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "compatibility_date": "2026-07-16",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "name": "hermes-website",
+  "main": "src/worker.js",
+  "assets": {
+    "directory": "artifacts/ags-fertility/dist/public",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
