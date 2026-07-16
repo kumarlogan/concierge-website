@@ -8,7 +8,7 @@ export const faqData = [
     answer: 'We rigorously vet hospitals based on their success rates, accreditations (such as JCI and NABH), experience treating international patients, transparency in pricing, and the credentials of their reproductive endocrinologists and embryologists.'
   },
   {
-    question: 'How long will I need to stay in Bangalore?',
+    question: 'How long will I need to stay in Bangalore, India?',
     answer: 'The typical length of stay for an IVF cycle is approximately 3 weeks. However, this varies depending on your specific treatment protocol. We help coordinate travel, accommodation, and appointments to optimize your time abroad.'
   },
   {

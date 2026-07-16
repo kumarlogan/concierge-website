@@ -7,7 +7,7 @@ export function WhyAGS() {
     {
       icon: <ShieldCheck className="w-6 h-6 text-primary" />,
       title: 'Verified Hospitals',
-      description: 'We partner exclusively with accredited, internationally recognized clinics in Bangalore with proven track records.'
+      description: 'We partner exclusively with accredited, internationally recognized clinics in Bangalore, India with proven track records.'
     },
     {
       icon: <HeartHandshake className="w-6 h-6 text-primary" />,

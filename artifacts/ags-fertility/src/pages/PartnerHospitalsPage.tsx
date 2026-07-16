@@ -17,7 +17,7 @@ export default function PartnerHospitalsPage() {
         <FadeIn className="max-w-3xl">
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-6">Our Partner Hospitals</h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            We selectively partner with internationally accredited fertility centers in Bangalore, chosen for their clinical excellence, ethical standards, and advanced technology.
+            We selectively partner with internationally accredited fertility centers in Bangalore, India, chosen for their clinical excellence, ethical standards, and advanced technology.
           </p>
         </FadeIn>
       </SectionWrapper>
