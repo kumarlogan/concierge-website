@@ -4,7 +4,6 @@
   "compatibility_date": "2026-07-17",
   "assets": {
     "directory": "artifacts/ags-fertility/dist/public",
-    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
   "routes": [
