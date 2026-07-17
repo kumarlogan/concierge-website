@@ -1,7 +1,6 @@
 import React from 'react';
-import { Quote } from 'lucide-react';
-import { SectionWrapper, FadeIn, StaggerContainer, StaggerItem } from '../layout/SectionWrapper';
-import { testimonials } from '@/data/testimonials';
+import { PenLine } from 'lucide-react';
+import { SectionWrapper, FadeIn } from '../layout/SectionWrapper';
 
 export function Testimonials() {
   return (
@@ -15,25 +14,19 @@ export function Testimonials() {
         </p>
       </FadeIn>
 
-      <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {testimonials.map((testimonial) => (
-          <StaggerItem key={testimonial.id}>
-            <div className="bg-white rounded-3xl p-8 h-full shadow-sm border border-border/50 relative">
-              <Quote className="absolute top-6 right-6 w-8 h-8 text-primary/20" />
-              <div className="mb-6 pt-4">
-                <p className="text-muted-foreground italic leading-relaxed">
-                  "{testimonial.quote}"
-                </p>
-              </div>
-              <div className="mt-auto">
-                <div className="font-semibold text-foreground">{testimonial.initials}</div>
-                <div className="text-sm text-muted-foreground">{testimonial.city}, {testimonial.province}</div>
-                <div className="text-xs mt-2 text-primary font-medium">{testimonial.treatmentType}</div>
-              </div>
-            </div>
-          </StaggerItem>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="bg-white/50 rounded-3xl p-8 h-full border-2 border-dashed border-border/40 flex flex-col items-center justify-center min-h-[220px] text-center gap-3"
+          >
+            <PenLine className="w-6 h-6 text-muted-foreground/40" />
+            <p className="text-muted-foreground/50 text-sm font-medium">
+              Your story could be here
+            </p>
+          </div>
         ))}
-      </StaggerContainer>
+      </div>
     </SectionWrapper>
   );
 }
