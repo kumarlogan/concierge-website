@@ -8,18 +8,22 @@ beforeEach(() => {
 });
 
 describe("EPIC-002-006C Phase 5 — AI workforce", () => {
-  it("seeds all 8 agents (1 existing + 7 placeholders)", () => {
+  it("seeds all 12+ agents (existing ops + domain placeholders + expansion)", () => {
     seedAgentWorkforce();
     const ids = listAgents().map((a) => a.id).sort();
     expect(ids).toEqual([
       "ags-fertility-ops-agent",
       "customer-support-agent",
       "deployment-agent",
+      "developer-agent-claude-code",
+      "developer-agent-local",
       "documentation-agent",
       "finance-agent",
+      "monitoring-agent",
       "qa-agent",
       "research-agent",
       "security-agent",
+      "security-tooling-agent",
     ].sort());
   });
 

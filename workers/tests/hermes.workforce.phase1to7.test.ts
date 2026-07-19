@@ -95,6 +95,10 @@ describe("EPIC-002-006D · Phase 1 — Agent Registry & Seeding", () => {
         "research-agent",
         "finance-agent",
         "customer-support-agent",
+        "developer-agent-claude-code",
+        "developer-agent-local",
+        "security-tooling-agent",
+        "monitoring-agent",
       ].sort(),
     );
   });
