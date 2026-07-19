@@ -55,6 +55,7 @@
 - **EPIC-002-006C reports:** `docs/operations/EPIC-002-006C_EXECUTION_PLAN.md`, `EPIC-002-006C_PROGRESS.md`, `EPIC-002-006C_VALIDATION_REPORT.md`.
 - **EPIC-002-006G reports:** `docs/operations/EPIC-002-006G_COMPLETION.md`.
 - **EPIC-002-006H reports:** `docs/operations/EPIC-002-006H_COMPLETION_REPORT.md`, `docs/operations/EPIC-002-006H_VALIDATION_REPORT.md`.
+- **EPIC-002-007 reports:** `docs/operations/EPIC-002-007_VALIDATION_REPORT.md`, `docs/operations/EPIC-002-007_COMPLETION_REPORT.md`.
 - **Organization docs:** `docs/organization/*` (architecture, identity model, AI workforce, dependency rules, provider abstractions, repository structure).
 
 ---
@@ -132,6 +133,7 @@ archive/          # Retired/quarantined artifacts (e.g. Category D scripts)
 | EPIC-002-006F | Admin Operating Platform | ✅ Complete | Secure BFF boundary, Governance visibility, AI Workforce dashboard, tool capability model, sandbox hardening (217/217 tests) |
 | EPIC-002-006G | Admin Console Runtime | ✅ Complete | Real 6-domain renderer, verified-human session, non-autonomous workflow, MCP-ready adapter (239/239 tests) |
 | EPIC-002-006H | Platform Foundation Hardening + Closeout | ✅ Complete | Auth provider + memory + real tool backends + MCP layer + observability + security hardening (255/255 tests); no ADR-014 (covered by ADR-012/013) |
+| EPIC-002-007 | Hermes Activation Platform | ✅ Complete | Capability provider framework (`ToolProvider`-based, fail-closed), generic orchestrator (retry/timeout/cancel), approval-gate layer, git provider (prod commit/push human-token gated, never auto-push), Developer Agent runtime (non-autonomous, code-gen gated in prod). 16/16 activation tests; 271/271 full workers suite; AGS Fertility isolated; **no new ADR** (ratified by ADR-008/013/002) |
 
 ---
 
@@ -163,6 +165,8 @@ archive/          # Retired/quarantined artifacts (e.g. Category D scripts)
 | Provider abstraction implementation | Concrete adapters behind defined interfaces |
 | Multi-provider support | OCI, AWS, Azure, local alongside Cloudflare |
 | OCI/local/cloud portability | Business logic depends on interfaces, not providers |
+| EPIC-002-007 (done) | Activation Platform — capability provider framework, orchestrator, approval gates, git provider, Developer Agent runtime |
+| EPIC-002-008 | Activation Provider Backends & Runtime Wiring — concrete, separately-approved vendor adapters (Claude Code CLI executor, real security scanner) behind the stable `ToolProvider` capability framework; persisted provider catalog tied to ADR-006 Resource Registry |
 
 ---
 
@@ -260,6 +264,9 @@ Governance is **ADR-driven**: every architectural decision is recorded, reviewed
 ### 2026-07-19 (cont.)
 - **EPIC-002-006H completed (governance closeout)** — Authentication Provider Foundation, Memory Foundation (expiration bug fixed), first real tool backends (`tool:code.local-sandbox`, `tool:security.local-scanner`), MCP compatibility layer, Observability layer, and Security Hardening (16 new fail-closed tests). Full suite **255/255 passing**; AGS Fertility isolated and untouched by 006H. No ADR-014 required (decisions covered by ADR-012/013). See `docs/operations/EPIC-002-006H_COMPLETION_REPORT.md` and `EPIC-002-006H_VALIDATION_REPORT.md`.
 - **Flagged out-of-scope change:** two AGS Fertility working-tree modifications (`lib/db/src/schema/consultations.ts`, `artifacts/api-server/src/routes/consultations.ts`) are unrelated to 006H and excluded from its commits; they require separate human review.
+
+### 2026-07-19 (cont.) — EPIC-002-007 COMPLETE
+- **EPIC-002-007 · Hermes Activation Platform — COMPLETE.** Capability provider framework (`ToolProvider`-based, fail-closed lifecycle FSM), generic orchestrator (retry/timeout/cancel over `task.ts`), approval-gate layer (extends human-gated `approval.ts` to capability actions), git provider (prod commit/push require explicit human token; `preparePush` stages only, never auto-push), Developer Agent runtime (non-autonomous state machine: plan → code-gen gated in prod → generate → validate → security-scan → commit). Claude Code provider implements `ToolProvider` with an **injected** executor (no vendor SDK imported into `hermes/`). Validation: `typecheck:libs` 0 errors; activation suite **16/16**; full workers suite **271/271** (0 regressions); AGS Fertility isolated and untouched. **No new ADR** — architecture ratified by ADR-008 (Provider Adapter), ADR-013 (neutral capability model + ToolProvider, rejected concrete vendor wiring), ADR-002 (human-gated autonomy). Recommended next epic: **EPIC-002-008** (Activation Provider Backends & Runtime Wiring). Reports: `docs/operations/EPIC-002-007_VALIDATION_REPORT.md`, `EPIC-002-007_COMPLETION_REPORT.md`.
 
 ---
 
