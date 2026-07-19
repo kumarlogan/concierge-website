@@ -39,6 +39,21 @@ export interface RegisteredAgent {
   principalId: string;
   /** Free-form notes (audit trail). */
   notes?: string;
+  // ── EPIC-002-006C PHASE 5 platform metadata (all optional for compat) ──
+  /** Human-readable purpose statement. */
+  purpose?: string;
+  /** Owning principal/team accountable for the agent. */
+  owner?: string;
+  /** Hermes permission grants required for the agent to act. */
+  permissions?: string[];
+  /** Applications the agent is permitted to operate within. */
+  applicationsAllowed?: string[];
+  /** Environments the agent may touch (production/staging/development). */
+  environments?: string[];
+  /** Memory scope isolation boundary for the agent. */
+  memoryScope?: "isolated" | "shared" | "global";
+  /** Audit history of lifecycle/activation changes. */
+  auditHistory?: Array<{ at: string; actor: string; action: string; detail?: Record<string, unknown> }>;
 }
 
 /** In-memory registry backing store. Replace with D1/contract later (ADR-007). */
@@ -49,7 +64,20 @@ export function registerAgent(agent: RegisteredAgent): RegisteredAgent {
     throw new Error(`Agent already registered: ${agent.id}`);
   }
   // Safety: registration ALWAYS starts disabled, regardless of input.
-  const safe: RegisteredAgent = { ...agent, activation: "disabled", state: "registered" };
+  const safe: RegisteredAgent = {
+    ...agent,
+    activation: "disabled",
+    state: "registered",
+    auditHistory: [
+      ...(agent.auditHistory ?? []),
+      {
+        at: new Date().toISOString(),
+        actor: agent.owner ?? "system",
+        action: "registered",
+        detail: { activation: "disabled", autonomous: false },
+      },
+    ],
+  };
   REGISTRY.set(agent.id, safe);
   return safe;
 }
