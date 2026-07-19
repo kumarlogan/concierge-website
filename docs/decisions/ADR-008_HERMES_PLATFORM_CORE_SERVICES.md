@@ -1,6 +1,6 @@
 # ADR-008 — Hermes Platform Core Services
 
-- **Status:** Proposed (planning only — not yet implemented)
+- **Status:** ✅ Implemented (EPIC-002-006C, 2026-07-19) — 158/158 tests, AGS Fertility isolated & protected
 - **Date:** 2026-07-19
 - **Deciders:** Chief Architect (AGS), Human Product Owner (approval required)
 - **Supersedes:** — (extends ADR-007)
@@ -105,4 +105,20 @@ is an explicit human-authorized out-of-band action).
 
 ---
 
-*Proposed ADR — requires Human Product Owner approval before any implementation.*
+## Implementation Note (added 2026-07-19, EPIC-002-006C)
+
+Implemented exactly as proposed, in-process, provider-neutral. One deliberate
+enhancement over the original proposal:
+
+- **Provider-neutral audit emitter** (`hermes/audit/event.ts`) was added instead of
+  wiring the extracted `writeAuditEvent` (which requires a `D1Database` instance)
+  directly into the services. This keeps `hermes/services/*` free of any Cloudflare
+  dependency and aligns with the ADR-007 cloud-mobility goal. The emitter writes to an
+  in-memory ring buffer at runtime and is the single audit sink for all service actions;
+  wiring it to the durable `AuditProvider` (D1/OCI) is a later, gated step.
+
+Test evidence: 158/158 passing (141 baseline + 17 net-new); `tsc` clean on new code;
+0 secrets; AGS Fertility behavior unchanged (no worker routes modified). Full report:
+`docs/operations/EPIC-002-006C_VALIDATION_REPORT.md`.
+
+*Implemented ADR — status promoted from Proposed to Implemented via EPIC-002-006C.*

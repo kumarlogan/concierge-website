@@ -32,17 +32,22 @@
 | EPIC-002-004 | Security foundation |
 | EPIC-002-005 | Organization architecture + AI workforce model ratified (ADR-004, ADR-005, ADR-006) |
 | EPIC-002-006A | Security remediation + repository hygiene + **baseline-002-006** tag established |
+| EPIC-002-006B | Hermes extraction complete — Identity, Permissions, Audit, Agent Registry extracted to `hermes/`; 10 provider contracts in `shared/interfaces/`; AGS Fertility consumes Hermes; first AI agent registered (`ags-fertility-ops-agent`, disabled) |
+| EPIC-002-006C | Hermes Platform Core Services built — Resource Registry, Discovery, Lifecycle, AI Registry foundation (8-agent workforce), Provider Adapter boundary, Internal Platform API contracts. 158/158 tests; AGS Fertility isolated & protected |
 
 ### What exists today
 - **Organization architecture** — three-layer model defined in `docs/organization/ORGANIZATION_ARCHITECTURE.md` (ADR-004).
 - **Hermes platform design** — control-plane spec in `docs/organization/HERMES_PLATFORM.md` (ADR-005); platform services in `docs/organization/PLATFORM_SERVICES.md`.
+- **Hermes platform services (operational, in-process)** — `hermes/services/{registry,discovery,lifecycle,scheduler,notification,memory,providers}`, `hermes/contracts` (internal API), `hermes/agents/seed.ts` (8-agent workforce). See ADR-008 (implemented).
 - **Security foundation** — Identity & Authorization Engine (`workers/src/auth/*`: provider registry, principal builder, data-driven permission resolver, authorization middleware, audit writer), Telegram Ops Bot MVP, CI/CD. Ratified by ADR-001/002/003.
 - **Repository baseline** — `baseline-002-006` (commit `ded1c953`), 0 secrets tracked, gitleaks CI scanning operational.
 - **Application foundation** — AGS Fertility live on Cloudflare Workers + D1, frontend on Cloudflare Pages.
 
 ### Reference documents
-- **ADRs:** `docs/decisions/ADR-001` (Cloudflare migration) · `ADR-002` (Multi-Agent Ops) · `ADR-003` (Permission resolution) · `ADR-004` (Org architecture) · `ADR-005` (Hermes platform) · `ADR-006` (Resource registry) · `ADR-007` (Hermes extraction).
+- **ADRs:** `docs/decisions/ADR-001` (Cloudflare migration) · `ADR-002` (Multi-Agent Ops) · `ADR-003` (Permission resolution) · `ADR-004` (Org architecture) · `ADR-005` (Hermes platform) · `ADR-006` (Resource registry) · `ADR-007` (Hermes extraction) · `ADR-008` (Hermes Platform Core Services — **implemented**).
 - **EPIC-002-006A reports:** `docs/operations/EPIC-002-006_EXECUTIVE_CLOSEOUT.md`, `EPIC-002-006A4C_*` verification reports.
+- **EPIC-002-006B reports:** `docs/operations/EPIC-002-006B_PROGRESS.md`, `EPIC-002-006B_VALIDATION_REPORT.md`.
+- **EPIC-002-006C reports:** `docs/operations/EPIC-002-006C_EXECUTION_PLAN.md`, `EPIC-002-006C_PROGRESS.md`, `EPIC-002-006C_VALIDATION_REPORT.md`.
 - **Organization docs:** `docs/organization/*` (architecture, identity model, AI workforce, dependency rules, provider abstractions, repository structure).
 
 ---
