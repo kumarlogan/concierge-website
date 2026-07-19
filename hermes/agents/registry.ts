@@ -90,3 +90,8 @@ export function deactivateAgent(id: string): RegisteredAgent {
   REGISTRY.set(id, updated);
   return updated;
 }
+
+/** Test/reset helper — clears the in-memory registry (not used in production). */
+export function _clearAgents(): void {
+  REGISTRY.clear();
+}
