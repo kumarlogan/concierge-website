@@ -44,8 +44,8 @@ The dashboard is governed by exactly six domains (replacing the earlier
 | `infrastructure` | `hermes:admin:read` | `adminViewResources`, `adminViewServiceStatus`, `adminViewPlatformHealth` |
 | `workforce` | `hermes:admin:read` | `adminViewWorkforce`, `adminViewAgent` |
 | `operations` | `hermes:admin:read` | `adminViewTasks`, events, status |
-| `security` | `hermes:admin:read` | `adminViewAuthzDenials`, `adminViewAuditTrail` |
-| `governance` | `hermes:admin:read` | ADRs, policies, pending approvals |
+| `security` | `hermes:admin:audit-read` | `adminViewAuthzDenials`, `adminViewAuditTrail` |
+| `governance` | `hermes:admin:audit-read` | ADRs, policies, pending approvals |
 
 `DOMAIN_READ_PERMISSION` in `access.ts` and `DASHBOARD_IA` in `ui-contracts.ts`
 are the single source of truth; both were updated in lockstep.
@@ -117,3 +117,95 @@ via the `ToolProvider` interface — no concrete vendor is wired in.
   Operations, Governance); the old names were placeholders.
 - **Wire a concrete vendor tool backend now:** rejected — violates provider
   independence; adapters stay interface-only until a backend is chosen.
+
+---
+
+## Addendum — EPIC-002-006G (Admin Console Runtime)
+
+**Date:** 2026-07-19
+**Epic:** EPIC-002-006G (Admin Console → real UI + safe runtime)
+**Author:** Hermes (Night Execution Mode)
+
+006F delivered the BFF + skeleton SPA. 006G turns that skeleton into a
+**real, runnable console** with a verified-human boundary, a non-autonomous
+workflow engine, and an MCP-ready tool adapter — without relaxing any 006F
+safety invariant.
+
+### A1. Real console renderer (Phase 1)
+`hermes/admin/console/render.ts` is the single view-builder. It exports
+`renderConsoleFull(boot)` and `renderDomain(boot, domainId)` which produce
+Markdown for **all six** dashboard domains from the BFF payload — no direct
+`hermes/services/*`, `hermes/agents/*`, or `hermes/workforce/*` imports. The
+skeleton `app.ts` `renderDomain` now delegates to `render.ts` instead of
+emitting placeholder text, and `renderConsoleFull` is the full-markdown
+renderer used by the BFF/SSR path. Fail-closed: unknown domain id or missing
+permission returns a `REDACTED` block.
+
+### A2. Verified-principal session (Phase 2)
+- `hermes/admin/console/session.ts` introduces a **branded**
+  `VerifiedPrincipal` type. It can ONLY be produced by `verifyPrincipal(p)`,
+  which returns `null` for any non-human principal (`agent:*`, `svc:*`, no
+  `principal:` prefix, or malformed input). The console NEVER mints a
+  principal from raw request data.
+- `ConsoleSession.establish(p)` throws unless `verifyPrincipal` succeeds —
+  there is no silent fallback to a low-privilege identity.
+- `hermes/admin/console/bff-client.ts` implements the `BffClient` interface
+  from `app.ts`. It takes an already-verified `Principal` and delegates to
+  `bffBootstrap`/`bffDomain`. It does NOT trust, construct, or escalate
+  principals.
+
+### A3. Controlled (non-autonomous) workflow orchestrator (Phase 3)
+`hermes/admin/console/workflow.ts` — `ControlledWorkflow` is a staged state
+machine: `drafted → submitted → awaiting-approval → approved → executing →
+completed | failed | cancelled`.
+- `execute()` **refuses to run** unless state === `approved` (fail-closed:
+  a submitted-but-unapproved workflow throws `approval required`).
+- `approve(p)` requires `hermes:admin:task-write`; a reader without that
+  permission cannot approve (throws `requires hermes:admin:task-write`).
+- Steps are supplied as closures by the human; the orchestrator never
+  self-approves or self-submits. Every transition is audited. This satisfies
+  the standing invariant: **no autonomous execution path exists.**
+
+### A4. Safe, MCP-ready tool adapter (Phase 4)
+`hermes/admin/console/tool-adapter.ts` — `ConsoleToolAdapter` wraps any
+`ToolProvider` behind two safety gates:
+- **Allowlist default-deny:** a tool runs only if its id is in the explicit
+  `allowedTools` set; everything else returns `{ ok: false, error: "tool not
+  in allowlist" }`.
+- **Human approval token:** any capability whose `requiresApprovalIn` list
+  includes the current env requires an explicit `approvalToken` on the call.
+- **Never throws:** provider errors are returned as `ToolResult`, never
+  leaked as exceptions.
+- **MCP-ready:** the `ToolCall`/`ToolResult` shape is the existing
+  `services/tools` contract that maps 1:1 to MCP `tools/call`. An MCP server
+  drops in by implementing `ToolProvider` — zero console changes. (Type-only
+  imports from `services/tools` are used; the runtime provider is injected,
+  preserving the console boundary.)
+
+### A5. Runtime validation (Phase 5)
+- `npx tsc --noEmit` — clean (0 errors).
+- `workers` vitest — **239/239 passing** (22 new tests: session
+  human-only verification, workflow non-autonomous guarantees, tool-adapter
+  default-deny + human-token gate, renderer fail-closed boundary).
+- Secret scan — clean.
+- Import boundary — `hermes/admin/console/*` runtime code imports no
+  `hermes/services/*`, `hermes/agents/*`, or `hermes/workforce/*` internals
+  (only types, for the tool adapter).
+
+### A6. Defect corrections during 006G
+- `ui-contracts.ts` — reverted a stray cosmetic edit to the `CONSOLE_AUTH`
+  `authorization` field (the `***` typo was already fixed in 006F; the edit
+  risked reintroducing it).
+- `render.ts` `renderDomain` — fixed `domain.id` access on a string-typed
+  domain id (was reading `.id` on a `DashboardDomainId` union).
+- `permissions.ts` — `governance` now requires `hermes:admin:audit-read`
+  (aligned with the BFF's actual gate; previously mismatched at `read`).
+- `bff.ts` — workforce domain now returns `adminWorkforceDashboard(principal)`
+  (`AgentCardView[]`) instead of the raw roster, so the renderer receives the
+  contracted view-model.
+
+### A7. Reversibility
+All 006G changes are additive (new `console/*.ts` modules + tests) or
+contract corrections. No endpoint, migration, D1 schema, Cloudflare config,
+or secret was touched. Rollback = `git revert` of the 006G commits. AGS
+Fertility unchanged and still isolated.

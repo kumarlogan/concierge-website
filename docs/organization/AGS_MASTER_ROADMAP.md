@@ -37,6 +37,8 @@
 | EPIC-002-006D | Hermes AI Workforce Management (governance layer) — Agent Assignment Service, Approval Workflow (human-gated activate/pause/resume/retire), Task Framework, Permission Boundary, Memory Boundary, Workforce Events & Audit, Internal Workforce API. 185/185 tests (27 new); agents inactive by default; AGS Fertility isolated. Admin Platform prepared (EPIC-002-006E_PREPARATION.md) |
 | EPIC-002-006E | Admin Platform Foundation — `hermes/admin/*` pure read functions, permission-aware access model (`requireDomainRead`/`assertHumanPrincipal`), 6-domain IA, provider-abstracted tool adapters (`ToolProvider`), agent tool contracts. Contract-only; 205/205 worker tests. |
 | EPIC-002-006F | Admin Operating Platform — Secure Access Layer BFF (`bffBootstrap`/`bffDomain`, fail-closed, human-principal only), Governance visibility, AI Workforce dashboard surface, tool-ecosystem capability model (vendor-neutral), agent sandbox hardening (ephemeral run + seal, human approval workflow, real application scoping). 217/217 tests; AGS Fertility isolated. |
+| EPIC-002-006G | Admin Console Runtime — real 6-domain renderer, verified-human `VerifiedPrincipal` session, non-autonomous `ControlledWorkflow` state machine, MCP-ready `ConsoleToolAdapter` (allowlist default-deny + human-approval token). 239/239 tests; AGS Fertility isolated. |
+| EPIC-002-006H | Hermes Platform Foundation Hardening + Governance Closeout — Authentication Provider Foundation (`hermes/identity/authn.ts`), Memory Foundation (`services/memory/architecture.ts`, expiration bug fixed), first real tool backends (`tool:code.local-sandbox`, `tool:security.local-scanner`), MCP compatibility layer (`services/mcp/`), Observability layer (`admin/observability.ts`), Security Hardening (16 new fail-closed tests). 255/255 tests; AGS Fertility isolated; no ADR-014 required (covered by ADR-012/013). |
 
 ### What exists today
 - **Organization architecture** — three-layer model defined in `docs/organization/ORGANIZATION_ARCHITECTURE.md` (ADR-004).
@@ -47,10 +49,12 @@
 - **Application foundation** — AGS Fertility live on Cloudflare Workers + D1, frontend on Cloudflare Pages.
 
 ### Reference documents
-- **ADRs:** `docs/decisions/ADR-001` (Cloudflare migration) · `ADR-002` (Multi-Agent Ops) · `ADR-003` (Permission resolution) · `ADR-004` (Org architecture) · `ADR-005` (Hermes platform) · `ADR-006` (Resource registry) · `ADR-007` (Hermes extraction) · `ADR-008` (Hermes Platform Core Services — **implemented**).
+- **ADRs:** `docs/decisions/ADR-001` (Cloudflare migration) · `ADR-002` (Multi-Agent Ops) · `ADR-003` (Permission resolution) · `ADR-004` (Org architecture) · `ADR-005` (Hermes platform) · `ADR-006` (Resource registry) · `ADR-007` (Hermes extraction) · `ADR-008` (Hermes Platform Core Services — **implemented**) · `docs/adr/ADR-012` (Admin Platform Internal-Only Facade) · `docs/adr/ADR-013` (Admin BFF & AI Workforce Foundations, with 006G addendum).
 - **EPIC-002-006A reports:** `docs/operations/EPIC-002-006_EXECUTIVE_CLOSEOUT.md`, `EPIC-002-006A4C_*` verification reports.
 - **EPIC-002-006B reports:** `docs/operations/EPIC-002-006B_PROGRESS.md`, `EPIC-002-006B_VALIDATION_REPORT.md`.
 - **EPIC-002-006C reports:** `docs/operations/EPIC-002-006C_EXECUTION_PLAN.md`, `EPIC-002-006C_PROGRESS.md`, `EPIC-002-006C_VALIDATION_REPORT.md`.
+- **EPIC-002-006G reports:** `docs/operations/EPIC-002-006G_COMPLETION.md`.
+- **EPIC-002-006H reports:** `docs/operations/EPIC-002-006H_COMPLETION_REPORT.md`, `docs/operations/EPIC-002-006H_VALIDATION_REPORT.md`.
 - **Organization docs:** `docs/organization/*` (architecture, identity model, AI workforce, dependency rules, provider abstractions, repository structure).
 
 ---
@@ -126,6 +130,8 @@ archive/          # Retired/quarantined artifacts (e.g. Category D scripts)
 | EPIC-002-006D | Hermes AI Workforce Management | ✅ Complete | Assignment, human-gated Approval, Tasks, Permission + Memory boundaries, Workforce Audit, Internal API (185/185 tests); Admin Platform prepared |
 | EPIC-002-006E | Admin Platform Foundation | ✅ Complete | `hermes/admin/*` facade + permission model + 6-domain IA + provider-abstracted tool adapters (205/205 tests) |
 | EPIC-002-006F | Admin Operating Platform | ✅ Complete | Secure BFF boundary, Governance visibility, AI Workforce dashboard, tool capability model, sandbox hardening (217/217 tests) |
+| EPIC-002-006G | Admin Console Runtime | ✅ Complete | Real 6-domain renderer, verified-human session, non-autonomous workflow, MCP-ready adapter (239/239 tests) |
+| EPIC-002-006H | Platform Foundation Hardening + Closeout | ✅ Complete | Auth provider + memory + real tool backends + MCP layer + observability + security hardening (255/255 tests); no ADR-014 (covered by ADR-012/013) |
 
 ---
 
@@ -251,9 +257,9 @@ Governance is **ADR-driven**: every architectural decision is recorded, reviewed
 
 ## 14. Change Log
 
-### 2026-07-19
-- **AGS Master Roadmap created** after completion of EPIC-002-006A baseline establishment (`baseline-002-006`).
-- Single source of truth for the AGS ecosystem: vision, current state, target architecture, repository structure, completed/active/future roadmaps, AI workforce, expansion model, security principles, cloud strategy, success metrics, and decision authority.
+### 2026-07-19 (cont.)
+- **EPIC-002-006H completed (governance closeout)** — Authentication Provider Foundation, Memory Foundation (expiration bug fixed), first real tool backends (`tool:code.local-sandbox`, `tool:security.local-scanner`), MCP compatibility layer, Observability layer, and Security Hardening (16 new fail-closed tests). Full suite **255/255 passing**; AGS Fertility isolated and untouched by 006H. No ADR-014 required (decisions covered by ADR-012/013). See `docs/operations/EPIC-002-006H_COMPLETION_REPORT.md` and `EPIC-002-006H_VALIDATION_REPORT.md`.
+- **Flagged out-of-scope change:** two AGS Fertility working-tree modifications (`lib/db/src/schema/consultations.ts`, `artifacts/api-server/src/routes/consultations.ts`) are unrelated to 006H and excluded from its commits; they require separate human review.
 
 ---
 
