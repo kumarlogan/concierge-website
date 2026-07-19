@@ -63,6 +63,28 @@ Validation: `hermes.execution.003.test.ts` **28/28 pass**; full workers suite
 **299/299 pass**. See `docs/operations/EPIC-003-001_VALIDATION_REPORT.md` and
 `docs/operations/EPIC-003-001_COMPLETION_REPORT.md`.
 
+### EPIC-003-002 — Hermes Developer Automation Pipeline ✅ Complete (2026-07-19)
+
+Complete engineering workflow from feature request to simulated git operations,
+composed on the EPIC-003-001 foundations (Identity, Authorization, Audit, Workforce,
+Activation Platform). No production touch, no vendor lock-in, simulation-only git.
+
+| Deliverable | Status |
+|---|---|
+| M1 · Development Work Request spec + normalization | ✅ |
+| M2 · Engineering Planner (GoalSpec, waves, ADR heuristic) | ✅ |
+| M3 · Claude Code ToolProvider (fail-closed, simulated executor) | ✅ |
+| M4 · QA Pipeline (5 suites, boundary fail) | ✅ |
+| M5 · Security Pipeline (permission / approval / aggregate) | ✅ |
+| M6 · Docs Pipeline (doc rec + ADR authoring) | ✅ |
+| M7 · Contribution Aggregator (blocks on security fail) | ✅ |
+| M8 · Review Package + Simulated Git Plan | ✅ |
+| M9 · End-to-End Simulation (no real side effects) | ✅ |
+
+Validation: `hermes.developer.003.test.ts` **17/17 pass**; full workers suite
+**316/316 pass** (23 files). See `docs/operations/EPIC-003-002_VALIDATION_REPORT.md`
+and `docs/operations/EPIC-003-002_COMPLETION_REPORT.md`.
+
 ### Upcoming Epics (Phase 1)
 
 | Epic | Description | Status |
