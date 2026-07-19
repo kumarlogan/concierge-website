@@ -85,6 +85,33 @@ Validation: `hermes.developer.003.test.ts` **17/17 pass**; full workers suite
 **316/316 pass** (23 files). See `docs/operations/EPIC-003-002_VALIDATION_REPORT.md`
 and `docs/operations/EPIC-003-002_COMPLETION_REPORT.md`.
 
+### EPIC-003-003 — Hermes Security Automation Platform ✅ Complete (2026-07-19)
+
+Provider-neutral security automation that sits beside the Developer pipeline: a
+registered `ManagedProvider` (resolved via capability negotiation) runs scanners
+through an injectable `CapabilityExecutor` port (simulated by default; gitleaks /
+semgrep / osv-scanner / trivy are drop-in backends). A fail-closed Security Agent
+collects findings, aggregates risk, and produces a review package — it never
+autonomously remediates or blocks beyond governed gates. Composed on the
+EPIC-003-001 foundations (Identity, Authorization, Audit, Workforce, Activation
+Platform). No production touch, no vendor lock-in, simulation-only scanner.
+
+| Deliverable | Status |
+|---|---|
+| M1 · Security Work Model (provider-neutral contracts) | ✅ |
+| M2 · Security Agent Runtime (fail-closed execution) | ✅ |
+| M3 · Security Provider Framework (reuses `activation/provider-framework.ts`) | ✅ |
+| M4 · OSS Compatibility Layer (scanner adapter specs + simulated executor) | ✅ |
+| M5 · Developer → Security Integration (orchestrator hook) | ✅ |
+| M6 · Risk Engine (aggregate + score, fail-closed) | ✅ |
+| M7 · Admin Visibility (read model + admin facade) | ✅ |
+| M8 · Test Suite | ✅ |
+| M9 · Docs (roadmap, completion, validation reports) | ✅ |
+
+Validation: `hermes.security.003.test.ts` **28/28 pass**; in-scope `tsc --noEmit`
+clean (whole repo 0 errors). See `docs/operations/EPIC-003-003_VALIDATION_REPORT.md`
+and `docs/operations/EPIC-003-003_COMPLETION_REPORT.md`.
+
 ### Upcoming Epics (Phase 1)
 
 | Epic | Description | Status |

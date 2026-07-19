@@ -39,6 +39,8 @@ import {
   apiAuthorizeAgentAction,
   ApprovalError,
 } from "../workforce/api.js";
+import { buildSecurityAdminView } from "../services/security/admin-view.js";
+import { listSecurityReviews } from "../services/security/security-store.js";
 
 // ─── READ DOMAIN: ORGANIZATION ──────────────────────────────────
 
@@ -179,6 +181,19 @@ export function adminAuthorizeAgentAction(
 ) {
   requireDomainRead(principal, "security");
   return apiAuthorizeAgentAction(agentId, perm, context);
+}
+
+// ─── READ DOMAIN: SECURITY (Security Automation visibility) ─────
+
+/**
+ * Admin-only view of the Security Automation platform. Requires the
+ * `security` domain read permission (human principal). Exposes latest scans,
+ * findings summary, overall risk, approval state, and provider health.
+ * INTERNAL ONLY — no public HTTP route, consistent with the admin facade.
+ */
+export function adminViewSecurity(principal: Principal) {
+  requireDomainRead(principal, "security");
+  return buildSecurityAdminView(listSecurityReviews());
 }
 
 /** Re-export error + access surface for callers. */
