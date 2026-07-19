@@ -34,6 +34,7 @@
 | EPIC-002-006A | Security remediation + repository hygiene + **baseline-002-006** tag established |
 | EPIC-002-006B | Hermes extraction complete — Identity, Permissions, Audit, Agent Registry extracted to `hermes/`; 10 provider contracts in `shared/interfaces/`; AGS Fertility consumes Hermes; first AI agent registered (`ags-fertility-ops-agent`, disabled) |
 | EPIC-002-006C | Hermes Platform Core Services built — Resource Registry, Discovery, Lifecycle, AI Registry foundation (8-agent workforce), Provider Adapter boundary, Internal Platform API contracts. 158/158 tests; AGS Fertility isolated & protected |
+| EPIC-002-006D | Hermes AI Workforce Management (governance layer) — Agent Assignment Service, Approval Workflow (human-gated activate/pause/resume/retire), Task Framework, Permission Boundary, Memory Boundary, Workforce Events & Audit, Internal Workforce API. 185/185 tests (27 new); agents inactive by default; AGS Fertility isolated. Admin Platform prepared (EPIC-002-006E_PREPARATION.md) |
 
 ### What exists today
 - **Organization architecture** — three-layer model defined in `docs/organization/ORGANIZATION_ARCHITECTURE.md` (ADR-004).
@@ -118,6 +119,9 @@ archive/          # Retired/quarantined artifacts (e.g. Category D scripts)
 | EPIC-002-004 | Security foundation | ✅ Complete | Identity/permission/audit engine built |
 | EPIC-002-005 | Organization architecture | ✅ Complete | ADR-004/005/006 ratified; AI workforce model |
 | EPIC-002-006A | Security remediation + hygiene | ✅ Complete | 0 secrets, gitleaks CI, `baseline-002-006` |
+| EPIC-002-006B | Hermes Platform Extraction | ✅ Complete | Identity/Permissions/Audit/Agent Registry → `hermes/`; 10 provider contracts; AGS Fertility consumes Hermes |
+| EPIC-002-006C | Hermes Platform Core Services | ✅ Complete | Resource Registry, Discovery, Lifecycle, AI Registry, Provider Adapter, Internal API (158/158 tests) |
+| EPIC-002-006D | Hermes AI Workforce Management | ✅ Complete | Assignment, human-gated Approval, Tasks, Permission + Memory boundaries, Workforce Audit, Internal API (185/185 tests); Admin Platform prepared |
 
 ---
 
