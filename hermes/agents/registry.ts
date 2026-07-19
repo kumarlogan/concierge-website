@@ -13,7 +13,13 @@
 // default. No agent performs autonomous actions until activated. Activation
 // is an out-of-band, human-authorized operation — never automatic.
 
-export type AgentState = "registered" | "active" | "suspended" | "retired";
+// EPIC-002-006D: align AgentState with the canonical AgentLifecycleState
+// defined in shared/contracts/lifecycle.ts (registered → assigned → approved
+// → active → paused → retired). The registry is the source of truth for the
+// agent's lifecycle state; the shared contract is the single vocabulary.
+import type { AgentLifecycleState } from "../../shared/contracts/lifecycle.js";
+
+export type AgentState = AgentLifecycleState;
 export type ActivationState = "disabled" | "enabled";
 
 export interface AgentCapability {

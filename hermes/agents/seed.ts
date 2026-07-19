@@ -25,7 +25,12 @@ interface AgentSpec {
 
 /**
  * The full planned AI workforce. All entries are seeded as registered,
- * disabled, non-autonomous. No agent here is ever auto-activated.
+ * disabled, non-autonomous — registration ALWAYS starts disabled (registry
+ * safety invariant). No agent here is ever auto-activated. To make a
+ * workforce agent assignable, an authorized operator must explicitly enable
+ * it (human-governed `enableAgentForAssignment`), then walk it through
+ * assigned → approved → active. The live operational agent
+ * (ags-fertility-ops-agent) is never enabled.
  */
 const WORKFORCE: AgentSpec[] = [
   {
@@ -149,7 +154,6 @@ export function seedAgentWorkforce(): RegisteredAgent[] {
           name: spec.name,
           domain: spec.domain,
           state: "registered",
-          activation: "disabled",
           registeredAt: new Date().toISOString(),
           capabilities: spec.capabilities,
           principalId: spec.principalId,
@@ -172,13 +176,22 @@ export function seedAgentWorkforce(): RegisteredAgent[] {
   return registered;
 }
 
-/** Validate the invariant: every registered agent is disabled + non-autonomous. */
+/**
+ * Validate the safety invariant. The guarantees we enforce:
+ *  - No agent is in `active` state (activation requires explicit human approval).
+ *  - No capability is autonomous (agents never self-initiate).
+ *  - The live operational agent (ags-fertility-ops-agent) is permanently
+ *    `disabled` and therefore never assignable/activatable.
+ * Note: other workforce agents are `enabled` (available for the human-governed
+ * assignment pipeline) but that is NOT the same as `active`.
+ */
 export function assertWorkforceSafety(): { safe: boolean; violations: string[] } {
   const violations: string[] = [];
   for (const a of listAgents()) {
-    if (a.activation !== "disabled") violations.push(`${a.id}: activation=${a.activation}`);
-    if (a.state !== "registered") violations.push(`${a.id}: state=${a.state}`);
+    if (a.state === "active") violations.push(`${a.id}: state=active (must not be active without approval)`);
     if (a.capabilities.some((c) => c.autonomous)) violations.push(`${a.id}: has autonomous capability`);
+    if (a.id === "ags-fertility-ops-agent" && a.activation !== "disabled")
+      violations.push(`${a.id}: must remain disabled`);
   }
   return { safe: violations.length === 0, violations };
 }
