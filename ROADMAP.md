@@ -41,6 +41,28 @@ production workflow.
 | Backend testing | ⬜ Not Started |
 | Backend documentation | ⬜ Not Started |
 
+### EPIC-003-001 — Hermes Execution Platform ✅ Complete (2026-07-19)
+
+Operational AI OS execution layer: Work Planner, Workforce Dispatcher, Execution
+Queue, Review Pipeline, Multi-Agent Coordination, Provider Abstraction, and
+Application Automation (simulation-only). Built on existing Hermes foundations
+(orchestrator, task framework, provider registry, git provider) — no production
+touch, no vendor lock-in.
+
+| Deliverable | Status |
+|---|---|
+| Work Planner (dependency-ordered waves, cycle fail-closed) | ✅ |
+| Workforce Dispatcher (registry → workforce → fail-closed) | ✅ |
+| Execution Queue (human approval gate, retry/pause/cancel, audit) | ✅ |
+| Review Pipeline (aggregate, conflict detect, human approval gate) | ✅ |
+| Multi-Agent Coordination (dev/qa/security/docs/research domains) | ✅ |
+| Provider Abstraction (replaceable backends, no lock-in) | ✅ |
+| Application Automation (simulation-only, privileged blocked) | ✅ |
+
+Validation: `hermes.execution.003.test.ts` **28/28 pass**; full workers suite
+**299/299 pass**. See `docs/operations/EPIC-003-001_VALIDATION_REPORT.md` and
+`docs/operations/EPIC-003-001_COMPLETION_REPORT.md`.
+
 ### Upcoming Epics (Phase 1)
 
 | Epic | Description | Status |
