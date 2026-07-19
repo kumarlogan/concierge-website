@@ -21,7 +21,7 @@ const DOMAIN_REQUIRED_PERMISSION: Record<DashboardDomainId, string> = {
   workforce: "hermes:admin:read",
   security: "hermes:admin:audit-read",
   operations: "hermes:admin:read",
-  governance: "hermes:admin:read",
+  governance: "hermes:admin:audit-read",
 };
 
 /**

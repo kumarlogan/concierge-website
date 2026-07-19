@@ -13,13 +13,14 @@
 
 import type { DashboardDomain, PrincipalView } from "../ui-contracts.js";
 import { DASHBOARD_IA, toPrincipalView } from "../ui-contracts.js";
+import { canRenderDomain, canRenderPanel, denialReason } from "./permissions.js";
 import {
-  canRenderDomain,
-  canRenderPanel,
-  denialReason,
-} from "./permissions.js";
+  renderConsole as renderConsoleFull,
+  renderDomain as renderDomainFull,
+  consoleNavigation,
+} from "./render.js";
+import type { ConsoleBootstrap } from "./viewmodels.js";
 import type {
-  ConsoleBootstrap,
   OrgApplicationView,
   ResourceView,
   AgentCardView,
@@ -48,6 +49,8 @@ export interface BffClient {
 /**
  * Render a single domain. Fail-closed: if the principal may not view the
  * domain, returns a redacted placeholder and records the denial reason.
+ * Delegates to the real domain renderer (render.ts) which builds markdown
+ * tables/cards from the BFF payload.
  */
 export function renderDomain(
   principal: PrincipalView,
@@ -58,32 +61,24 @@ export function renderDomain(
     const reason = denialReason(principal, domain.id);
     return `[REDACTED: ${domain.label} — ${reason ?? "access denied"}]`;
   }
-  const visiblePanels = domain.panels.filter((p) =>
-    canRenderPanel(principal, domain.id),
-  );
-  const lines = [
-    `## ${domain.label}`,
-    domain.description,
-    ...visiblePanels.map((p) => `- ${p.title} (${p.visualization})`),
-  ];
-  if (visiblePanels.length === 0) {
-    lines.push("[no panels authorized for this principal]");
-  }
-  return lines.join("\n");
+  // Build a minimal bootstrap slice so the real renderer can format the payload.
+  const slice: ConsoleBootstrap = {
+    principal: { id: principal.id, role: principal.role, permissions: principal.permissions },
+    role: principal.role,
+    domains: payload ? { [domain.id]: payload } : {},
+  };
+  return renderDomainFull(slice, domain.id);
 }
 
 /** Render the full console for a principal (used by the BFF/SSR or client). */
 export async function renderConsole(client: BffClient): Promise<string> {
   const bootstrap = await client.bootstrap();
-  const out: string[] = [];
-  out.push(`# Hermes Admin Console`);
-  out.push(`Principal: ${bootstrap.principal.id} · Role: ${bootstrap.role}`);
-  out.push("");
-  for (const domain of DASHBOARD_IA) {
-    out.push(renderDomain(bootstrap.principal, domain, bootstrap.domains[domain.id]));
-    out.push("");
-  }
-  return out.join("\n");
+  return renderConsoleFull(bootstrap);
+}
+
+/** Expose navigation model for the SPA shell. */
+export function getConsoleNavigation(bootstrap: ConsoleBootstrap) {
+  return consoleNavigation(bootstrap);
 }
 
 // ─── Typed panel payload contracts (document the BFF response shapes) ──

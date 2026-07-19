@@ -26,6 +26,7 @@ import {
   adminViewServiceStatus,
   adminViewPlatformHealth,
 } from "./index.js";
+import { adminWorkforceDashboard } from "./workforce-view.js";
 import {
   viewGovernanceAdrs,
   viewGovernancePolicies,
@@ -47,10 +48,7 @@ export function bffBootstrap(principal: Principal): ConsoleBootstrap {
       infrastructure: { ok: true, data: adminViewResources(principal) },
       workforce: {
         ok: true,
-        data: {
-          roster: adminViewWorkforce(principal),
-          detailSample: adminViewAgent(principal, ""),
-        },
+        data: adminWorkforceDashboard(principal),
       },
       security: { ok: true, data: adminViewAuthzDenials(principal) },
       operations: { ok: true, data: adminViewTasks(principal) },
