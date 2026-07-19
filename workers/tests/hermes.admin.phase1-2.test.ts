@@ -98,7 +98,7 @@ describe("EPIC-002-006E Phase 2 — UI contracts", () => {
     expect(DASHBOARD_IA).toHaveLength(6);
     const ids = DASHBOARD_IA.map((d) => d.id).sort();
     expect(ids).toEqual(
-      ["organization", "resources", "workforce", "operations", "security", "platform-health"].sort(),
+      ["governance", "infrastructure", "operations", "organization", "security", "workforce"].sort(),
     );
   });
 

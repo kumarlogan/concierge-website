@@ -83,7 +83,7 @@ export function viewTasks(filter?: {
   return listTasks(filter as never);
 }
 
-export function viewWorkforceEvents(): readonly WorkforceEvent[] {
+export function viewWorkforceEvents(): readonly AuditEvent[] {
   return readWorkforceAudit();
 }
 

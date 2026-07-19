@@ -34,11 +34,11 @@ export type AdminPermission = (typeof ADMIN_PERMISSIONS)[number];
 /** Minimum permission required to read each dashboard domain. */
 export const DOMAIN_READ_PERMISSION: Record<string, AdminPermission> = {
   organization: "hermes:admin:read",
-  resources: "hermes:admin:read",
+  infrastructure: "hermes:admin:read",
   workforce: "hermes:admin:read",
   operations: "hermes:admin:read",
   security: "hermes:admin:read",
-  "platform-health": "hermes:admin:read",
+  governance: "hermes:admin:read",
 };
 
 /** Validate that a principal is a human (not an agent) before any admin call. */

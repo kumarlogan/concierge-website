@@ -35,11 +35,11 @@ export interface DashboardDomain {
 
 export type DashboardDomainId =
   | "organization"
-  | "resources"
+  | "infrastructure"
   | "workforce"
-  | "operations"
   | "security"
-  | "platform-health";
+  | "operations"
+  | "governance";
 
 export interface DashboardPanel {
   id: string;
@@ -62,14 +62,17 @@ export const DASHBOARD_IA: DashboardDomain[] = [
     ],
   },
   {
-    id: "resources",
-    label: "Resources",
-    description: "Registry inventory, providers, and lifecycle state.",
+    id: "infrastructure",
+    label: "Infrastructure",
+    description: "Providers, resources, lifecycle states, dependencies, and platform health.",
     minRole: "viewer",
     panels: [
       { id: "inventory", title: "Resource Inventory", dataSource: "adminViewResources", visualization: "table" },
       { id: "providers", title: "Provider Coverage", dataSource: "adminViewResources", visualization: "matrix" },
       { id: "lifecycle", title: "Lifecycle States", dataSource: "adminViewResources", visualization: "cards" },
+      { id: "dependencies", title: "Dependency Graph", dataSource: "adminViewResources", visualization: "tree" },
+      { id: "services", title: "Service Status", dataSource: "adminViewServiceStatus", visualization: "gauge" },
+      { id: "rollup", title: "Health Rollup", dataSource: "adminViewPlatformHealth", visualization: "gauge" },
     ],
   },
   {
@@ -108,13 +111,14 @@ export const DASHBOARD_IA: DashboardDomain[] = [
     ],
   },
   {
-    id: "platform-health",
-    label: "Platform Health",
-    description: "Service status, provider reachability, and system health.",
+    id: "governance",
+    label: "Governance",
+    description: "ADRs, policies, and human approval queues.",
     minRole: "viewer",
     panels: [
-      { id: "services", title: "Service Status", dataSource: "adminViewServiceStatus", visualization: "gauge" },
-      { id: "rollup", title: "Health Rollup", dataSource: "adminViewPlatformHealth", visualization: "gauge" },
+      { id: "adrs", title: "Architecture Decisions", dataSource: "adminViewGovernanceAdrs", visualization: "table" },
+      { id: "policies", title: "Policy Registry", dataSource: "adminViewGovernancePolicies", visualization: "table" },
+      { id: "approvals", title: "Approval Queue", dataSource: "adminViewGovernanceApprovals", visualization: "table" },
     ],
   },
 ];

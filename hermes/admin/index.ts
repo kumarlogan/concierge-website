@@ -47,10 +47,10 @@ export function adminViewApplications(principal: Principal) {
   return viewApplications();
 }
 
-// ─── READ DOMAIN: RESOURCES ────────────────────────────────────
+// ─── READ DOMAIN: INFRASTRUCTURE ───────────────────────────────
 
 export function adminViewResources(principal: Principal, filter?: Parameters<typeof viewResources>[0]) {
-  requireDomainRead(principal, "resources");
+  requireDomainRead(principal, "infrastructure");
   return viewResources(filter);
 }
 
@@ -90,15 +90,15 @@ export function adminViewAuthzDenials(principal: Principal) {
   return viewAuthzDenials();
 }
 
-// ─── READ DOMAIN: PLATFORM HEALTH ──────────────────────────────
+// ─── READ DOMAIN: INFRASTRUCTURE (service status / health) ─────
 
 export function adminViewServiceStatus(principal: Principal) {
-  requireDomainRead(principal, "platform-health");
+  requireDomainRead(principal, "infrastructure");
   return getServiceStatuses();
 }
 
 export function adminViewPlatformHealth(principal: Principal) {
-  requireDomainRead(principal, "platform-health");
+  requireDomainRead(principal, "infrastructure");
   return getPlatformHealth();
 }
 
