@@ -1,6 +1,6 @@
 // ┌─────────────────────────────────────────────────────────────┐
 // │ Hermes Platform — Dev Tools Adapter (provider-neutral)        │
-// │ EPIC-002-006E · PHASE 4                                        │
+// │ EPIC-002-006E · PHASE 4 / EPIC-002-006F · PHASE 4            │
 // │ Exposes code read/write/exec through a stable interface. The    │
 // │ concrete backend (local shell, Claude Code remote, etc.) is    │
 // │ injected — the platform never depends on a vendor SDK.          │
@@ -13,6 +13,7 @@ import {
   type ToolResult,
 } from "./tool-provider.js";
 import { emitAudit } from "../../audit/event.js";
+import type { ToolCapability } from "./tool-capabilities.js";
 
 /** Backend contract a concrete dev tool implementation must satisfy. */
 export interface DevBackend {
@@ -35,6 +36,17 @@ class NoopDevBackend implements DevBackend {
 }
 
 /**
+ * Capability declarations for the dev tools provider. These are the stable,
+ * provider-neutral capability IDs the workforce/registry references — they do
+ * NOT name any vendor backend (GitHub, OpenAI, Claude, …).
+ */
+export const DEV_TOOL_CAPABILITIES: ToolCapability[] = [
+  { id: "tool:code.read", description: "Read source files from a repository", requiresApproval: false },
+  { id: "tool:code.write", description: "Write/modify source files", requiresApprovalIn: ["production"] },
+  { id: "tool:code.exec", description: "Execute shell commands in a sandbox", requiresApprovalIn: ["production"] },
+];
+
+/**
  * Dev tools provider. Wraps a DevBackend. Enforces the approval rule:
  * prod writes/exec require an approvalToken; otherwise the call is denied.
  */
@@ -42,6 +54,11 @@ export class DevToolsProvider implements ToolProvider {
   readonly id = "tool:code.local-shell";
   readonly label = "Dev Tools (local shell)";
   constructor(private backend: DevBackend = new NoopDevBackend()) {}
+
+  /** Declared capabilities (provider-neutral). Used by the permission model. */
+  declaredCapabilities(): ToolCapability[] {
+    return DEV_TOOL_CAPABILITIES;
+  }
 
   async run(call: ToolCall): Promise<ToolResult> {
     emitAudit("tool.code.call", call.actor, { tool: call.tool, env: call.env });

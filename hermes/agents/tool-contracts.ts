@@ -37,6 +37,7 @@ export type ToolNamespace = (typeof TOOL_NAMESPACES)[number];
 /** A resolved tool permission for an agent, scoped to env + application. */
 export interface ToolGrant {
   namespace: ToolNamespace;
+  /** Applications this grant is valid for. Empty = all (use sparingly). */
   applications: string[];
   environments: Array<"development" | "staging" | "production">;
   /** Whether this grant is allowed to act WITHOUT a per-call approval. */
@@ -66,6 +67,82 @@ export const DEFAULT_SANDBOX: SandboxPolicy = {
   productionSecrets: false,
 };
 
+// ─── EPHEMERAL EXECUTION ────────────────────────────────────────
+
+/**
+ * A single ephemeral execution context. State created here is discarded when
+ * the run completes — nothing persists to the host or the agent's memory.
+ */
+export interface EphemeralRun {
+  id: string;
+  agentId: string;
+  applicationId: string;
+  env: "development" | "staging" | "production";
+  /** True once the run's scratch state has been wiped. */
+  sealed: boolean;
+  startedAt: string;
+  finishedAt?: string;
+}
+
+/**
+ * Begin an ephemeral run. Returns a context the caller MUST seal() after the
+ * work completes. The sandbox root is isolated and wiped on seal — this is the
+ * only execution tier an agent may use without an explicit persistent grant.
+ */
+export function beginEphemeralRun(
+  agentId: string,
+  applicationId: string,
+  env: "development" | "staging" | "production",
+  policy: SandboxPolicy = DEFAULT_SANDBOX,
+): EphemeralRun {
+  if (policy.tier !== "ephemeral" && policy.tier !== "read-only") {
+    emitAudit("agent.ephemeral.denied", agentId, {
+      reason: "sandbox tier not ephemeral",
+      tier: policy.tier,
+    });
+    throw new Error(`Ephemeral execution requires an ephemeral/read-only sandbox, got ${policy.tier}`);
+  }
+  const run: EphemeralRun = {
+    id: `run:${agentId}:${Date.now()}`,
+    agentId,
+    applicationId,
+    env,
+    sealed: false,
+    startedAt: new Date().toISOString(),
+  };
+  emitAudit("agent.ephemeral.begin", agentId, {
+    runId: run.id,
+    applicationId,
+    env,
+    root: policy.root,
+  });
+  return run;
+}
+
+/**
+ * Seal an ephemeral run: discard all scratch state. Idempotent — calling on an
+ * already-sealed run is a no-op (audited). The platform never persists agent
+ * execution state unless an explicit persistent grant exists.
+ */
+export function sealEphemeralRun(run: EphemeralRun): EphemeralRun {
+  if (run.sealed) {
+    emitAudit("agent.ephemeral.seal-noop", run.agentId, { runId: run.id });
+    return run;
+  }
+  const sealed: EphemeralRun = {
+    ...run,
+    sealed: true,
+    finishedAt: new Date().toISOString(),
+  };
+  emitAudit("agent.ephemeral.seal", run.agentId, {
+    runId: run.id,
+    applicationId: run.applicationId,
+    env: run.env,
+    note: "scratch state discarded",
+  });
+  return sealed;
+}
+
 // ─── MEMORY SCOPE ───────────────────────────────────────────────
 
 export type MemoryScope = "isolated" | "shared" | "global";
@@ -87,6 +164,55 @@ export function resolveMemoryScope(agent: RegisteredAgent): MemoryScope {
 export type ToolApprovalKind = "auto" | "human" | "forbidden";
 
 /**
+ * A pending human-approval request. Created when an agent needs a capability
+ * that requires human sign-off (e.g. production write/exec). The request is
+ * emitted to the audit trail and MUST be resolved by a human before the agent
+ * proceeds — there is no autonomous path.
+ */
+export interface ApprovalRequest {
+  id: string;
+  agentId: string;
+  applicationId: string;
+  env: "development" | "staging" | "production";
+  action: "read" | "write" | "exec";
+  tool: ToolNamespace;
+  requestedAt: string;
+  state: "pending" | "approved" | "rejected";
+}
+
+/**
+ * Request human approval for a tool action. Emits an `agent.request.approval`
+ * audit event (consumed by the Governance approval queue). The returned request
+ * is in `pending` state — the agent must NOT proceed until a human approves.
+ */
+export function requestApproval(
+  agentId: string,
+  applicationId: string,
+  env: "development" | "staging" | "production",
+  action: "read" | "write" | "exec",
+  tool: ToolNamespace,
+): ApprovalRequest {
+  const req: ApprovalRequest = {
+    id: `approval:${agentId}:${Date.now()}`,
+    agentId,
+    applicationId,
+    env,
+    action,
+    tool,
+    requestedAt: new Date().toISOString(),
+    state: "pending",
+  };
+  emitAudit("agent.request.approval", agentId, {
+    requestId: req.id,
+    applicationId,
+    env,
+    action,
+    tool,
+  });
+  return req;
+}
+
+/**
  * Decide the approval requirement for a tool call. Governance rules:
  *  - Production writes (code.exec / code.write in prod) → human approval.
  *  - Anything touching production secrets → forbidden unless explicitly granted.
@@ -98,9 +224,6 @@ export function classifyToolApproval(
   env: "development" | "staging" | "production",
   action: "read" | "write" | "exec",
 ): ToolApprovalKind {
-  const inScope =
-    grant.applications.length === 0 || true; // application scoping enforced upstream
-  if (!inScope) return "forbidden";
   if (env === "production" && (action === "write" || action === "exec")) return "human";
   if (action === "exec" && !grant.autoApprove) return "human";
   if (grant.autoApprove && env !== "production") return "auto";
@@ -111,6 +234,9 @@ export function classifyToolApproval(
 /**
  * Gate a tool call. Throws if forbidden; returns the approval kind the
  * caller must satisfy (human prompt, or proceed). Records an audit event.
+ *
+ * @param applicationId the specific application the call targets. The grant's
+ *   `applications` list is enforced here (empty list = all applications).
  */
 export function guardToolCall(
   agentId: string,
@@ -118,6 +244,7 @@ export function guardToolCall(
   env: "development" | "staging" | "production",
   action: "read" | "write" | "exec",
   tool: ToolNamespace,
+  applicationId: string,
 ): ToolApprovalKind {
   // A grant for "tool:code" permits "tool:code.*" but NOT "tool:security.*".
   const grantDomain = grant.namespace.split(":")[1];
@@ -126,8 +253,19 @@ export function guardToolCall(
     emitAudit("agent.tool.denied", agentId, { reason: "namespace mismatch", tool, grant: grant.namespace });
     throw new Error(`Tool ${tool} not permitted by grant ${grant.namespace}`);
   }
+  // Application scoping: a non-empty grant.applications list restricts the
+  // grant to exactly those applications.
+  if (grant.applications.length > 0 && !grant.applications.includes(applicationId)) {
+    emitAudit("agent.tool.denied", agentId, {
+      reason: "application out of scope",
+      tool,
+      applicationId,
+      allowed: grant.applications,
+    });
+    throw new Error(`Tool ${tool} not permitted for application ${applicationId}`);
+  }
   const kind = classifyToolApproval(grant, env, action);
-  emitAudit("agent.tool.gate", agentId, { tool, env, action, approval: kind });
+  emitAudit("agent.tool.gate", agentId, { tool, env, action, applicationId, approval: kind });
   if (kind === "forbidden") {
     throw new Error(`Tool ${tool} forbidden in ${env} for action ${action}`);
   }

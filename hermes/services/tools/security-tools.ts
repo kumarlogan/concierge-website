@@ -12,6 +12,7 @@ import {
   type ToolResult,
 } from "./tool-provider.js";
 import { emitAudit } from "../../audit/event.js";
+import type { ToolCapability } from "./tool-capabilities.js";
 
 export interface SecurityBackend {
   readonly name: string;
@@ -34,10 +35,25 @@ class NoopSecurityBackend implements SecurityBackend {
   }
 }
 
+/**
+ * Capability declarations for the security tools provider. Provider-neutral:
+ * the IDs do not name a vendor (Snyk, Semgrep, Trivy, …).
+ */
+export const SECURITY_TOOL_CAPABILITIES: ToolCapability[] = [
+  { id: "tool:security.scan.deps", description: "Scan dependencies for known vulnerabilities", requiresApproval: false },
+  { id: "tool:security.scan.secrets", description: "Scan for leaked secrets/credentials", requiresApproval: false },
+  { id: "tool:security.iac.validate", description: "Validate infrastructure-as-code against policy", requiresApproval: false },
+];
+
 export class SecurityToolsProvider implements ToolProvider {
   readonly id = "tool:security.scanner";
   readonly label = "Security Tools (scanner)";
   constructor(private backend: SecurityBackend = new NoopSecurityBackend()) {}
+
+  /** Declared capabilities (provider-neutral). Used by the permission model. */
+  declaredCapabilities(): ToolCapability[] {
+    return SECURITY_TOOL_CAPABILITIES;
+  }
 
   async run(call: ToolCall): Promise<ToolResult> {
     emitAudit("tool.security.call", call.actor, { tool: call.tool, env: call.env });
