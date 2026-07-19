@@ -20,7 +20,7 @@
 import type { D1Database } from "@cloudflare/workers-types";
 import type { IdentityResolution, Principal } from "./types.js";
 import { AuthError } from "./types.js";
-import { resolveEffectivePermissions } from "./permissions.js";
+import { resolveEffectivePermissions } from "@hermes/permissions/permissions.js";
 
 /** Shape of a users row as needed by the builder. */
 interface UserRow {

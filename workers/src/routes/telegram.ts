@@ -21,7 +21,7 @@
 // The bot is a second client of that same surface.
 
 import type { Env, RouteHandler } from "../types/env.js";
-import { requirePermission } from "../auth/middleware.js";
+import { requirePermission } from "@hermes/permissions/middleware.js";
 import {
   getOpsDashboard,
   listOpsLeads,

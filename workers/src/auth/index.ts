@@ -12,9 +12,7 @@
 // Clinic Portal) imports from here and uses the SAME pipeline. No Telegram,
 // dashboard, or mobile logic leaks into business services.
 
-export * from "./types.js";
-export * from "./providers.js";
-export * from "./principal.js";
-export * from "./permissions.js";
+// Identity capability is extracted to Hermes (EPIC-002-006B) — re-export via adapters.
+export * from "./identity.js";
+export * from "./permissions.js"; // includes permissions + authorization middleware
 export * from "./audit.js";
-export * from "./middleware.js";

@@ -45,5 +45,9 @@
       }
     }
   },
-  "workers_dev": true
+  "workers_dev": true,
+  "alias": {
+    "@hermes": "../hermes",
+    "@shared": "../shared"
+  }
 }

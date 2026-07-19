@@ -17,11 +17,11 @@
 // write, not a code change.
 
 import type { D1Database } from "@cloudflare/workers-types";
-import { buildPrincipal } from "./principal.js";
+import { buildPrincipal } from "@hermes/identity/principal.js";
 import { hasPermission } from "./permissions.js";
-import { writeAuditEvent } from "./audit.js";
-import { resolveIdentity } from "./providers.js";
-import { AuthError, type Principal } from "./types.js";
+import { writeAuditEvent } from "@hermes/audit/audit.js";
+import { resolveIdentity } from "@hermes/identity/providers.js";
+import { AuthError, type Principal } from "@hermes/identity/types.js";
 
 /** A resource the requested action targets. */
 export interface ResourceTarget {

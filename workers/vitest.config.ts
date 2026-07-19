@@ -5,6 +5,7 @@
 
 import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
+import { resolve } from "node:path";
 
 export default defineConfig({
   plugins: [
@@ -17,6 +18,12 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      "@hermes": resolve(__dirname, "../hermes"),
+      "@shared": resolve(__dirname, "../shared"),
+    },
+  },
   test: {
     include: ["tests/**/*.test.ts"],
     // Apply D1 migrations before any tests run (runs in Node.js)

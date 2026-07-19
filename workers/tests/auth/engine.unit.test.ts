@@ -17,10 +17,10 @@ import {
   resolveEffectivePermissions,
   hasPermission,
   OWNER_ROLE_NAME,
-} from "../../src/auth/permissions.js";
-import { buildPrincipal } from "../../src/auth/principal.js";
-import { writeAuditEvent } from "../../src/auth/audit.js";
-import { AuthError } from "../../src/auth/types.js";
+} from "@hermes/permissions/permissions.js";
+import { buildPrincipal } from "@hermes/identity/principal.js";
+import { writeAuditEvent } from "@hermes/audit/audit.js";
+import { AuthError } from "@hermes/identity/types.js";
 
 // ── Tiny in-memory D1 mock ────────────────────────────────────
 // Supports the exact chained API the engine uses:

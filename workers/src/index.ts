@@ -25,7 +25,7 @@ import { rateLimit, rateLimitHeaders, clientKey } from "./middleware/rateLimit.j
 import { info, warn } from "./middleware/logger.js";
 
 // ── Operations API (EPIC-002-003A) ──────────────────────────
-import { requirePermission } from "./auth/middleware.js";
+import { requirePermission } from "@hermes/permissions/middleware.js";
 import {
   listOpsLeads,
   listMyLeads,

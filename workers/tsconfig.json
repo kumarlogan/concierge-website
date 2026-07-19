@@ -5,9 +5,14 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "outDir": "dist",
-    "rootDir": ".",
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hermes/*": ["../hermes/*"],
+      "@shared/*": ["../shared/*"],
+      "@cloudflare/workers-types": ["./node_modules/@cloudflare/workers-types"]
+    }
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "include": ["src/**/*.ts", "tests/**/*.ts", "../hermes/**/*.ts", "../shared/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

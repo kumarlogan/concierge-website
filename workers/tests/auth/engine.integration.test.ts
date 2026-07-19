@@ -12,7 +12,7 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { env } from "cloudflare:workers";
-import { authorize } from "../../src/auth/middleware.js";
+import { authorize } from "@hermes/permissions/middleware.js";
 
 // ── Seed the RBAC tables with a known scenario ────────────────
 // This mirrors the production seed shape but uses test-scoped ids so it never
