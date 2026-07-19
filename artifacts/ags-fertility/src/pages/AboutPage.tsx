@@ -9,8 +9,6 @@ import {
   StaggerItem,
 } from '@/components/layout/SectionWrapper';
 
-// ─── TEMPORARY birthday overlay — auto-expires July 19, 2026 ─────────────────
-import BirthdayOverlay from '@/components/BirthdayOverlay';
 import { Button } from '@/components/ui/button';
 import {
   Heart,
@@ -189,9 +187,6 @@ export default function AboutPage() {
 
   return (
     <>
-      {/* ─── TEMPORARY birthday overlay — auto-expires July 19, 2026 ────────── */}
-      <BirthdayOverlay />
-
       <PageLayout>
       {/* ── 1. Hero ──────────────────────────────────────────────────────── */}
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
