@@ -73,4 +73,8 @@ export const PLATFORM_PERMISSIONS = {
   LIFECYCLE_WRITE: "hermes:lifecycle:write",
   AGENT_WRITE: "hermes:agent:write",
   AGENT_ACTIVATE: "hermes:agent:activate",
+  // EPIC-002-007 · Activation platform
+  ACTIVATION_READ: "hermes:activation:read",
+  ACTIVATION_WRITE: "hermes:activation:write",
+  ACTIVATION_PROVIDER: "hermes:activation:provider",
 } as const;

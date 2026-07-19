@@ -10,3 +10,4 @@ export * as Scheduler from "./scheduler/index.js";
 export * as Notification from "./notification/index.js";
 export * as Memory from "./memory/index.js";
 export * as Providers from "./providers/index.js";
+export * as Activation from "./activation/index.js";
