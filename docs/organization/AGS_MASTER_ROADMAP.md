@@ -35,6 +35,8 @@
 | EPIC-002-006B | Hermes extraction complete — Identity, Permissions, Audit, Agent Registry extracted to `hermes/`; 10 provider contracts in `shared/interfaces/`; AGS Fertility consumes Hermes; first AI agent registered (`ags-fertility-ops-agent`, disabled) |
 | EPIC-002-006C | Hermes Platform Core Services built — Resource Registry, Discovery, Lifecycle, AI Registry foundation (8-agent workforce), Provider Adapter boundary, Internal Platform API contracts. 158/158 tests; AGS Fertility isolated & protected |
 | EPIC-002-006D | Hermes AI Workforce Management (governance layer) — Agent Assignment Service, Approval Workflow (human-gated activate/pause/resume/retire), Task Framework, Permission Boundary, Memory Boundary, Workforce Events & Audit, Internal Workforce API. 185/185 tests (27 new); agents inactive by default; AGS Fertility isolated. Admin Platform prepared (EPIC-002-006E_PREPARATION.md) |
+| EPIC-002-006E | Admin Platform Foundation — `hermes/admin/*` pure read functions, permission-aware access model (`requireDomainRead`/`assertHumanPrincipal`), 6-domain IA, provider-abstracted tool adapters (`ToolProvider`), agent tool contracts. Contract-only; 205/205 worker tests. |
+| EPIC-002-006F | Admin Operating Platform — Secure Access Layer BFF (`bffBootstrap`/`bffDomain`, fail-closed, human-principal only), Governance visibility, AI Workforce dashboard surface, tool-ecosystem capability model (vendor-neutral), agent sandbox hardening (ephemeral run + seal, human approval workflow, real application scoping). 217/217 tests; AGS Fertility isolated. |
 
 ### What exists today
 - **Organization architecture** — three-layer model defined in `docs/organization/ORGANIZATION_ARCHITECTURE.md` (ADR-004).
@@ -122,6 +124,8 @@ archive/          # Retired/quarantined artifacts (e.g. Category D scripts)
 | EPIC-002-006B | Hermes Platform Extraction | ✅ Complete | Identity/Permissions/Audit/Agent Registry → `hermes/`; 10 provider contracts; AGS Fertility consumes Hermes |
 | EPIC-002-006C | Hermes Platform Core Services | ✅ Complete | Resource Registry, Discovery, Lifecycle, AI Registry, Provider Adapter, Internal API (158/158 tests) |
 | EPIC-002-006D | Hermes AI Workforce Management | ✅ Complete | Assignment, human-gated Approval, Tasks, Permission + Memory boundaries, Workforce Audit, Internal API (185/185 tests); Admin Platform prepared |
+| EPIC-002-006E | Admin Platform Foundation | ✅ Complete | `hermes/admin/*` facade + permission model + 6-domain IA + provider-abstracted tool adapters (205/205 tests) |
+| EPIC-002-006F | Admin Operating Platform | ✅ Complete | Secure BFF boundary, Governance visibility, AI Workforce dashboard, tool capability model, sandbox hardening (217/217 tests) |
 
 ---
 
