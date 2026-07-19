@@ -51,8 +51,8 @@ export const DEV_TOOL_CAPABILITIES: ToolCapability[] = [
  * prod writes/exec require an approvalToken; otherwise the call is denied.
  */
 export class DevToolsProvider implements ToolProvider {
-  readonly id = "tool:code.local-shell";
-  readonly label = "Dev Tools (local shell)";
+  readonly id: string = "tool:code.local-shell";
+  readonly label: string = "Dev Tools (local shell)";
   constructor(private backend: DevBackend = new NoopDevBackend()) {}
 
   /** Declared capabilities (provider-neutral). Used by the permission model. */

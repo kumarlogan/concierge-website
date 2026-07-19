@@ -46,8 +46,8 @@ export const SECURITY_TOOL_CAPABILITIES: ToolCapability[] = [
 ];
 
 export class SecurityToolsProvider implements ToolProvider {
-  readonly id = "tool:security.scanner";
-  readonly label = "Security Tools (scanner)";
+  readonly id: string = "tool:security.scanner";
+  readonly label: string = "Security Tools (scanner)";
   constructor(private backend: SecurityBackend = new NoopSecurityBackend()) {}
 
   /** Declared capabilities (provider-neutral). Used by the permission model. */

@@ -40,15 +40,17 @@ beforeEach(() => {
 });
 
 describe("EPIC-002-006E Phase 4 — tool providers register", () => {
-  it("registers all five domain providers", () => {
+  it("registers domain providers (native + real backends)", () => {
     const ids = listToolProviders().map((p) => p.id).sort();
     expect(ids).toEqual(
       [
         "tool:code.local-shell",
-        "tool:security.scanner",
+        "tool:code.local-sandbox",
         "tool:docs.store",
-        "tool:research.engine",
         "tool:monitor.gateway",
+        "tool:research.engine",
+        "tool:security.local-scanner",
+        "tool:security.scanner",
       ].sort(),
     );
   });

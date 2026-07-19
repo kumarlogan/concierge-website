@@ -11,6 +11,8 @@ import "./security-tools.js";
 import "./docs-tools.js";
 import "./research-tools.js";
 import "./monitoring-tools.js";
+import "./tools-real.js";
+import "../mcp/adapter.js";
 
 export * from "./tool-provider.js";
 export * from "./dev-tools.js";
@@ -18,3 +20,7 @@ export * from "./security-tools.js";
 export * from "./docs-tools.js";
 export * from "./research-tools.js";
 export * from "./monitoring-tools.js";
+export * from "./local-sandbox-backend.js";
+export * from "./local-security-backend.js";
+export * from "./tools-real.js";
+export * from "../mcp/adapter.js";
