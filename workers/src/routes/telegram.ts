@@ -125,7 +125,7 @@ export const telegramWebhook: RouteHandler = async (request, env, _params) => {
 
   // Build an internal request that carries the Telegram identity the same way
   // the HTTP API expects it. The existing auth engine resolves identity from
-  // these exact headers (see src/auth/providers.ts).
+  // these exact headers (see hermes/identity/providers.ts).
   const identityHeaders: Record<string, string> = {
     "X-Telegram-Chat-Id": chatId,
     "X-Telegram-Display-Name": displayName,
