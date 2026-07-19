@@ -5,8 +5,8 @@ info:
   version: 0.1.0
   description: AGS Fertility Concierge API
 servers:
-  - url: /api
-    description: Base API path
+  - url: /api/v1
+    description: API v1 base path
 tags:
   - name: health
     description: Health operations
@@ -14,7 +14,7 @@ tags:
     description: Consultation request operations
 
 paths:
-  /healthz:
+  /health:
     get:
       operationId: healthCheck
       tags: [health]
@@ -46,13 +46,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConsultationConfirmation"
+                $ref: "#/components/schemas/ConsultationSuccess"
         "400":
           description: Validation error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/ConsultationError"
+        "409":
+          description: Duplicate lead
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsultationError"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsultationError"
 
   /consultations/count:
     get:
@@ -72,73 +84,83 @@ components:
   schemas:
     HealthStatus:
       type: object
+      required:
+        - status
+        - service
+        - version
+        - environment
+        - timestamp
       properties:
         status:
           type: string
-      required:
-        - status
+        service:
+          type: string
+        version:
+          type: string
+        environment:
+          type: string
+        timestamp:
+          type: string
 
     ConsultationInput:
       type: object
       required:
         - name
         - email
-        - province
-        - treatmentInterest
-        - message
+        - phone
+        - treatment_interest
       properties:
         name:
           type: string
-          minLength: 2
+          maxLength: 255
           description: Full name of the enquiring person
-        partnerName:
-          type: ["string", "null"]
-          description: Partner name if applicable
         email:
           type: string
+          maxLength: 255
           description: Contact email address
         phone:
-          type: ["string", "null"]
-          description: Optional phone number (WhatsApp preferred)
-        province:
           type: string
-          description: Canadian province or territory
-        treatmentInterest:
+          maxLength: 100
+          description: Phone number
+        treatment_interest:
           type: string
-          enum:
-            - IVF
-            - ICSI
-            - Egg Freezing
-            - Embryo Freezing
-            - Donor Programs
-            - Fertility Preservation
-            - Not Sure Yet
+          maxLength: 500
           description: Treatment the person is interested in
-        howDidYouHear:
-          type: ["string", "null"]
-          description: How they heard about AGS
         message:
           type: string
-          minLength: 10
-          description: Additional message or questions
-        consentToContact:
-          type: boolean
-          description: Consent to be contacted
+          maxLength: 2000
+          description: Optional additional message or questions
 
-    ConsultationConfirmation:
+    ConsultationSuccess:
       type: object
       required:
-        - id
+        - success
+        - lead_id
+        - status
         - message
-        - submittedAt
       properties:
-        id:
-          type: integer
+        success:
+          type: boolean
+        lead_id:
+          type: string
+        status:
+          type: string
         message:
           type: string
-        submittedAt:
+
+    ConsultationError:
+      type: object
+      required:
+        - success
+        - error
+        - message
+      properties:
+        success:
+          type: boolean
+        error:
           type: string
-          format: date-time
+        message:
+          type: string
 
     ConsultationCount:
       type: object
@@ -147,11 +169,3 @@ components:
       properties:
         count:
           type: integer
-
-    ErrorResponse:
-      type: object
-      required:
-        - error
-      properties:
-        error:
-          type: string

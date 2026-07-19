@@ -1,0 +1,8 @@
+// src/middleware/ — Request/response middleware
+// Will be populated starting in EPIC-001-003 (API routing).
+//
+// Planned structure:
+//   middleware/error-handler.ts  — Global error catching
+//   middleware/cors.ts           — CORS headers
+//   middleware/validation.ts     — Request validation
+//   middleware/logging.ts        — Request logging

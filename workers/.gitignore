@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Local environment / secrets — NEVER commit
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+*.local
+
+# Cloudflare local state
+.wrangler/
+.miniflare/
+.dev.vars
+
+# Build output
+dist/
+*.log
+.DS_Store

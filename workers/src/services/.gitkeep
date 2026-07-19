@@ -1,0 +1,8 @@
+// src/services/ — Business logic and database access
+// Each file encapsulates a domain service.
+// Will be populated starting in EPIC-001-007 (consultation workflow).
+//
+// Planned structure:
+//   services/consultation.ts — Consultation creation + validation
+//   services/lead.ts         — Lead management
+//   services/database.ts     — D1 connection helpers

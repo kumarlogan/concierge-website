@@ -47,3 +47,33 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# ── Category D deprecated scripts (quarantined — contained/referenced live secrets) ──
+# These experimental deploy/check helpers are superseded by .github/workflows/deploy.yml.
+# They MUST NEVER enter git history (some hardcoded a Cloudflare API token, now rotated).
+# Kept locally only under ~/archive/category-d-2026-07-19/ (outside this repo).
+check_*.py
+debug_*.py
+test_*.py
+deploy_*.py
+deploy.sh
+pipeline.sh
+upload_assets*.py
+recreate_project.py
+setup_github_secret.py
+fetch_*_logs.py
+poll_workflow.py
+run_deploy.py
+
+# ── Secrets / local credential stores ──
+.git-credentials
+.env
+.env.*
+*.local
+wrangler.toml.bak
+
+# ── Generated / temporary files ──
+*.log
+.tmp/
+tmp/
+.DS_Store

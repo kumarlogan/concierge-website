@@ -1,0 +1,23 @@
+# Gitleaks configuration — Hermes Platform extraction baseline
+# Extends the gitleaks default ruleset with a CI-only Cloudflare detector
+# and an allowlist for documentation lines that intentionally SHOW the
+# secret-detection pattern (not real secrets).
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "cloudflare-api-token"
+description = "Cloudflare API Token"
+regex = '''cfat_[A-Za-z0-9]{20,}'''
+keywords = ["cfat_"]
+
+[allowlist]
+# Documentation that references the detection pattern by name only.
+paths = [
+  '''docs/operations/EPIC-002-006A3_REPOSITORY_HYGIENE_PLAN\.md''',
+  '''docs/operations/EPIC-002-006A2_SCRIPT_REVIEW\.md''',
+  '''workers/docs/DEPLOYMENT\.md''',
+  '''CHANGELOG\.md''',
+]
+# The literal token value itself must NEVER be allowed — only pattern references.
