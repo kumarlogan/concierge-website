@@ -41,6 +41,7 @@ import {
 } from "../workforce/api.js";
 import { buildSecurityAdminView } from "../services/security/admin-view.js";
 import { listSecurityReviews } from "../services/security/security-store.js";
+import { buildWorkflowAdminViews } from "./workflow-view.js";
 
 // ─── READ DOMAIN: ORGANIZATION ──────────────────────────────────
 
@@ -164,6 +165,23 @@ export function adminAssignTask(principal: Principal, taskId: string) {
 export function adminListTasks(principal: Principal, filter?: Parameters<typeof apiListTasks>[0]) {
   requireDomainRead(principal, "operations");
   return apiListTasks(filter);
+}
+
+// ─── READ DOMAIN: OPERATIONS (Workforce Orchestration visibility) ─
+
+/**
+ * Admin-only, READ-ONLY view of Workforce Orchestration workflows.
+ * Requires the `operations` domain read permission (human principal).
+ * Exposes workflow status, current stage, assigned agents/providers, pending
+ * approvals, execution timeline, retries, and failures.
+ * INTERNAL ONLY — no public HTTP route (consistent with the admin facade).
+ */
+export function adminViewWorkflows(
+  principal: Principal,
+  filter?: { state?: "queued" | "planning" | "waiting" | "running" | "paused" | "completed" | "cancelled" | "failed" },
+) {
+  requireDomainRead(principal, "operations");
+  return buildWorkflowAdminViews(filter);
 }
 
 // ─── SECURITY BOUNDARY CHECKS (read-only introspection) ───────

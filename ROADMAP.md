@@ -112,6 +112,32 @@ Validation: `hermes.security.003.test.ts` **28/28 pass**; in-scope `tsc --noEmit
 clean (whole repo 0 errors). See `docs/operations/EPIC-003-003_VALIDATION_REPORT.md`
 and `docs/operations/EPIC-003-003_COMPLETION_REPORT.md`.
 
+### EPIC-003-005 — Workforce Orchestration Platform ✅ Complete (2026-07-20)
+
+Coordinates multiple agents to deliver an objective as a governed, auditable
+workflow — reusing the existing execution foundations (Work Planner, Execution
+Queue, Workforce Dispatcher, Provider Registry, Audit) without redesign. Hermes
+remains the orchestrator: it plans, dispatches, assigns, and waits at human
+approval gates; it never autonomously executes approval-required work. In-memory
+only (no database), provider-neutral, fail-closed on unresolved capabilities and
+missing approvals.
+
+| Deliverable | Status |
+|---|---|
+| M1+M5 · Coordinator + 8 lifecycle states (in-memory) | ✅ |
+| M2 · Coordination ops (assign/monitor/retry/cancel/recover) | ✅ |
+| M3 · Dynamic capability resolution (registry → workforce → fail-closed) | ✅ |
+| M4 · Human approval gate (env-driven fail-closed, production always gated) | ✅ |
+| M6 · Audit every orchestration event | ✅ |
+| M7 · Admin read-only `adminViewWorkflows` (no public route) | ✅ |
+| M8 · Orchestration test suite | ✅ |
+| M9 · Docs (roadmap, completion, validation reports) | ✅ |
+
+Validation: `hermes.workforce.orchestration.test.ts` **12/12 pass**; full workers
+suite **375/375 pass**; in-scope `tsc --noEmit` clean. See
+`docs/operations/EPIC-003-005_VALIDATION_REPORT.md` and
+`docs/operations/EPIC-003-005_COMPLETION_REPORT.md`.
+
 ### Upcoming Epics (Phase 1)
 
 | Epic | Description | Status |
