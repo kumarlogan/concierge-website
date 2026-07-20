@@ -69,3 +69,6 @@ export type FutureAdapter = "oci" | "aws" | "azure" | "local";
 export function isAdapterImplemented(name: ProviderName): boolean {
   return name === "cloudflare";
 }
+
+// ── Capability seam (EPIC-003-006 M5) ──────────────────────────
+export * from "./capability.js";
