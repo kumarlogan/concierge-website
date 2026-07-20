@@ -186,7 +186,7 @@ export interface ConsoleAuthModel {
 export const CONSOLE_AUTH: ConsoleAuthModel = {
   authentication: "hermes-identity-provider",
   principalKind: "human",
-  authorization: "permission gates (hermes/admin/access.ts)",
+  authorization: "admin permission gates (hermes/admin/access.ts)",
   audit: "every admin action emits an audit event",
   forbidden: "agent principals, service accounts, public/anonymous access",
 };

@@ -10,6 +10,8 @@ import type {
   ResourceKind,
   ResourceLifecycleState,
 } from "../../../shared/contracts/resource.js";
+import type { AgentLifecycleState } from "../../../shared/contracts/lifecycle.js";
+import type { ActivationState } from "../../agents/registry.js";
 import { listResources } from "../registry/registry.js";
 import { listAgents } from "../../agents/registry.js";
 
@@ -48,8 +50,8 @@ export function discoverAgents(): Array<{
   id: string;
   name: string;
   domain: string;
-  state: string;
-  activation: string;
+  state: AgentLifecycleState | undefined;
+  activation: ActivationState | undefined;
 }> {
   return listAgents().map((a) => ({
     id: a.id,

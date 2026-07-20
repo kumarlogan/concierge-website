@@ -12,7 +12,9 @@
 // └─────────────────────────────────────────────────────────────┘
 
 import type { DashboardDomain, PrincipalView } from "../ui-contracts.js";
+import type { Principal } from "../../contracts/platform-api.js";
 import { DASHBOARD_IA, toPrincipalView } from "../ui-contracts.js";
+import { deriveRoleHint } from "./session.js";
 import { canRenderDomain, canRenderPanel, denialReason } from "./permissions.js";
 import {
   renderConsole as renderConsoleFull,
@@ -53,18 +55,21 @@ export interface BffClient {
  * tables/cards from the BFF payload.
  */
 export function renderDomain(
-  principal: PrincipalView,
+  principal: Principal,
   domain: DashboardDomain,
   payload?: ConsoleBootstrap["domains"][string],
 ): string {
-  if (!canRenderDomain(principal, domain.id)) {
-    const reason = denialReason(principal, domain.id);
+  const role = deriveRoleHint(principal.permissions);
+  const view = toPrincipalView(principal, role);
+  if (!canRenderDomain(view, domain.id)) {
+    const reason = denialReason(view, domain.id);
     return `[REDACTED: ${domain.label} — ${reason ?? "access denied"}]`;
   }
   // Build a minimal bootstrap slice so the real renderer can format the payload.
+  // role is derived from the verified principal's permissions (single source of truth).
   const slice: ConsoleBootstrap = {
-    principal: { id: principal.id, role: principal.role, permissions: principal.permissions },
-    role: principal.role,
+    principal: view,
+    role,
     domains: payload ? { [domain.id]: payload } : {},
   };
   return renderDomainFull(slice, domain.id);

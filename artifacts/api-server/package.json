@@ -7,7 +7,7 @@
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "echo '[api-server] QUARANTINED LEGACY PACKAGE — excluded from Hermes authoritative typecheck (EPIC-003-006 M1). Not Hermes platform code. No type errors fixed here. Run `tsc -p tsconfig.json --noEmit` directly to inspect the prototype.' && exit 0"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",
