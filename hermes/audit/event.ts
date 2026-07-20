@@ -1,11 +1,17 @@
 // ┌─────────────────────────────────────────────────────────────┐
-// │ Hermes Platform — Provider-neutral Audit Event                │
-// │ EPIC-002-006C · PHASE 1                                        │
-// │ Decouples services from the D1-backed auth audit writer.       │
-// │ Emits append-only audit events to an in-memory buffer; an      │
-// │ optional sink (e.g. D1 via shared/interfaces) can be attached. │
+// │ Hermes Platform — Audit Emission (boundary seam)              │
+// │ EPIC-003-006 M3 · emits append-only audit events through the  │
+// │ AuditStore persistence boundary (defaultAuditStore). An        │
+// │ optional sink (e.g. D1-backed writer) can still be attached.   │
 // └─────────────────────────────────────────────────────────────┘
 
+import type { AuditEvent as CanonicalAuditEvent } from "../../shared/interfaces/audit.js";
+import { defaultAuditStore } from "./store.js";
+
+/**
+ * Public audit event shape (legacy-compatible; carries `detail`). Backed by
+ * the canonical AuditStore, which normalizes events to AuditEvent (meta).
+ */
 export interface AuditEvent {
   /** Event type, e.g. "registry.register", "agent.activated". */
   type: string;
@@ -15,11 +21,12 @@ export interface AuditEvent {
   at: string;
   /** Arbitrary structured detail. */
   detail: Record<string, unknown>;
+  /** Canonical meta (mirror of detail; present when read back from store). */
+  meta?: Record<string, unknown>;
 }
 
 type AuditSink = (event: AuditEvent) => void;
 
-const BUFFER: AuditEvent[] = [];
 let SINK: AuditSink | null = null;
 
 /** Attach a durable sink (e.g. D1-backed writer). Optional. */
@@ -27,25 +34,50 @@ export function setAuditSink(sink: AuditSink | null): void {
   SINK = sink;
 }
 
-/** Emit an audit event. Never throws (non-blocking, like the auth writer). */
+/**
+ * Emit an audit event through the persistence boundary. Never throws
+ * (non-blocking, like the auth writer). Failures in the store or sink are
+ * logged but never propagated to the caller.
+ */
 export function emitAudit(type: string, actor: string, detail: Record<string, unknown> = {}): void {
-  const event: AuditEvent = { type, actor, at: new Date().toISOString(), detail };
-  BUFFER.push(event);
+  const canonical: CanonicalAuditEvent = {
+    type,
+    actor,
+    at: new Date().toISOString(),
+    action: type,
+    meta: detail,
+  };
+  try {
+    defaultAuditStore.append(canonical);
+  } catch (err) {
+    console.error("audit store append failed:", err instanceof Error ? err.message : String(err));
+  }
   if (SINK) {
     try {
-      SINK(event);
+      SINK({ type, actor, at: canonical.at, detail });
     } catch (err) {
       console.error("audit sink failed:", err instanceof Error ? err.message : String(err));
     }
   }
 }
 
-/** Read the in-memory buffer (for tests / introspection). */
+/** Adapt a canonical stored event to the public (detail-bearing) shape. */
+function toPublic(e: CanonicalAuditEvent): AuditEvent {
+  return {
+    type: e.type,
+    actor: e.actor,
+    at: e.at,
+    detail: e.meta ?? {},
+    meta: e.meta,
+  };
+}
+
+/** Read the persisted buffer (for tests / introspection). */
 export function readAuditBuffer(): readonly AuditEvent[] {
-  return BUFFER;
+  return defaultAuditStore.query().map(toPublic);
 }
 
 /** Test helper. */
 export function _clearAuditBuffer(): void {
-  BUFFER.length = 0;
+  defaultAuditStore.clear();
 }
