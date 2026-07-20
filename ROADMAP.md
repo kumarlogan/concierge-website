@@ -207,6 +207,55 @@ operational intelligence, multi-clinic coordination, expanded service offerings.
 
 ---
 
+## EPIC-003-006: Platform Hardening & Boundary Segregation ✅ Complete
+
+Segregate and harden the committed Hermes platform code from the legacy AGS
+Fertility prototype, establish authoritative contracts for agent lifecycle,
+audit persistence, tenant boundaries, and provider loading, and prove it with
+a clean typecheck + full test suite.
+
+**Constraints honored:** No changes to unrelated legacy AGS prototype code;
+no weakening of types to silence errors; legacy `artifacts/api-server` quarantined
+(documented, not silently changed); no Cloudflare/D1 changes; no secrets access.
+
+### Milestones
+
+| Deliverable | Status |
+|---|---|
+| M1 · Fix Hermes source type errors (app.ts, ui-contracts.ts, discovery.ts) + quarantine api-server | ✅ |
+| M2 · Agent registration contract hardening (lifecycle states, suspended, audit) | ✅ |
+| M3 · Audit persistence boundary (AuditEvent + AuditStore interface + Memory impl) | ✅ |
+| M4 · Tenant/org boundary declaration (Principal + scopes insertion point) | ✅ |
+| M5 · Provider loader seam (Manifest → Loader → Capability Registry) | ✅ |
+| M6 · Validation — tests, typecheck, secret scan, boundary checks | ✅ |
+| M7 · Docs (validation report, completion report, roadmap) | ✅ |
+
+### Key Contracts Established
+
+- **Agent lifecycle** (`shared/contracts/lifecycle.ts` + `hermes/agents/registry.ts`):
+  two orthogonal axes — lifecycle (`registered→assigned→approved→active→paused|suspended→retired`)
+  enforced by a canonical transition table; activation (`disabled|enabled`) explicit and
+  authorized out-of-band. `canAgentAct()` is the single execution gate (enabled AND active).
+- **Audit persistence** (`shared/interfaces/audit.ts` + `hermes/audit/store.ts`):
+  one canonical `AuditEvent` + provider-neutral `AuditStore` interface; `MemoryAuditStore`
+  default, swappable for D1 behind the same interface. Append-only, non-blocking.
+- **Tenant boundary** (`hermes/contracts/platform-api.ts` + `hermes/admin/access.ts`):
+  `Principal` carries `organizationId`/`tenantId`/`scopes`; `withinTenantScope()` is the
+  single enforcement point — hard cross-org wall, scope-narrowed grants.
+- **Provider seam** (`hermes/services/providers/capability.ts`): `ProviderManifest` (data) →
+  `ProviderLoader` (only place vendor code enters) → `CapabilityRegistry` (single source of
+  truth for "what can run here"). Decoupled from the low-level `ProviderBundle` adapter service.
+
+### Validation
+
+- `pnpm run typecheck` → **EXIT 0** (libs build clean; artifacts/scripts typecheck; api-server quarantined).
+- Full test suite → **375/375 pass** across 26 files.
+- Secret scan → clean (no leaked credentials; Cloudflare token never written to code).
+- Boundary checks (independent) → tenant isolation, agent-safety transition rejection,
+  audit persistence, capability registry all verified.
+
+---
+
 ## Future Capabilities
 
 Capabilities identified for future consideration but not yet assigned to a phase.
