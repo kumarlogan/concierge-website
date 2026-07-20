@@ -39,13 +39,22 @@ export function setAuditSink(sink: AuditSink | null): void {
  * (non-blocking, like the auth writer). Failures in the store or sink are
  * logged but never propagated to the caller.
  */
-export function emitAudit(type: string, actor: string, detail: Record<string, unknown> = {}): void {
+export function emitAudit(
+  type: string,
+  actor: string,
+  detail: Record<string, unknown> = {},
+  opts: { tenant?: string; workflow?: string; category?: string; decision?: "allow" | "deny" } = {},
+): void {
   const canonical: CanonicalAuditEvent = {
     type,
     actor,
     at: new Date().toISOString(),
     action: type,
     meta: detail,
+    ...(opts.tenant !== undefined ? { tenant: opts.tenant } : {}),
+    ...(opts.workflow !== undefined ? { workflow: opts.workflow } : {}),
+    ...(opts.category !== undefined ? { category: opts.category as CanonicalAuditEvent["category"] } : {}),
+    ...(opts.decision !== undefined ? { decision: opts.decision } : {}),
   };
   try {
     defaultAuditStore.append(canonical);

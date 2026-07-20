@@ -38,6 +38,10 @@ export interface AuditEvent {
   decision?: "allow" | "deny";
   /** Structured detail (free-form; never include secrets). */
   meta?: Record<string, unknown>;
+  /** Tenant/organization the event belongs to (multi-tenant isolation). */
+  tenant?: string;
+  /** Workflow the event is correlated to (execution correlation). */
+  workflow?: string;
 }
 
 /** Optional filter for reading stored events. */
@@ -47,6 +51,10 @@ export interface AuditQuery {
   actor?: string;
   resource?: string;
   decision?: "allow" | "deny";
+  /** Tenant/organization the event belongs to (multi-tenant isolation). */
+  tenant?: string;
+  /** Workflow the event is correlated to (execution correlation). */
+  workflow?: string;
   since?: string; // RFC3339 lower bound (inclusive)
   until?: string; // RFC3339 upper bound (inclusive)
   limit?: number;
