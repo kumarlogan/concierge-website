@@ -96,3 +96,45 @@ export function visibleApplications(principal: Principal): string[] | "all" {
   deriveAdminRole(principal); // throws if no admin authority
   return "all";
 }
+
+ /**
+  * Tenant / organization boundary check (EPIC-003-006 M4 insertion point).
+  *
+  * Returns true when `principal` is authorized to act on a resource owned by
+  * `targetOrg` (and optionally `targetTenant`). The boundary is enforced here,
+  * in one place, rather than ad-hoc per caller.
+  *
+  * Rules:
+  *  - A principal without an `organizationId` is treated as unbound → deny for
+  *    any tenant-protected resource (callers pass `requireScope: true` to force
+  *    the check; pass `requireScope: false` when the resource is not
+  *    tenant-protected and cross-tenant access is acceptable).
+  *  - If the principal declares `scopes`, the target org/tenant MUST match at
+  *    least one scope (scope = explicit grant).
+  *  - If the principal has `organizationId` but no `scopes`, it may act within
+  *    its own organization only.
+  */
+ export function withinTenantScope(
+   principal: Principal,
+   target: { organizationId: string; tenantId?: string },
+   opts: { requireScope?: boolean } = {},
+ ): boolean {
+   const ownOrg = principal.organizationId;
+   // Unbound principal: deny unless tenant protection is not required.
+   if (!ownOrg) return opts.requireScope === false;
+   // Cross-organization is always denied (hard tenant wall).
+   if (ownOrg !== target.organizationId) return false;
+   // Tenant qualifier must match when both declare one.
+   if (target.tenantId && principal.tenantId && target.tenantId !== principal.tenantId) {
+     return false;
+   }
+   // Explicit scopes narrow the grant further.
+   if (principal.scopes && principal.scopes.length > 0) {
+     return principal.scopes.some(
+       (s) =>
+         s.organizationId === target.organizationId &&
+         (!target.tenantId || !s.tenantId || s.tenantId === target.tenantId),
+     );
+   }
+   return true;
+ }
