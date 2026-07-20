@@ -26,12 +26,17 @@ export type ResourceLifecycleState =
   | "deleted";
 
 // ── Lifecycle states (agents) ───────────────────────────────────
+// Authoritative agent lifecycle vocabulary (EPIC-003-006 M2):
+//   registered → assigned → approved → active → (paused | suspended) → retired
+// `activation` (enabled/disabled) is ORTHOGONAL — see registry. An agent may
+// only execute when BOTH activation === "enabled" AND state === "active".
 export type AgentLifecycleState =
   | "registered"
   | "assigned"
   | "approved"
   | "active"
   | "paused"
+  | "suspended"
   | "retired";
 
 // ── Ownership / scope ───────────────────────────────────────────

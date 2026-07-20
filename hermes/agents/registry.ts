@@ -18,9 +18,33 @@
 // → active → paused → retired). The registry is the source of truth for the
 // agent's lifecycle state; the shared contract is the single vocabulary.
 import type { AgentLifecycleState } from "../../shared/contracts/lifecycle.js";
+import { canTransitionAgent } from "../../shared/contracts/lifecycle.js";
 
 export type AgentState = AgentLifecycleState;
 export type ActivationState = "disabled" | "enabled";
+
+// ── Authoritative agent state vocabulary (EPIC-003-006 M2) ──────
+// Two ORTHOGONAL axes govern whether an agent may act:
+//   1. Lifecycle (AgentLifecycleState): registered → assigned → approved →
+//      active → (paused | suspended) → retired. Governed by setState() and the
+//      canonical AGENT_TRANSITIONS table in shared/contracts/lifecycle.ts.
+//   2. Activation (ActivationState): "disabled" | "enabled". Governed by
+//      activateAgent()/deactivateAgent() — an explicit, human-authorized op.
+// An agent may ONLY execute when BOTH axes are satisfied:
+//   activation === "enabled" AND state === "active"  (see canAgentAct).
+// "disabled", "paused", and "suspended" all prevent execution; they are NOT
+// interchangeable — activation is an operator switch, paused/suspended are
+// lifecycle holds with distinct re-entry transitions.
+export const AGENT_LIFECYCLE_STATES: readonly AgentLifecycleState[] = [
+  "registered",
+  "assigned",
+  "approved",
+  "active",
+  "paused",
+  "suspended",
+  "retired",
+];
+export const AGENT_ACTIVATION_STATES: readonly ActivationState[] = ["disabled", "enabled"];
 
 export interface AgentCapability {
   /** Stable capability identifier, e.g. "ops.lead.read". */
@@ -36,8 +60,19 @@ export interface RegisteredAgent {
   name: string;
   /** Owning organization unit, e.g. "ags-fertility". */
   domain: string;
-  state: AgentState;
-  activation: ActivationState;
+  /**
+   * Lifecycle state. OPTIONAL on input: registerAgent() ALWAYS forces
+   * "registered" (fail-closed — registration is the first gate, never an
+   * active state). The registry is the authoritative source of truth for
+   * lifecycle transitions (see setState / canTransitionAgent).
+   */
+  state?: AgentState;
+  /**
+   * Activation flag. OPTIONAL on input: registerAgent() ALWAYS forces
+   * "disabled". An agent can only execute after an explicit, authorized
+   * activateAgent() call (see canAgentAct).
+   */
+  activation?: ActivationState;
   capabilities: AgentCapability[];
   /** RFC3339 registration timestamp. */
   registeredAt: string;
@@ -69,11 +104,14 @@ export function registerAgent(agent: RegisteredAgent): RegisteredAgent {
   if (REGISTRY.has(agent.id)) {
     throw new Error(`Agent already registered: ${agent.id}`);
   }
-  // Safety: registration ALWAYS starts disabled, regardless of input.
+  // Safety: registration ALWAYS starts disabled + registered, regardless of
+  // input. These are the fail-closed defaults — an agent is never registered
+  // in an active or enabled state. (state/activation are optional on input
+  // precisely because the registry owns them here.)
   const safe: RegisteredAgent = {
     ...agent,
-    activation: "disabled",
-    state: "registered",
+    activation: "disabled" as ActivationState,
+    state: "registered" as AgentState,
     auditHistory: [
       ...(agent.auditHistory ?? []),
       {
@@ -99,9 +137,33 @@ export function listAgents(): RegisteredAgent[] {
 export function setState(id: string, state: AgentState): RegisteredAgent {
   const agent = REGISTRY.get(id);
   if (!agent) throw new Error(`Unknown agent: ${id}`);
-  const updated = { ...agent, state };
+  const from = agent.state ?? "registered";
+  // Hardened: enforce the canonical agent lifecycle transition table.
+  // This is the single gate for all lifecycle moves — illegal transitions
+  // (e.g. registered -> active without approval) are rejected here.
+  if (!canTransitionAgent(from, state)) {
+    throw new Error(`Illegal agent transition: ${from} -> ${state}`);
+  }
+  const updated: RegisteredAgent = {
+    ...agent,
+    state,
+    auditHistory: [
+      ...(agent.auditHistory ?? []),
+      { at: new Date().toISOString(), actor: "system", action: "state", detail: { from, to: state } },
+    ],
+  };
   REGISTRY.set(id, updated);
   return updated;
+}
+
+/**
+ * Authoritative execution gate. An agent may ONLY act when it is BOTH
+ * activated (activation === "enabled") AND in the active lifecycle state.
+ * Calling setAgentState/activateAgent does not bypass this — every dispatch
+ * path MUST call canAgentAct() before allowing the agent to execute.
+ */
+export function canAgentAct(agent: RegisteredAgent): boolean {
+  return agent.activation === "enabled" && (agent.state ?? "registered") === "active";
 }
 
 /**
@@ -123,6 +185,17 @@ export function deactivateAgent(id: string): RegisteredAgent {
   const updated = { ...agent, activation: "disabled" as ActivationState };
   REGISTRY.set(id, updated);
   return updated;
+}
+
+/**
+ * Place an agent into the lifecycle `suspended` hold. Suspension is a
+ * lifecycle transition (not an activation switch): it must go through the
+ * canonical transition table and is recorded in auditHistory. A suspended
+ * agent cannot execute (canAgentAct requires state === "active"). Re-entry is
+ * only to "active" or "retired" (see AGENT_TRANSITIONS).
+ */
+export function suspendAgent(id: string): RegisteredAgent {
+  return setState(id, "suspended");
 }
 
 /** Test/reset helper — clears the in-memory registry (not used in production). */

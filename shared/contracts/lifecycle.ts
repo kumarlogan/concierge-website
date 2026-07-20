@@ -27,9 +27,10 @@ export const RESOURCE_TRANSITIONS: Record<ResourceLifecycleState, ResourceLifecy
 export const AGENT_TRANSITIONS: Record<AgentLifecycleState, AgentLifecycleState[]> = {
   registered: ["assigned", "retired"],
   assigned: ["approved", "retired"],
-  approved: ["active", "paused", "retired"],
-  active: ["paused", "retired"],
+  approved: ["active", "paused", "suspended", "retired"],
+  active: ["paused", "suspended", "retired"],
   paused: ["active", "retired"],
+  suspended: ["active", "retired"],
   retired: [],
 };
 
