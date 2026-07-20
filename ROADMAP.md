@@ -112,6 +112,38 @@ Validation: `hermes.security.003.test.ts` **28/28 pass**; in-scope `tsc --noEmit
 clean (whole repo 0 errors). See `docs/operations/EPIC-003-003_VALIDATION_REPORT.md`
 and `docs/operations/EPIC-003-003_COMPLETION_REPORT.md`.
 
+### EPIC-003-004 — Security Provider Integration ✅ Complete (2026-07-20)
+
+Completes the security provider surface that EPIC-003-003 left as simulated-only:
+real OSS scanner adapters (gitleaks / semgrep / osv-scanner / trivy) that probe for a
+real backend and **fail closed** (`not_installed`) when the binary is absent; automatic
+provider **discovery** (version + installation state + health) reading the platform
+registry and adapter probes; a **provider-health** platform (monitor + select-healthy,
+fail-closed when none serve a capability); multi-provider **finding aggregation** with
+deduplication; admin **security visibility** (version / installation state / last scan
+per provider); and local-first **tool detection** (no install required, grace in edge
+runtimes). Reuses `activation/provider-framework.ts` (extended `ProviderHealth` with
+`offline` / `not_installed`); no production touch, no vendor lock-in, simulation-default.
+
+| Deliverable | Status |
+|---|---|
+| M1 · Security module barrel (`services/security`) | ✅ |
+| M2 · Real OSS scanner adapters (fail-closed `not_installed`) | ✅ |
+| M3 · Provider discovery (version + installation state + health) | ✅ |
+| M4 · Developer pipeline integration (simulated executor, baseline findings) | ✅ |
+| M5 · Provider-health platform (monitor + select-healthy) | ✅ |
+| M6 · Multi-provider finding aggregation + deduplication | ✅ |
+| M7 · Admin security visibility (version / install state / last scan) | ✅ |
+| M8 · Local-first tool detection (no install required) | ✅ |
+| M9 · Docs (roadmap, completion, validation reports) | ✅ |
+
+Validation: `hermes.security.004.test.ts` **19/19 pass**; full workers suite
+**375/375 pass**; in-scope `tsc --noEmit` clean (all EPIC-003-004 files compile;
+pre-existing errors in unrelated modules — admin/console, agents/seed, auth/integration
+tests, other-epic tests — remain untouched and out of scope). See
+`docs/operations/EPIC-003-004_VALIDATION_REPORT.md` and
+`docs/operations/EPIC-003-004_COMPLETION_REPORT.md`.
+
 ### EPIC-003-005 — Workforce Orchestration Platform ✅ Complete (2026-07-20)
 
 Coordinates multiple agents to deliver an objective as a governed, auditable

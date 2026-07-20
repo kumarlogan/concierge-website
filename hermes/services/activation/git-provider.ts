@@ -51,20 +51,28 @@ const GIT_CAPABILITIES: import("./provider-framework.js").CapabilityDescriptor[]
 // ─── Provider registration ───────────────────────────────────
 
 export function registerGitProvider(): ManagedProvider {
-  const executor: CapabilityExecutor = (capability, args, ctx) => {
+  const executor: CapabilityExecutor = async (capability, args, ctx) => {
     if (!BACKEND) {
       return { ok: false, error: "Git backend not wired", backend: "git.local" };
     }
     const B = "git.local";
     switch (capability) {
-      case "git.branch":
-        return { ...BACKEND.branch(String(args.name), args.base ? String(args.base) : undefined), backend: B };
-      case "git.commit":
-        return { ...BACKEND.commit(String(args.message), (args.paths as string[]) ?? undefined), backend: B };
-      case "git.diff":
-        return { ...BACKEND.diff(args.target ? String(args.target) : undefined), backend: B };
-      case "git.pr-prepare":
-        return { ...BACKEND.preparePush(String(args.remote ?? "origin"), String(args.ref)), backend: B };
+      case "git.branch": {
+        const r = await BACKEND.branch(String(args.name), args.base ? String(args.base) : undefined);
+        return { ...r, backend: B };
+      }
+      case "git.commit": {
+        const r = await BACKEND.commit(String(args.message), (args.paths as string[]) ?? undefined);
+        return { ...r, backend: B };
+      }
+      case "git.diff": {
+        const r = await BACKEND.diff(args.target ? String(args.target) : undefined);
+        return { ...r, backend: B };
+      }
+      case "git.pr-prepare": {
+        const r = await BACKEND.preparePush(String(args.remote ?? "origin"), String(args.ref));
+        return { ...r, backend: B };
+      }
       default:
         return { ok: false, error: `Unsupported git capability: ${capability}`, backend: B };
     }

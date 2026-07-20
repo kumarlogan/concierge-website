@@ -9,6 +9,8 @@
 
 import { listProviders } from "../activation/provider-framework.js";
 import { readAuditBuffer } from "../../audit/event.js";
+import { discoverSecurityProviders } from "./providers/provider-discovery.js";
+import type { SecurityToolAdapter } from "./providers/real-adapters.js";
 import type { SecurityReviewPackage, RiskLevel } from "./security-work-model.js";
 
 export interface SecurityScanSummary {
@@ -35,6 +37,12 @@ export interface SecurityProviderHealth {
   lifecycle: string;
   health: string;
   capabilities: string[];
+  /** Backend version if reported (e.g. gitleaks 8.18.0). */
+  version?: string;
+  /** Whether the concrete backend binary is installed. */
+  installationState: "installed" | "not_installed" | "unknown";
+  /** ISO timestamp of the most recent scan via this provider, if any. */
+  lastScan?: string;
 }
 
 export interface SecurityAdminView {
@@ -52,7 +60,10 @@ export interface SecurityAdminView {
  * the caller (the security service keeps a small ring buffer of completed
  * reviews); provider health and audit events are read from the platform.
  */
-export function buildSecurityAdminView(scans: SecurityReviewPackage[]): SecurityAdminView {
+export function buildSecurityAdminView(
+  scans: SecurityReviewPackage[],
+  realAdapters: SecurityToolAdapter[] = [],
+): SecurityAdminView {
   const latestScans: SecurityScanSummary[] = scans.slice(-10).map((s) => ({
     requestId: s.requestId,
     sourceRequestId: s.sourceRequestId,
@@ -86,14 +97,28 @@ export function buildSecurityAdminView(scans: SecurityReviewPackage[]): Security
   const pending = scans.filter((s) => s.approvalRequired && s.recommendation !== "approve").length;
   const required = scans.filter((s) => s.approvalRequired).length;
 
-  const providerHealth: SecurityProviderHealth[] = listProviders()
-    .filter((p) => p.domain === "security")
-    .map((p) => ({
-      id: p.id,
-      label: p.label,
-      lifecycle: p.lifecycle,
-      health: p.health.health,
-      capabilities: p.capabilities.map((c) => c.id),
+  // Discovery gives us version / installation state / health from the registry.
+  const discovered = discoverSecurityProviders(realAdapters);
+  const lastScanByProvider = new Map<string, string>();
+  for (const s of scans) {
+    for (const f of s.findings) {
+      const pid = f.capability;
+      const cur = lastScanByProvider.get(pid);
+      if (!cur || s.audit.generatedAt > cur) lastScanByProvider.set(pid, s.audit.generatedAt);
+    }
+  }
+
+  const providerHealth: SecurityProviderHealth[] = discovered
+    .filter((d) => d.domain === "security")
+    .map((d) => ({
+      id: d.id,
+      label: d.label,
+      lifecycle: d.enabled ? (d.available ? "active" : "enabled") : "registered",
+      health: d.healthy,
+      capabilities: d.capabilities,
+      version: d.version,
+      installationState: d.installationState,
+      lastScan: lastScanByProvider.get(d.id),
     }));
 
   const auditEventCount = readAuditBuffer().filter((e) => e.type.startsWith("sec.")).length;

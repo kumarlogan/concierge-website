@@ -91,7 +91,10 @@ const DEFAULT_ACTIVATION_PRINCIPAL = { id: "principal:activation", permissions: 
 export function activateSecurityProvider(principal?: { id: string; permissions: string[] }): ManagedProvider {
   const p = getProvider(SECURITY_PROVIDER_ID);
   if (!p) throw new Error(`Security provider ${SECURITY_PROVIDER_ID} not registered`);
-  enableProvider(SECURITY_PROVIDER_ID, (principal ?? DEFAULT_ACTIVATION_PRINCIPAL) as any);
+  // Idempotent: if already enabled/active, skip the (illegal) re-enable transition.
+  if (p.lifecycle !== "enabled" && p.lifecycle !== "active") {
+    enableProvider(SECURITY_PROVIDER_ID, (principal ?? DEFAULT_ACTIVATION_PRINCIPAL) as any);
+  }
   setProviderHealth(SECURITY_PROVIDER_ID, "healthy");
   return p;
 }
@@ -104,8 +107,15 @@ export function activateSecurityProvider(principal?: { id: string; permissions: 
  * without changing any agent/runtime code.
  */
 export function bootstrapSecurityProvider(executor?: import("../../activation/provider-framework.js").CapabilityExecutor): void {
-  registerSecurityProvider();
+  // Idempotent: the simulated provider survives across test files in the same
+  // module scope, so re-bootstrapping must not throw "already registered".
+  if (!getSecurityProvider()) {
+    registerSecurityProvider();
+  }
   setSecurityExecutor(executor ?? makeSimulatedSecurityExecutor());
+  // Bring the provider to an active, healthy lifecycle state so reviews can
+  // execute. activateSecurityProvider is itself idempotent (no-op if active).
+  activateSecurityProvider();
 }
 
 /** Re-export the simulated executor factory for callers/tests. */

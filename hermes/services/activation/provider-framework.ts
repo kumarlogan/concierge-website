@@ -54,7 +54,26 @@ export function canTransitionProvider(
 
 // ─── Health ────────────────────────────────────────────────────
 
-export type ProviderHealth = "unknown" | "healthy" | "degraded" | "unhealthy";
+/**
+ * Provider health states (EPIC-003-004 / M5).
+ *  • healthy      — responsive, executing normally
+ *  • degraded     — responsive but impaired (partial results, retries)
+ *  • offline      — expected to be reachable but not responding
+ *  • not_installed — the concrete backend binary/SDK is absent (fail-closed)
+ *  • unknown      — never probed
+ *
+ * NOTE: backward compatible — existing callers only ever assign
+ * "healthy" | "unhealthy" | "degraded" | "unknown". The two new states
+ * ("offline", "not_installed") are produced by the health monitor and by
+ * provider adapters that detect a missing backend.
+ */
+export type ProviderHealth =
+  | "unknown"
+  | "healthy"
+  | "degraded"
+  | "unhealthy"
+  | "offline"
+  | "not_installed";
 
 export interface HealthReport {
   health: ProviderHealth;

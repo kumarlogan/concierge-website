@@ -202,7 +202,7 @@ export async function runSecurityReview(
 
   const pkg: SecurityReviewPackage = {
     requestId: req.requestId,
-    sourceRequestId: req.sourceRequestId,
+    sourceRequestId: req.sourceRequestId ?? req.requestId,
     targetApplication: req.targetApplication,
     env: req.env,
     findings: allFindings,
