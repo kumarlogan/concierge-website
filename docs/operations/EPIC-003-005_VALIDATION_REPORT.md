@@ -98,3 +98,36 @@ EPIC working trees (those files remain unstaged).
 - **agents**: `seed.ts` missing `activation` field.
 
 None of the above were modified, absorbed, or repaired by this closeout.
+
+---
+
+## Recovery Addendum — Validation (2026-07-26)
+
+### R5 — Notification Integration Validation
+
+Notification tests verify each approval lifecycle event fires the notification
+service **exactly once** with the correct subject:
+
+| Test | Notification Asserted | Fires Once? |
+|------|----------------------|-------------|
+| `emits a notification when approval is requested` | `Approval Requested` | ✅ |
+| `emits a notification when approval is granted` | `Approval Granted` | ✅ |
+| `emits a notification when approval expires` | `Approval Expired` | ✅ |
+| `emits a notification when approval is rejected` | `Approval Rejected` | ✅ |
+| `rejects a non-existent approval request` | (error path — no notification) | ✅ |
+
+### Updated Test Results
+
+| Scope | Command | Before | After |
+|------|---------|--------|-------|
+| Orchestration suite | `npx vitest run hermes.workforce.orchestration.test.ts` | **12/12 pass** | **17/17 pass** |
+| Full workforce suite | `npx vitest run hermes.workforce.*.test.ts` | — | **44/44 pass** (2 files) |
+
+### Code Changes (verified)
+
+- `rejectTaskApproval()` — validates task exists, pending approval exists,
+  marks `rejected`, removes from `wf.approvals`, emits audit + notification,
+  transitions workflow appropriately.
+- Notification calls use `void notify(...)` — fire-and-forget, non-blocking.
+- No new imports, no new dependencies, no behavioural changes to existing
+  approval paths.

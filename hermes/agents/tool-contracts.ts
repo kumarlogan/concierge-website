@@ -177,6 +177,8 @@ export interface ApprovalRequest {
   action: "read" | "write" | "exec";
   tool: ToolNamespace;
   requestedAt: string;
+  /** ISO timestamp when the request expires (optional). */
+  expiresAt?: string;
   state: "pending" | "approved" | "rejected";
 }
 

@@ -434,8 +434,107 @@ erDiagram
 | Upload validation | Workers validate file type, size, and ownership before issuing upload URLs |
 | Encryption at rest | R2 provides server-side encryption; all objects are encrypted at rest |
 | Encryption in transit | All transfers use TLS; pre-signed URLs are time-limited |
-| Data retention | Objects have defined retention policies; patient data is not stored indefinitely without purpose |
-| Access logging | R2 access logs enabled; Workers log every object access for auditability |
+
+---
+
+## 7. Workforce Persistence (EPIC-005 Phase 5)
+
+The workforce persistence layer implements durable storage for workforce-specific agent state, activation requests, and audit events using Cloudflare D1 (SQLite).
+
+### Schema
+
+The D1 schema includes three tables:
+
+1. `workforce_agents` - Stores workforce-specific agent state
+2. `agent_activation_requests` - Tracks agent activation requests for workflow tasks
+3. `agent_audit_events` - Records audit events for agent lifecycle and activation
+4. `workforce_metrics` - Stores operational metrics for observability
+
+### Implementation
+
+The persistence layer follows a repository pattern with a provider-neutral backend interface:
+
+- `WorkforceRepository` - The public API for workforce persistence
+- `WorkforcePersistenceBackend` - Provider-neutral interface for persistence backends
+- `D1WorkforceBackend` - Cloudflare D1 implementation of the backend
+- `MemoryWorkforceBackend` - In-memory implementation for development/testing
+
+### Data Ownership Model
+
+- Agent lifecycle state is primarily owned by the agent-state-store but replicated to `workforce_agents` for workforce-specific queries
+- Activation requests are owned by the workforce service and stored in `agent_activation_requests`
+- Audit events are owned by the workforce service and stored in `agent_audit_events`
+- Metrics are owned by the workforce service and stored in `workforce_metrics`
+
+### Recovery Behavior
+
+- State persists across process restarts
+- Approved activations survive restarts
+- Audit history is preserved
+- Metrics are preserved for operational visibility
+- Permanent disable states are preserved
+- Failed transactions do not partially update state due to D1's ACID compliance
+
+## 8. Workforce Activation Workflow (EPIC-005 Phase 5)
+
+The workforce activation workflow implements a controlled process for safely activating workforce agents with proper approvals and validation.
+
+### Activation Command Workflow
+
+The activation workflow provides the following operator actions:
+
+- `listEligibleAgents()` - List all agents eligible for activation
+- `requestActivation(agentId, requestedBy, reason)` - Request activation for an agent
+- `approveActivation(requestId, approvedBy)` - Approve an activation request
+- `rejectActivation(requestId, rejectedBy, reason)` - Reject an activation request
+- `assignTestTask(agentId, taskSpec)` - Assign a test task to verify agent functionality
+- `reviewExecutionResult(taskId)` - Review the results of a test task execution
+
+### Activation Readiness Validation
+
+Before activation, the system verifies:
+
+- Agent exists in the registry
+- Agent is not permanently disabled
+- Required capabilities exist
+- Approval reference exists
+- Safety checks pass
+- Observability is connected
+
+### Activation Checklist
+
+Required items before first activation:
+
+- [x] Lifecycle approved
+- [x] Persistence confirmed
+- [x] Audit enabled
+- [x] Metrics enabled
+- [x] Capability providers available
+- [x] Rollback path available
+
+### Dry-Run Mode
+
+The `simulateActivation(agentId)` function provides a dry-run mode that shows:
+
+- Required approvals
+- Capabilities needed
+- Potential risks
+- Expected execution path
+
+Without changing any state.
+
+### Safety Features
+
+The activation workflow includes several safety features:
+
+- **Approval-based activation** - All activations require explicit approval
+- **Validation checks** - Multiple validation points before activation
+- **Audit trail** - Complete audit logging of all activation-related actions
+- **Observability integration** - Metrics and health monitoring during activation
+- **Safety violation detection** - Automatic detection of safety violations
+- **Rollback capability** - Ability to deactivate agents if needed
+
+This workflow ensures that agents are only activated after proper validation and approval, maintaining the safety and integrity of the workforce platform.
 
 ### Storage Flow
 
@@ -466,9 +565,91 @@ sequenceDiagram
 
 ---
 
-## 7. Hermes Integration Architecture
+## Workforce Approval Lifecycle & Notification (Recovery 2026-07-26)
 
-### What Hermes Is
+The workforce orchestration layer manages a complete approval lifecycle for
+every task that requires human authorization before execution. Notifications
+are emitted at every lifecycle transition through the existing notification
+service.
+
+### Approval Lifecycle
+
+Each task in a workflow passes through the following approval states:
+
+```
+requested → [granted | rejected | expired]
+```
+
+| State | Trigger | Effect |
+|-------|---------|--------|
+| **requested** | `requestTaskApproval()` called during dispatch | Task enters `waiting` state; pending approval recorded in `wf.approvals`; notification sent |
+| **granted** | `grantTaskApproval()` called by an authorized approver | Task removed from pending set; added to `wf.grantedApprovals`; queue may now execute it; notification sent |
+| **rejected** | `rejectTaskApproval()` called by an authorized approver | Task removed from pending set; workflow stays `waiting` if other approvals remain, or transitions to `failed` if this was the last pending approval; notification sent |
+| **expired** | `runTask()` finds a pending request past its `expiresAt` | Pending request removed automatically; task cannot run; re-request required; notification sent |
+
+### Authorization Model
+
+Approval operations require specific permissions enforced at the function
+boundary:
+
+| Operation | Required Permission | Authorized Principals |
+|-----------|--------------------|-----------------------|
+| Request approval | `hermes:admin:workforce-write` | Assigned workflow principals |
+| Grant approval | `hermes:admin:workforce-write` | Human administrators |
+| Reject approval | `hermes:admin:workforce-write` | Human administrators |
+| Execute approved task | `hermes:admin:workforce-write` + in `wf.grantedApprovals` | Human operators (granted approval) |
+
+No principal may autonomously execute a task that has a pending or un-granted
+approval request. The `runTask()` function enforces **two independent fail-closed
+gates**:
+1. A pending approval ALWAYS blocks execution, regardless of environment.
+2. A task flagged `requiresApproval` (production environment or
+   capability-flagged) MUST have an explicit human grant in `grantedApprovals`.
+
+### Expiration Policy
+
+Approval requests expire **15 minutes** after creation (`APPROVAL_TTL_MS`).
+Expired requests are detected at `runTask()` time — the pending entry is removed
+from `wf.approvals` and an `Approval Expired` notification is emitted. The caller
+must re-request approval to proceed.
+
+### Notification Flow
+
+The orchestration layer reuses the existing `notify()` service from
+`hermes/services/notification/notification.ts`, which fans out through a
+`NotificationProvider` interface. Four lifecycle events trigger notifications:
+
+| Event | Notification Subject | Channel | Recipient |
+|-------|---------------------|---------|-----------|
+| Approval requested | `Approval Requested` | telegram | The actor who requested |
+| Approval granted | `Approval Granted` | telegram | The approver |
+| Approval rejected | `Approval Rejected` | telegram | The rejector |
+| Approval expired | `Approval Expired` | telegram | The executor attempting the run |
+
+Notifications are fire-and-forget (`void notify(...)`) — delivery failures do
+not block the orchestration lifecycle. Every notification is also recorded in
+the audit trail via `emitAudit("notification.send", ...)`.
+
+### rejectTaskApproval()
+
+Added during recovery (2026-07-26). Rejects a pending approval by:
+
+1. Validating the task exists in the workflow
+2. Validating a pending approval exists for the task
+3. Marking the request state as `rejected`
+4. Removing the request from `wf.approvals`
+5. Emitting `workflow.approval.rejected` audit event
+6. Transitioning the workflow to `failed` if no approvals remain, or staying
+   in `waiting` if other pending approvals exist
+7. Sending an `Approval Rejected` notification
+
+```ts
+rejectTaskApproval(workflowId, itemId, rejector): Promise<Workflow>
+```
+
+---
+
+## 7. Hermes Integration Architecture
 
 Hermes Agent (by Nous Research) is the **AI orchestration and operations
 assistant** for the AG Synergy platform. It operates via Telegram as the primary

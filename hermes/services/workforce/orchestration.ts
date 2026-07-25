@@ -38,6 +38,7 @@ import {
   type QueueEntry,
 } from "../execution/execution-queue.js";
 import { requestApproval, type ApprovalRequest } from "../../agents/tool-contracts.js";
+import { notify } from "../../services/notification/notification.js";
 
 // ─── Workflow lifecycle (EPIC-003-005 M5) ─────────────────────
 
@@ -125,6 +126,17 @@ function nowIso(): string {
 function genWorkflowId(): string {
   wfSeq += 1;
   return `wf_${wfSeq}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+// ─── Approval expiration (default 15 min) ────────────────
+
+/** Default TTL for approval requests in milliseconds (15 minutes). */
+const APPROVAL_TTL_MS = 15 * 60 * 1000;
+
+/** Determine if an approval request has expired. */
+function isApprovalExpired(req: ApprovalRequest): boolean {
+  if (!req.expiresAt) return false;
+  return Date.now() > new Date(req.expiresAt).getTime();
 }
 
 function setState(wf: Workflow, state: WorkflowState, actor: string, note?: string, detail?: Record<string, unknown>): void {
@@ -262,13 +274,19 @@ export function assignWorkflow(workflowId: string, actor: string): Workflow {
 /**
  * Request human approval for a specific workflow task (queue entry). The
  * workflow remains in `waiting` until a human grants it. Fail-closed: calling
- * runWorkflow on a task that has not been approved throws.
+ * runTask on a task that has not been approved throws.
+ * Requires `hermes:admin:workforce-write` permission.
  */
-export function requestTaskApproval(workflowId: string, itemId: string, actor: string): ApprovalRequest {
+export function requestTaskApproval(
+  workflowId: string,
+  itemId: string,
+  actor: string,
+): ApprovalRequest {
   const wf = getWorkflow(workflowId);
   const t = wf.tasks.find((x) => x.itemId === itemId);
   if (!t) throw new OrchestrationError(`Unknown task ${itemId} in workflow ${workflowId}`);
   if (!t.queueId) throw new OrchestrationError(`Task ${itemId} not assigned; call assignWorkflow first`);
+  const now = Date.now();
   const req = requestApproval(
     t.dispatch.agentId ?? "hermes.workforce",
     wf.applicationId,
@@ -276,23 +294,34 @@ export function requestTaskApproval(workflowId: string, itemId: string, actor: s
     "write",
     "tool:code.write",
   );
+  req.expiresAt = new Date(now + APPROVAL_TTL_MS).toISOString();
   wf.approvals.set(t.queueId, req);
   emitAudit("workflow.approval.requested", actor, { workflowId, itemId, queueId: t.queueId });
   setState(wf, "waiting", actor, `approval requested for ${itemId}`);
+  void notify(
+    { channel: "telegram", to: actor, subject: "Approval Requested", body: `Approval requested for task ${itemId} in workflow ${workflowId}` },
+    actor,
+  );
   return req;
 }
 
 /**
- * Grant approval for a workflow task. Human authority only — the approver id
- * is recorded in the audit trail. After granting, the task is approved at the
- * underlying task layer (so the queue may run it).
+ * Grant a pending approval request.
+ * After granting, the task is approved at the underlying task layer
+ * (so the queue may run it).
+ * Requires `hermes:admin:workforce-write` permission.
  */
-export function grantTaskApproval(workflowId: string, itemId: string, approver: string): Workflow {
+export async function grantTaskApproval(
+  workflowId: string,
+  itemId: string,
+  approver: string,
+): Promise<Workflow> {
   const wf = getWorkflow(workflowId);
   const t = wf.tasks.find((x) => x.itemId === itemId);
   if (!t) throw new OrchestrationError(`Unknown task ${itemId} in workflow ${workflowId}`);
   const req = wf.approvals.get(t.queueId);
   if (!req) throw new OrchestrationError(`No pending approval for task ${itemId}`);
+  if (isApprovalExpired(req)) throw new OrchestrationError(`Approval for task ${itemId} has expired`);
   // The approval queue (tool-contracts) is append-only and human-driven: a
   // human grants it out-of-band. Here we lift the request out of the workflow's
   // pending set, record the grant (so runTask can verify it was satisfied),
@@ -302,6 +331,40 @@ export function grantTaskApproval(workflowId: string, itemId: string, approver: 
   wf.grantedApprovals.add(t.queueId);
   emitAudit("workflow.approval.granted", approver, { workflowId, itemId, queueId: t.queueId });
   setState(wf, wf.state === "paused" ? "paused" : "waiting", approver, `approval granted for ${itemId}`);
+  void notify(
+    { channel: "telegram", to: approver, subject: "Approval Granted", body: `Approval granted for task ${itemId} in workflow ${workflowId}` },
+    approver,
+  );
+  return wf;
+}
+
+/**
+ * Reject a pending approval request.
+ * The request is removed from the pending set and the rejection is recorded
+ * in the audit trail. The workflow remains in `waiting` with other approvals,
+ * or transitions to `failed` if this was the last pending approval.
+ * Requires `hermes:admin:workforce-write` permission.
+ */
+export async function rejectTaskApproval(
+  workflowId: string,
+  itemId: string,
+  rejector: string,
+): Promise<Workflow> {
+  const wf = getWorkflow(workflowId);
+  const t = wf.tasks.find((x) => x.itemId === itemId);
+  if (!t) throw new OrchestrationError(`Unknown task ${itemId} in workflow ${workflowId}`);
+  const req = wf.approvals.get(t.queueId);
+  if (!req) throw new OrchestrationError(`No pending approval for task ${itemId}`);
+  req.state = "rejected";
+  wf.approvals.delete(t.queueId);
+  emitAudit("workflow.approval.rejected", rejector, { workflowId, itemId, queueId: t.queueId });
+  // Transition to failed if no approvals remain and at least one required approval.
+  const stillPending = wf.approvals.size > 0;
+  setState(wf, stillPending ? "waiting" : "failed", rejector, `approval rejected for ${itemId}`);
+  void notify(
+    { channel: "telegram", to: rejector, subject: "Approval Rejected", body: `Approval rejected for task ${itemId} in workflow ${workflowId}` },
+    rejector,
+  );
   return wf;
 }
 
@@ -331,6 +394,16 @@ export async function runTask(
   //  2) Tasks that require approval (env-driven or capability-flagged) MUST have
   //     an explicit human grant on record before they may run.
   if (wf.approvals.has(t.queueId)) {
+    const pendingReq = wf.approvals.get(t.queueId);
+    if (pendingReq && isApprovalExpired(pendingReq)) {
+      wf.approvals.delete(t.queueId);
+      emitAudit("workflow.approval.expired", approver, { workflowId, itemId, queueId: t.queueId });
+      void notify(
+        { channel: "telegram", to: approver, subject: "Approval Expired", body: `Approval expired for task ${itemId} in workflow ${workflowId}; re-request required` },
+        approver,
+      );
+      throw new OrchestrationError(`Approval for task ${itemId} has expired; re-request required`);
+    }
     throw new OrchestrationError(`Task ${itemId} still awaiting approval; cannot run autonomously`);
   }
   if (t.requiresApproval && !wf.grantedApprovals.has(t.queueId)) {

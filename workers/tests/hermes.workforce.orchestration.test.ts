@@ -1,11 +1,12 @@
 // EPIC-003-005 — Workforce Orchestration Coordinator (M1–M7)
 // Run: npx vitest run hermes.workforce.orchestration.test.ts  (from workers/)
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   createWorkflow,
   assignWorkflow,
   requestTaskApproval,
   grantTaskApproval,
+  rejectTaskApproval,
   runTask,
   retryTask,
   cancelWorkflow,
@@ -284,5 +285,124 @@ describe("M7 · admin read-only workflow view", () => {
     });
     const queued = listWorkflows({ state: "queued" });
     expect(queued.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ─── Notification integration tests ─────────────────────────
+
+describe("Notification · approval events fire exactly once", () => {
+  it("emits a notification when approval is requested", async () => {
+    const notif = await import("../../hermes/services/notification/notification.js");
+    const spy = vi.spyOn(notif, "notify").mockResolvedValue(undefined);
+
+    const wf = createWorkflow({
+      title: "Notified flow",
+      applicationId: "app-1",
+      requestedBy: "principal:kl",
+      env: "production",
+      items: [{ id: "n1", title: "Notified step", capability: "deploy.web", priority: 2 }],
+    });
+    assignWorkflow(wf.id, "principal:kl");
+    requestTaskApproval(wf.id, "n1", "principal:kl");
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: "Approval Requested" }),
+      "principal:kl",
+    );
+
+    spy.mockRestore();
+  });
+
+  it("emits a notification when approval is granted", async () => {
+    const notif = await import("../../hermes/services/notification/notification.js");
+    const spy = vi.spyOn(notif, "notify").mockResolvedValue(undefined);
+
+    const wf = createWorkflow({
+      title: "Grant notified",
+      applicationId: "app-1",
+      requestedBy: "principal:kl",
+      env: "production",
+      items: [{ id: "n2", title: "Granted step", capability: "deploy.web", priority: 2 }],
+    });
+    assignWorkflow(wf.id, "principal:kl");
+    requestTaskApproval(wf.id, "n2", "principal:kl");
+    spy.mockClear(); // clear the requested call
+    await grantTaskApproval(wf.id, "n2", "principal:ops");
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: "Approval Granted" }),
+      "principal:ops",
+    );
+
+    spy.mockRestore();
+  });
+
+  it("emits a notification when approval expires during execution attempt", async () => {
+    const notif = await import("../../hermes/services/notification/notification.js");
+    const spy = vi.spyOn(notif, "notify").mockResolvedValue(undefined);
+
+    const wf = createWorkflow({
+      title: "Expiry notified",
+      applicationId: "app-1",
+      requestedBy: "principal:kl",
+      env: "staging",
+      items: [{ id: "n3", title: "Expiring step", capability: "deploy.web", priority: 2 }],
+    });
+    assignWorkflow(wf.id, "principal:kl");
+    requestTaskApproval(wf.id, "n3", "principal:kl");
+    // Set the request expiry to the past so runTask will find it expired.
+    const t = wf.tasks.find((x) => x.itemId === "n3")!;
+    const req = wf.approvals.get(t.queueId);
+    if (req) req.expiresAt = new Date(Date.now() - 60000).toISOString();
+    spy.mockClear();
+    await expect(runTask(wf.id, "n3", "principal:ops", makeExecutor(), {})).rejects.toThrow(/expired/i);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: "Approval Expired" }),
+      "principal:ops",
+    );
+
+    spy.mockRestore();
+  });
+
+  it("emits a notification when approval is rejected", async () => {
+    const notif = await import("../../hermes/services/notification/notification.js");
+    const spy = vi.spyOn(notif, "notify").mockResolvedValue(undefined);
+
+    const wf = createWorkflow({
+      title: "Rejected notification",
+      applicationId: "app-1",
+      requestedBy: "principal:kl",
+      env: "staging",
+      items: [{ id: "n4", title: "Rejected step", capability: "deploy.web", priority: 2 }],
+    });
+    assignWorkflow(wf.id, "principal:kl");
+    requestTaskApproval(wf.id, "n4", "principal:kl");
+    spy.mockClear();
+    await rejectTaskApproval(wf.id, "n4", "principal:ops");
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({ subject: "Approval Rejected" }),
+      "principal:ops",
+    );
+
+    spy.mockRestore();
+  });
+
+  it("rejects a non-existent approval request", async () => {
+    const wf = createWorkflow({
+      title: "Reject missing",
+      applicationId: "app-1",
+      requestedBy: "principal:kl",
+      env: "staging",
+      items: [{ id: "n5", title: "Missing step", capability: "deploy.web", priority: 2 }],
+    });
+    assignWorkflow(wf.id, "principal:kl");
+
+    await expect(rejectTaskApproval(wf.id, "n5", "principal:ops")).rejects.toThrow(/No pending approval/i);
   });
 });

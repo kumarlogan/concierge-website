@@ -91,3 +91,40 @@ workforce-agent in production still requires a human grant.
 The commit is a pure addition of new files plus one additive hunk in
 `admin/index.ts`. It is logically reversible via `git revert` with no impact on
 parallel EPIC working trees (those files are not staged).
+
+---
+
+## Recovery Addendum (2026-07-26)
+
+Post-completion recovery work performed on the EPIC-003-005 codebase:
+
+| Step | Description | Date |
+|------|-------------|------|
+| R1–R3 | Sync/async bugs, import fixes, queue helper bugs | 2026-07-25 |
+| R4 | Reject approval (`rejectTaskApproval()`) | 2026-07-25 |
+| **R5** | **Notification integration** — approval lifecycle events (requested, granted, rejected, expired) fire through existing `notify()` service; each fires exactly once | 2026-07-26 |
+| **R6** | **Documentation synchronization** — ARCHITECTURE.md, ROADMAP.md, completion/validation reports, RECOVERY_REPORT.md all updated | 2026-07-26 |
+
+### R5 — Notification Integration
+
+The existing `notify()` service is now called at all four approval lifecycle
+transitions — no parallel notification system was created.
+
+- `requestTaskApproval()` → `"Approval Requested"` notification
+- `grantTaskApproval()` → `"Approval Granted"` notification  
+- `rejectTaskApproval()` → `"Approval Rejected"` notification (new)
+- `runTask()` expiry path → `"Approval Expired"` notification
+
+### Updated Validation
+
+- Orchestration suite: **17/17 passing** (12 original + 5 notification tests).
+- Full workforce suite: **44/44 passing** (orchestration + phase1to7, zero regressions).
+- Notification tests prove each event fires **exactly once** with correct subject.
+- No new typecheck errors.
+
+### Updated Files (since original completion)
+
+| File | Change |
+|------|--------|
+| `hermes/services/workforce/orchestration.ts` | Added `rejectTaskApproval()`, notification calls at all 4 approval lifecycle points |
+| `workers/tests/hermes.workforce.orchestration.test.ts` | 5 new notification tests, `vi` import, duplicate line fix |

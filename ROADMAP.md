@@ -144,7 +144,7 @@ tests, other-epic tests — remain untouched and out of scope). See
 `docs/operations/EPIC-003-004_VALIDATION_REPORT.md` and
 `docs/operations/EPIC-003-004_COMPLETION_REPORT.md`.
 
-### EPIC-003-005 — Workforce Orchestration Platform ✅ Complete (2026-07-20)
+### EPIC-003-005 — Workforce Orchestration Platform ✅ Complete (2026-07-26)
 
 Coordinates multiple agents to deliver an objective as a governed, auditable
 workflow — reusing the existing execution foundations (Work Planner, Execution
@@ -164,11 +164,14 @@ missing approvals.
 | M7 · Admin read-only `adminViewWorkflows` (no public route) | ✅ |
 | M8 · Orchestration test suite | ✅ |
 | M9 · Docs (roadmap, completion, validation reports) | ✅ |
+| **R4 · Recovery — sync/async bugs, queue helpers, missing reject** | ✅ (2026-07-25) |
+| **R5 · Recovery — notification integration (approval lifecycle events)** | ✅ (2026-07-26) |
+| **R6 · Recovery — documentation synchronization** | ✅ (2026-07-26) |
 
-Validation: `hermes.workforce.orchestration.test.ts` **12/12 pass**; full workers
-suite **375/375 pass**; in-scope `tsc --noEmit` clean. See
-`docs/operations/EPIC-003-005_VALIDATION_REPORT.md` and
-`docs/operations/EPIC-003-005_COMPLETION_REPORT.md`.
+Validation: `hermes.workforce.orchestration.test.ts` **17/17 pass** (12 original
++ 5 notification tests); full workforce suite **44/44 pass** (2 test files);
+notification tests prove each event fires exactly once, no duplicates. See
+`docs/operations/RECOVERY_REPORT.md` for the full recovery timeline.
 
 ### Upcoming Epics (Phase 1)
 
@@ -253,6 +256,49 @@ no weakening of types to silence errors; legacy `artifacts/api-server` quarantin
 - Secret scan → clean (no leaked credentials; Cloudflare token never written to code).
 - Boundary checks (independent) → tenant isolation, agent-safety transition rejection,
   audit persistence, capability registry all verified.
+
+---
+
+## EPIC-004: Persistent Operations Platform ✅ Complete (2026-07-20)
+
+Durable state boundaries behind provider-neutral seams — audit, workflow, agent
+state, persistence provider, tenant enforcement. All Hermes-owned truth moved
+behind swappable backends (Memory ships; D1/Postgres/KV are future seams). No D1
+coupling, no vendor lock-in, fail-closed tenant wall. See
+`docs/operations/EPIC-004_*.md` (validation / roadmap / architecture / testing /
+final reports).
+
+Validation: full workers suite **415/415 pass** (40 EPIC-004 + 375 prior);
+EPIC-004 sources type-clean; secret scan clean.
+
+## EPIC-004.5: Execution Durability Alignment ✅ Complete (2026-07-20)
+
+Closes the last in-memory runtime gap: the execution queue's `ENTRIES` Map held
+execution truth in volatile memory. EPIC-004.5 moves execution truth behind a
+provider-neutral `ExecutionStore` and refactors the queue into a coordinator.
+
+| Deliverable | Status |
+|---|---|
+| PHASE 1 · Execution domain contracts (ExecutionTask/Attempt/Transition/Result) | ✅ |
+| PHASE 2 · ExecutionStore boundary + MemoryExecutionBackend (no DB impl) | ✅ |
+| PHASE 3 · Execution queue → coordinator (state lives in store, not queue) | ✅ |
+| PHASE 4 · Approval durability (approver/at/scope/expiry; lost/expired/unknown → DENY) | ✅ |
+| PHASE 5 · Recovery model (restart simulation; no dup exec, no approval bypass) | ✅ |
+| PHASE 6 · Integration validation (tests/typecheck/secret scan) | ✅ |
+| PHASE 7 · Architecture review (7 questions answered) | ✅ |
+
+**Key results:**
+- Execution truth now lives in `persistence/execution-store.ts` (canonical
+  `ExecutionStore` boundary), not the queue's in-memory Map.
+- Reuses the canonical task lifecycle transitions (no duplicate state machine);
+  approval + running gated by durable record, fail-closed.
+- Tenant isolation enforced on every store op via EPIC-004 `enforceTenant`.
+- D1/Postgres/KV remain future seams — only the `ExecutionPersistenceBackend`
+  interface references them (no imports, no coupling).
+
+Validation: EPIC-004.5 tests **19/19 pass**; full workers suite **434/434 pass**
+(0 regressions vs 415 baseline); EPIC-004.5 sources type-clean; secret scan clean.
+See `docs/operations/EPIC-004.5_*.md`.
 
 ---
 
