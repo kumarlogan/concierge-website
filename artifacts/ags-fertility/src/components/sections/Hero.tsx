@@ -33,7 +33,7 @@ export function Hero() {
             </div>
             )}
             
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-semibold text-foreground tracking-tight leading-[1.1] mb-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-semibold text-foreground tracking-tight leading-[1.1] mb-6">
               Because Every Family's Journey <span className="text-primary">Deserves Personal Care.</span>
             </h1>
             
