@@ -14,6 +14,28 @@
 
 ## Decision Entries
 
+### D-009 — Phase 2 Scope & Patient Identity Architecture
+
+**Date:** 2026-07-25
+**Status:** 📋 In Planning
+**Category:** Product · Scope · Architecture
+
+| Field | Value |
+|---|---|
+| **Decision ID** | D-009 |
+| **Date** | 2026-07-25 |
+| **Status** | 📋 In Planning (Phase Gate awaiting approval) |
+| **Category** | Product · Scope · Architecture |
+| **Summary** | Phase 2 — Patient Workflow Platform scope approved: Patient Identity & Authentication (Epic 2.1), Patient Portal & Dashboard (Epic 2.2), Secure Document Upload (Epic 2.3), Appointment Management (Epic 2.4), Concierge Messaging (Epic 2.5). First deliverable: Sprint 2.1.1 — Architecture & Data Model (design-only, no implementation). |
+| **Rationale** | Phase 1 established the operational foundation. Phase 2 transforms Concierge from an internal operations tool into a patient-accessible service. The architecture-first approach (Sprint 2.1.1) ensures PHI compliance, provider-neutral identity boundaries, and backward compatibility before any patient-facing code is written. |
+| **Impact** | 5 new epics across Phase 2. New database tables for patient data with PHI segregation. `PatientIdentityResolver` seam in the identity pipeline. Patient-specific RBAC roles and permissions. R2 document storage activated. All Phase 2 work gated by security review. |
+| **Related ADRs** | ADR-001 (architecture principles), ADR-003 (data model) |
+| **Related Phase** | Phase 2 — Patient Workflow Platform |
+| **Related Epic** | Epic 2.1 — Patient Identity & Authentication |
+| **Related Sprint** | Sprint 2.1.1 — Architecture & Data Model |
+
+---
+
 ### D-008 — Production Enablement & Phase Gate Framework
 
 **Date:** 2026-07-26
