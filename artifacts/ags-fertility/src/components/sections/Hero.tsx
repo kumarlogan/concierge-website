@@ -28,7 +28,7 @@ export function Hero() {
           >
             <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm text-primary mb-6">
               <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
-              Canadian Coordination to Bangalore, India
+              Because Every Family's Journey Deserves Personal Care
             </div>
             
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-semibold text-foreground tracking-tight leading-[1.1] mb-6">
