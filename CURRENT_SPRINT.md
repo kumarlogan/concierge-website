@@ -11,7 +11,7 @@
 **Sprint ID:** EPIC-002
 **Start Date:** 2026-07-18
 **Target End Date:** TBD
-**Status:** 🚧 In Progress — EPIC-002-004-IMPL (Operations Bot MVP) Complete; next milestone EPIC-002-005 (Hermes Admin Bot)
+**Status:** 🚧 In Progress — EPIC-002-005 (Admin Bot) Complete; next milestone EPIC-002-006 (Workforce Activation Platform)
 
 ---
 
@@ -159,7 +159,7 @@ These are **explicitly excluded** from the RBAC data foundation task:
 | EPIC-002-003B | Telegram Operations Bot (Ops API client) | 🟠 High | ✅ Done | Hermes |
 | EPIC-002-004 | Operations Telegram Bot — Specification & Architecture | 🟠 High | ✅ Done (spec + impl) | Hermes |
 | EPIC-002-004-IMPL | Operations Telegram Bot — Implementation (per spec) | 🟠 High | ✅ Done | Hermes |
-| EPIC-002-005 | Hermes Admin Bot | 🟡 Medium | ⬜ Not Started | Hermes |
+|| EPIC-002-005 | Hermes Admin Bot | 🟡 Medium | ✅ Done | Hermes |
 
 ---
 
@@ -181,4 +181,4 @@ These are **explicitly excluded** from the RBAC data foundation task:
 ---
 
 **Previous Sprint:** EPIC-001 — Backend Foundation (✅ Complete, 10/10)
-**Next Sprint:** EPIC-002-005 (Hermes Admin Bot — owner-only infrastructure/deploy control via the Workers API; spec pending)
+**Next Sprint:** EPIC-002-006 (Workforce Activation Platform — agent lifecycle activation, approval gates, and safety enforcement)

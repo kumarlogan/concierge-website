@@ -173,6 +173,27 @@ Validation: `hermes.workforce.orchestration.test.ts` **17/17 pass** (12 original
 notification tests prove each event fires exactly once, no duplicates. See
 `docs/operations/RECOVERY_REPORT.md` for the full recovery timeline.
 
+### EPIC-002-005 — Hermes Control Plane — Admin Bot Foundation ✅ Complete (2026-07-25)
+
+A Telegram Admin Bot (Control Plane) for platform administrators — built as a
+separate webhook (`POST /admin/webhook`) alongside the existing Operations Bot.
+All commands are **read-only**; `/deploy` explicitly warns that deployment actions
+require the Hermes Admin Console or local CLI. Reuses the same RBAC engine,
+`TelegramIdentityResolver`, and `requirePermission()` middleware as the Operations Bot.
+
+| Deliverable | Status |
+|---|---|
+| `workers/src/routes/adminBot.ts` — 12 commands + callAdmin dispatch | ✅ |
+| `/admin/webhook` route wired in `workers/src/index.ts` | ✅ |
+| Two permission tiers (`hermes:admin:read`, `hermes:admin:audit-read`) | ✅ |
+| AdminPrincipal adapter bridging identity/types ↔ platform-api Principal | ✅ |
+| User-safe formatting (no internals leaked) + renderAuthError | ✅ |
+| Read-only gate on `/deploy` | ✅ |
+| 23 integration tests (`tests/admin/bot.integration.test.ts`) | ✅ |
+| Docs (CHANGELOG, ARCHITECTURE, ROADMAP) | ✅ |
+
+Validation: **462/462 tests pass** (441 prior + 23 admin bot); zero TypeScript regressions.
+
 ### Upcoming Epics (Phase 1)
 
 | Epic | Description | Status |

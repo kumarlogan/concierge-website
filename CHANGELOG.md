@@ -1,8 +1,51 @@
 # Changelog
 
-> Release history for the AG Synergy Platform.
+|> Release history for the AG Synergy Platform.
 > Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 > Versioning: [Semantic Versioning](https://semver.org/)
+
+---
+
+## [1.6.0] — EPIC-002-005: Hermes Control Plane — Admin Bot Foundation
+
+**Date:** 2026-07-25
+**Status:** ✅ Complete
+**Epic:** 2 — Operations Platform Foundation (Control Plane)
+
+### Added
+
+- **`workers/src/routes/adminBot.ts`** — Hermes Admin Bot (Control Plane) Telegram webhook handler:
+  - `POST /admin/webhook` route registered in `workers/src/index.ts`.
+  - **Identity** — same `TelegramIdentityResolver` as the Operations Bot, resolves `X-Telegram-Chat-Id` → `users.external_id` via the auth engine.
+  - **Authorization** — every command runs through `requirePermission()` against `hermes:admin:read` (read-only), `hermes:admin:audit-read` (security/audit). Deny-wins + OWNER short-circuit.
+  - **Command set** — `/start /help /health /status /version /workforce /agents /workflows /providers /deploy /security /approvals`, plus unknown-command handling and `@BotName` suffix stripping.
+  - **`callAdmin()` direct dispatch** — same pattern as `callOps()`: the bot runs the auth gate then invokes internal handler functions directly (no HTTP round-trip). All commands share the `AdminPrincipal` adapter that bridges `@hermes/identity/types` Principal to `@hermes/contracts/platform-api` Principal.
+  - **User-safe formatting** — no stack traces, SQL, tokens, or internal IDs leaked to chat. `renderAuthError()` maps 401/403 → safe messages; command responses are formatted Telegram markdown.
+  - **Read-only gate** — `/deploy` renders deployment status with a warning that deployment actions require the Hermes Admin Console or local CLI. No write side-effects from any command.
+- **`workers/tests/admin/bot.integration.test.ts`** — 23 integration tests (real Miniflare D1, seeded RBAC):
+  - Webhook ingress (private chat, malformed JSON, empty body)
+  - Authorization (OWNER allow, ADMIN allow, VIEWER deny, GUEST deny)
+  - All read-only commands (`/start /help /health /status /version /workforce /agents /workflows /providers /deploy`)
+  - Audit/security commands (`/security /approvals`, VIEWER denial)
+  - Unknown commands and edge cases (`/help@AdminBot`, trailing whitespace)
+
+### Changed
+
+- **`workers/src/index.ts`** — added `POST /admin/webhook` route importing `adminBotWebhook` from `./routes/adminBot.js`.
+- **`workers/src/routes/telegram.ts`** — updated `/help` text to cross-reference the Admin Bot's available commands.
+
+### Verified
+
+- ✅ **462/462 tests pass** (441 prior + 23 new admin bot integration).
+- ✅ **Zero TypeScript regressions** in new code — all pre-existing type issues in `hermes/services/` and `hermes/admin/access.ts` are unchanged.
+- ✅ **Two permission tiers** — `hermes:admin:read` for read-only commands, `hermes:admin:audit-read` for security/audit commands.
+- ✅ **All commands read-only** — no write side-effects; `/deploy` explicitly warns.
+- ✅ **No production code touched** outside the new admin bot route and its wiring.
+
+### Notes
+
+- Runtime secret (Telegram bot token, BotFather registration) is **out of scope** — the handler is wire-ready; deployment requires a bot token + registered webhook at the `/admin/webhook` path.
+- All 23 admin bot tests pass in isolation **and** alongside the full 34-file test suite.
 
 ---
 

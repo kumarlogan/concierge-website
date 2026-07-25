@@ -416,7 +416,7 @@ function renderHelp(): string {
     "/leads — list recent leads (top 10)",
     "/lead <id> — full detail for one lead",
     "",
-    "_Read-only MVP. More commands coming soon._",
+    "🏗️ *Admin*: This bot is for leads operations only. The *Hermes Admin Bot* handles platform administration (separate webhook).",
   ].join("\n");
 }
 

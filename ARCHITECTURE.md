@@ -256,6 +256,16 @@ logic in the route or service code.
   (command parsing, identity, RBAC enforcement, user-safe formatting) in
   `workers/tests/telegram/bot.integration.test.ts`. Full suite: **141 tests passing**.
 
+#### Admin Bot (EPIC-002-005 — Live)
+
+The Hermes **Admin Bot** is a control-plane Telegram bot for platform administrators. It runs at `POST /admin/webhook` (separate webhook from the Operations Bot to keep command namespaces and authorization scopes independent).
+
+- **Architecture** — `Telegram update → /admin/webhook → requirePermission() → adminBot.ts handler → sendMessage reply`. Same `TelegramIdentityResolver` + `requirePermission()` gate as the Operations Bot. Direct dispatch via `callAdmin()` — no HTTP round-trip.
+- **Command namespace** — `/start /help /health /status /version /workforce /agents /workflows /providers /deploy /security /approvals`. All commands are **read-only**; `/deploy` explicitly warns that deployment actions require the Hermes Admin Console or local CLI (no write side-effects from Telegram).
+- **Permission tiers** — `hermes:admin:read` gates all read-only commands; `hermes:admin:audit-read` gates `/security` and `/approvals`. Same RBAC engine, same D1-permission store.
+- **Principal adapter** — `AdminPrincipal` bridges the `@hermes/identity/types` Principal (returned by `requirePermission`) to the `@hermes/contracts/platform-api` Principal expected by admin facade functions in `@hermes/admin/`.
+- **Tests** — 23 integration tests in `workers/tests/admin/bot.integration.test.ts`. Full suite: **462 tests passing** (441 prior + 23 admin bot).
+
 ### API Design Principles
 
 - **RESTful** — resource-oriented endpoints with standard HTTP methods and status codes

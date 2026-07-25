@@ -89,6 +89,12 @@ router.post("/telegram/webhook", (request, env, _params) =>
   telegramWebhook(request, env, _params),
 );
 
+// ── Hermes Admin Bot (EPIC-002-005) ──────────────────────────
+import { adminWebhook } from "./routes/adminBot.js";
+router.post("/admin/webhook", (request, env, _params) =>
+  adminWebhook(request, env, _params),
+);
+
 // ── Catch-all for non-API requests ──────────────────────────
 // Handles any request that doesn't match an /api/v1/ route.
 // The router itself returns 404 for unmatched /api/v1/* paths;
