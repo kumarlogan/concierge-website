@@ -9,6 +9,40 @@
 import type { AuditEvent, AuditQuery, AuditStore } from "../../shared/interfaces/audit.js";
 import { enforceTenant } from "../persistence/tenant.js";
 import type { Principal } from "../contracts/platform-api.js";
+import { createProductionAuditStore, type FileBackendDeps } from "./store.durable.js";
+
+/**
+ * EPIC-005.9 (P2): production wiring (env-gated, deferred init).
+ *
+ * The default store is in-memory (dev/test). Production calls
+ * `configureFileAuditStore(path, fs)` once at startup to swap the active
+ * store to a restart-safe FileAuditBackend. The function is only CALLED at
+ * runtime (never at module load), so there is no circular-init hazard with
+ * `store.durable.js`. Existing tests that import `defaultAuditStore` keep
+ * the in-memory behavior.
+ *
+ * The instance is created lazily (first access) so the `MemoryAuditStore`
+ * class below is fully declared before it is instantiated — avoiding a
+ * "used before declaration" error.
+ */
+let activeAuditStore: AuditStore | null = null;
+
+function getStore(): AuditStore {
+  if (activeAuditStore === null) activeAuditStore = new MemoryAuditStore();
+  return activeAuditStore;
+}
+
+/** Swap the active persistence boundary (called once in production startup). */
+export function configureFileAuditStore(filePath: string, fs: FileBackendDeps): void {
+  activeAuditStore = createProductionAuditStore({ filePath, fs });
+}
+
+/** Process-wide default store (the active persistence boundary). */
+export const defaultAuditStore: AuditStore = new Proxy({} as AuditStore, {
+  get(_t, prop) {
+    return (getStore() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+}) as unknown as AuditStore;
 
 /** Append-only in-memory store. Safe for workers edge (single isolate). */
 export class MemoryAuditStore implements AuditStore {
@@ -57,9 +91,6 @@ export class MemoryAuditStore implements AuditStore {
     this.seq = 0;
   }
 }
-
-/** Process-wide default store (the active persistence boundary). */
-export const defaultAuditStore: AuditStore = new MemoryAuditStore();
 
 /** Re-export the canonical type for convenience. */
 export type { AuditEvent, AuditQuery, AuditStore } from "../../shared/interfaces/audit.js";

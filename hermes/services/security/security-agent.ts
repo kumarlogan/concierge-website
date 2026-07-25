@@ -15,6 +15,8 @@
 import {
   resolveProviderForCapability,
   executeCapability,
+  capabilityApprovalRequirement,
+  grantStackBApproval,
   type ManagedProvider,
 } from "../activation/provider-framework.js";
 import { emitAudit } from "../../audit/event.js";
@@ -155,8 +157,16 @@ export async function runSecurityScan(
   }
 
   // 4) Execute through the framework (handles approval gate + fail-closed).
+  // EPIC-005.9 (P1): the security agent NO LONGER self-issues a token. If the
+  // capability requires approval in this env, it mints a durable ApprovalRef
+  // through the human approval queue — the only issuer of approval refs. The
+  // gateway then verifies that ref against durable state (single model).
   emitAudit("sec.scan.start", agent.id, { requestId: req.requestId, capability, providerId: provider.id });
-  const res = await executeCapability(capability, { request: req }, { actor: agent.id, env: req.env, approvalToken: req.approvalRequirement.required ? "human-token" : undefined });
+  const needsExecApproval = capabilityApprovalRequirement(capability, req.env);
+  const approvalRef = needsExecApproval
+    ? await grantStackBApproval(agent.id, req.targetApplication ?? "unknown", "sec.scan", req.env)
+    : undefined;
+  const res = await executeCapability(capability, { request: req }, { actor: agent.id, env: req.env, approvalRef });
   if (!res.ok) {
     emitAudit("sec.scan.failed", agent.id, { requestId: req.requestId, capability, error: res.error });
     return { requestId: req.requestId, capability, providerId: provider.id, executed: false, findings: [], error: res.error };

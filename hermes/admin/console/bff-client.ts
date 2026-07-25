@@ -36,8 +36,10 @@ export class LocalBffClient implements BffClient {
       // Surface as a typed, redacted failure — never leak internals.
       return {
         ok: false,
-        code: "BFF_DOMAIN_ERROR",
-        message: `domain '${id}' unavailable`,
+        error: {
+          code: "BFF_DOMAIN_ERROR",
+          message: `domain '${id}' unavailable`,
+        },
       };
     }
   }

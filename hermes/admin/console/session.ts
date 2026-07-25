@@ -14,6 +14,7 @@
 // └─────────────────────────────────────────────────────────────┘
 
 import type { Principal } from "../../contracts/platform-api.js";
+import type { AdminRole } from "../access.js";
 
 /**
  * Branded type. The brand is a compile-time + runtime signal that this
@@ -103,14 +104,14 @@ export class ConsoleSession {
 }
 
 /** Lightweight role hint for display (authoritative role lives in access.ts). */
-function deriveRoleHint(permissions: string[]): string {
+export function deriveRoleHint(permissions: string[]): AdminRole {
   if (permissions.includes("hermes:admin:role-grant")) return "owner";
   if (permissions.includes("hermes:admin:workforce-write") || permissions.includes("hermes:admin:resource-write"))
     return "platform-admin";
   if (permissions.includes("hermes:admin:task-write")) return "operator";
   if (permissions.includes("hermes:admin:audit-read")) return "auditor";
   if (permissions.includes("hermes:admin:read")) return "viewer";
-  return "none";
+  return "viewer";
 }
 
 // NOTE: This module imports only the Principal contract type. It holds the

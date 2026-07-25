@@ -23,7 +23,12 @@ import {
   type TaskState,
 } from "../agents/task.js";
 import type { ApprovalRequest } from "../../agents/tool-contracts.js";
-import { resolveProviderForCapability, executeCapability, capabilityApprovalRequirement } from "./provider-framework.js";
+import {
+  resolveProviderForCapability,
+  executeCapability,
+  capabilityApprovalRequirement,
+  grantStackBApproval,
+} from "./provider-framework.js";
 import {
   decideGate,
   gateForApproval,
@@ -93,12 +98,19 @@ export function selectProvider(capability: string): string | undefined {
 
 /**
  * 3) Generate — run the code generation capability through the framework.
+ * EPIC-005.9 (P1): when the capability requires approval, the caller must
+ * supply a durable ApprovalRef (minted via the human queue), never a string
+ * token. The framework's single boundary verifies it fail-closed.
  */
-export async function generateCode(spec: DevTaskSpec, plan: string, approvalToken?: string): Promise<unknown> {
+export async function generateCode(
+  spec: DevTaskSpec,
+  plan: string,
+  approvalRef?: import("../execution/gateway/approval.js").ApprovalRef,
+): Promise<unknown> {
   const res = await executeCapability("dev.code.generate", { prompt: spec.prompt, plan }, {
     actor: spec.agentId,
     env: spec.env,
-    approvalToken,
+    approvalRef,
   });
   if (!res.ok) throw new Error(res.error ?? "generation failed");
   return res.data;
@@ -122,7 +134,11 @@ export function validateInternally(generated: unknown): { ok: boolean; detail?: 
  * proceed without a security review) rather than skipping silently.
  */
 export async function securityReview(agentId: string, applicationId: string, env: Environment): Promise<{ ok: boolean; findings?: string }> {
-  const res = await executeCapability("sec.scan", { applicationId }, { actor: agentId, env });
+  const needsExecApproval = capabilityApprovalRequirement("sec.scan", env);
+  const approvalRef = needsExecApproval
+    ? await grantStackBApproval(agentId, applicationId, "sec.scan", env)
+    : undefined;
+  const res = await executeCapability("sec.scan", { applicationId }, { actor: agentId, env, approvalRef });
   if (!res.ok) {
     emitAudit("dev.security.skipped", agentId, { applicationId, reason: res.error });
     return { ok: false, findings: res.error };
@@ -186,6 +202,9 @@ export async function runDeveloperAgent(
   const providerId = selectProvider("dev.code.generate");
 
   // 3) Generate — production code-gen requires explicit human approval.
+  // EPIC-005.9 (P1): the developer-automation gate still surfaces a pending
+  // ApprovalRequest (human queue). When a human grant is present, we mint a
+  // durable ApprovalRef for the Stack B execution boundary — never a string.
   let generated: unknown;
   const genNeedsApproval = capabilityApprovalRequirement("dev.code.generate", spec.env);
   if (genNeedsApproval && !approvalToken) {
@@ -193,8 +212,11 @@ export async function runDeveloperAgent(
     emitAudit("dev.agent.awaiting_approval", spec.agentId, { taskId: task.id, approvalId: approval.id, gate: "dev.code.generate" });
     return { taskId: task.id, plan: plan.plan, approval, state: "awaiting_approval" };
   }
+  const genApprovalRef = genNeedsApproval && approvalToken
+    ? await grantStackBApproval(spec.agentId, spec.applicationId, "dev.code.generate", spec.env)
+    : undefined;
   try {
-    generated = await generateCode(spec, plan.plan!, approvalToken);
+    generated = await generateCode(spec, plan.plan!, genApprovalRef);
   } catch (err) {
     return { taskId: task.id, plan: plan.plan, state: "failed", error: String(err) };
   }

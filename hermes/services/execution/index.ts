@@ -1,26 +1,16 @@
 // ┌─────────────────────────────────────────────────────────────┐
-// │ Hermes Execution Platform — Service Barrel                     │
-// │ EPIC-003-001 · Composition root for the execution plane.       │
-// │ Re-exports the seven deliverables and wires them through the   │
-// │ existing activation + agents foundations (no redesign).        │
+// │ Hermes Platform — Execution module barrel                  │
+// │ EPIC-003-001 · Execution Platform                         │
+// │ Re-exports the execution queue, planner, and dispatcher so  │
+// │ the platform can consume them via services.Execution.       │
 // └─────────────────────────────────────────────────────────────┘
 
+export * from "./execution-queue.js";
 export * from "./work-planner.js";
 export * from "./workforce-dispatch.js";
-export * from "./execution-queue.js";
-export * from "./review-pipeline.js";
-export * from "./simulation.js";
-
-// Re-export the activation building blocks this plane composes, so callers
-// have a single import surface for the execution platform.
-export {
-  resolveProviderForCapability,
-  listActiveProviders,
-  registerProvider,
-  enableProvider,
-  disableProvider,
-} from "../activation/provider-framework.js";
-export { orchestrate, DEFAULT_ORCHESTRATION } from "../activation/orchestrator.js";
-export { gateForApproval, enforceGate, decideGate } from "../activation/approval-gates.js";
-export { runDeveloperAgent } from "../activation/developer-agent.js";
-export { registerGitProvider, GIT_PROVIDER_ID } from "../activation/git-provider.js";
+export * from "./execution-coordinator.js";
+// EPIC-004.6 — Platform trust hardening (provider-neutral boundaries).
+export * from "./policy-evaluator.js";
+export * from "./idempotency.js";
+export * from "./lease.js";
+export * from "./metrics.js";

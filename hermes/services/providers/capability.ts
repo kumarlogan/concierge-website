@@ -68,6 +68,8 @@ export interface CapabilityRegistry {
   list(provider?: ProviderName): Capability[];
   /** True when a capability is available. */
   has(id: string): boolean;
+  /** Owner provider id of a capability (first registrant). Undefined if absent. */
+  ownerOf(id: string): ProviderName | undefined;
 }
 
 /** Default in-memory registry. */
@@ -86,6 +88,9 @@ export class MemoryCapabilityRegistry implements CapabilityRegistry {
   }
   has(id: string): boolean {
     return this.caps.has(id);
+  }
+  ownerOf(id: string): ProviderName | undefined {
+    return this.caps.get(id)?.provider;
   }
 }
 

@@ -27,7 +27,7 @@ import {
   validateInternally,
   securityReview,
 } from "../activation/developer-agent.js";
-import { capabilityApprovalRequirement } from "../activation/provider-framework.js";
+import { capabilityApprovalRequirement, grantStackBApproval, type ApprovalRef } from "../activation/provider-framework.js";
 import { emitAudit } from "../../audit/event.js";
 
 export { registerClaudeCodeProvider, setClaudeCodeExecutor, CLAUDE_CODE_PROVIDER_ID };
@@ -121,13 +121,20 @@ export async function runDeveloperTask(
     };
   }
 
+  // EPIC-005.9 (P1): when a human grant is present (simulation or real), mint a
+  // durable ApprovalRef via the human queue — never a bare string token.
+  let genApprovalRef: ApprovalRef | undefined;
+  if (needsApproval && opts.approvalToken) {
+    genApprovalRef = await grantStackBApproval(opts.actor, req.targetApplication, "dev.code.generate", env);
+  }
+
   // A lightweight plan is required for generateCode; reuse objective as prompt.
   let generated: unknown;
   try {
     generated = await generateCode(
       { agentId: opts.actor, applicationId: req.targetApplication, prompt: req.objective, env },
       req.objective,
-      opts.approvalToken,
+      genApprovalRef,
     );
   } catch (err) {
     return {

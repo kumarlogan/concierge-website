@@ -36,6 +36,8 @@ export interface ToolResult {
   error?: string;
   /** Backend that produced the result (provenance). */
   backend: string;
+  /** Set true when the result is a dry-run plan, not an actual execution. */
+  dryRun?: boolean;
 }
 
 /**

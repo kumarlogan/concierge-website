@@ -99,7 +99,6 @@ export const claudeCodeToolProvider: ToolProvider = {
     return EXECUTOR(call.tool, call.args, {
       actor: call.actor,
       env: call.env,
-      approvalToken: call.approvalToken,
     });
   },
 };

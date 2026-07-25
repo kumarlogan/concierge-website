@@ -51,7 +51,7 @@ export function assertHumanPrincipal(principal: Principal): void {
 
 /** Check a single admin permission on a human principal. */
 export function adminHasPermission(principal: Principal, perm: AdminPermission): boolean {
-  return principal.permissions.includes(perm);
+  return principal.permissions.has ? principal.permissions.has(perm) : principal.permissions.includes(perm);
 }
 
 /** Require a single admin permission or throw (used as a guard). */
@@ -75,15 +75,15 @@ export function requireDomainRead(principal: Principal, domain: keyof typeof DOM
  * This is a VIEW of permissions, never an authority grant.
  */
 export function deriveAdminRole(principal: Principal): AdminRole {
-  if (principal.permissions.includes("hermes:admin:role-grant")) return "owner";
+  if (adminHasPermission(principal, "hermes:admin:role-grant")) return "owner";
   if (
-    principal.permissions.includes("hermes:admin:workforce-write") ||
-    principal.permissions.includes("hermes:admin:resource-write")
+    adminHasPermission(principal, "hermes:admin:workforce-write") ||
+    adminHasPermission(principal, "hermes:admin:resource-write")
   )
     return "platform-admin";
-  if (principal.permissions.includes("hermes:admin:task-write")) return "operator";
-  if (principal.permissions.includes("hermes:admin:audit-read")) return "auditor";
-  if (principal.permissions.includes("hermes:admin:read")) return "viewer";
+  if (adminHasPermission(principal, "hermes:admin:task-write")) return "operator";
+  if (adminHasPermission(principal, "hermes:admin:audit-read")) return "auditor";
+  if (adminHasPermission(principal, "hermes:admin:read")) return "viewer";
   throw new Error(`Principal ${principal.id} holds no admin permission; cannot derive role`);
 }
 

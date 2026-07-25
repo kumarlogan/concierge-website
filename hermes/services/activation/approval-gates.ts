@@ -18,6 +18,7 @@ import {
   type ApprovalRequest,
   requestApproval,
 } from "../../agents/tool-contracts.js";
+import { grantStackBApproval, type ApprovalRef } from "./provider-framework.js";
 
 export type GateAction =
   | "git.commit"
@@ -117,17 +118,18 @@ function gateActionToNamespace(a: string): "tool:code.read" | "tool:code.write" 
 }
 
 /**
- * Guard helper: throws if the decision is "human" and no approval token is
- * present. Used by git/provider operations to enforce fail-closed.
+ * EPIC-005.9 (P1) — M6 now mints a durable ApprovalRef for git actions.
+ *
+ * The legacy string approval-token path is removed: the ONLY way to obtain a
+ * ref is the human approval queue (grantStackBApproval). The structured ref is
+ * verified fail-closed by the execution gateway — no bare string can satisfy
+ * a git approval gate.
  */
-export function enforceGate(
-  action: GateAction,
+export async function grantGitApproval(
+  actor: string,
+  applicationId: string,
+  action: string,
   env: Environment,
-  approvalToken?: string,
-): void {
-  const d = decideGate(action, env);
-  if (d.decision === "human" && !approvalToken) {
-    emitAudit("gate.denied", "system", { action, env, reason: "missing approval token" });
-    throw new Error(`Gate denied: ${d.reason}`);
-  }
+): Promise<ApprovalRef> {
+  return grantStackBApproval(actor, applicationId, action, env);
 }

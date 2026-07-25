@@ -128,3 +128,115 @@ export class MemoryAuditBackend implements AuditPersistenceBackend {
 export function createMemoryDurableAuditStore(): DurableAuditStore {
   return createDurableAuditStore(new MemoryAuditBackend());
 }
+
+/**
+ * File-backed append-only audit backend (JSON-lines).
+ *
+ * EPIC-005.9 (P2): makes the audit trail survive restarts. Each event is
+ * appended as one JSON object per line to a single file; queries stream the
+ * file and filter in memory. Writes are synchronous within a single isolate
+ * (workers edge: one isolate) and never throw on a single bad line — a
+ * corrupt line is skipped so one bad record cannot wedge the whole trail.
+ *
+ * Provider-neutral: takes an absolute path + a `writeFileSync`/`readFileSync`/
+ * `appendFileSync`/`existsSync` implementation so it works on Node (prod/build
+ * verification) and can be shimmed on edge runtimes. No D1/Cloudflare
+ * assumptions live here.
+ */
+export interface FileBackendDeps {
+  readFileSync: (path: string, encoding: BufferEncoding) => string;
+  writeFileSync: (path: string, data: string, encoding: BufferEncoding) => void;
+  appendFileSync: (path: string, data: string, encoding: BufferEncoding) => void;
+  existsSync: (path: string) => boolean;
+}
+
+export class FileAuditBackend implements AuditPersistenceBackend {
+  private static readonly MAX_LINES = 1_000_000;
+
+  constructor(
+    private readonly filePath: string,
+    private readonly fs: FileBackendDeps,
+  ) {}
+
+  private readAll(): AuditEvent[] {
+    if (!this.fs.existsSync(this.filePath)) return [];
+    const raw = this.fs.readFileSync(this.filePath, "utf8");
+    if (!raw.trim()) return [];
+    const out: AuditEvent[] = [];
+    for (const line of raw.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        out.push(JSON.parse(trimmed) as AuditEvent);
+      } catch {
+        // Skip a corrupt line rather than failing the whole query.
+        continue;
+      }
+    }
+    return out;
+  }
+
+  append(event: AuditEvent): void {
+    const id = event.id ?? `audit_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const at = event.at ?? new Date().toISOString();
+    const line = JSON.stringify({ ...event, id, at }) + "\n";
+    this.fs.appendFileSync(this.filePath, line, "utf8");
+  }
+
+  query(filter: AuditQuery = {}): AuditEvent[] {
+    let out = this.readAll();
+    if (filter.type) out = out.filter((e) => e.type === filter.type);
+    if (filter.category) out = out.filter((e) => e.category === filter.category);
+    if (filter.actor) out = out.filter((e) => e.actor === filter.actor);
+    if (filter.resource) out = out.filter((e) => e.resource === filter.resource);
+    if (filter.decision) out = out.filter((e) => e.decision === filter.decision);
+    if (filter.tenant) out = out.filter((e) => e.tenant === filter.tenant);
+    if (filter.workflow) out = out.filter((e) => e.workflow === filter.workflow);
+    if (filter.since) out = out.filter((e) => e.at >= filter.since!);
+    if (filter.until) out = out.filter((e) => e.at <= filter.until!);
+    if (typeof filter.limit === "number" && filter.limit >= 0) {
+      out = out.slice(-filter.limit);
+    }
+    return out.map((e) => ({ ...e }));
+  }
+
+  clear(): void {
+    this.fs.writeFileSync(this.filePath, "", "utf8");
+  }
+}
+
+/**
+ * Build the production audit store. When `filePath` is provided, returns a
+ * DurableAuditStore over a FileAuditBackend (restart-safe). Otherwise returns
+ * the in-memory store (dev/test default) so existing test expectations hold.
+ */
+export function createProductionAuditStore(
+  opts: { filePath?: string; fs?: FileBackendDeps } = {},
+): AuditStore {
+  if (opts.filePath && opts.fs) {
+    return createDurableAuditStore(new FileAuditBackend(opts.filePath, opts.fs));
+  }
+  // In-memory fallback (dev/test). Mirrors MemoryAuditStore without creating a
+  // circular dependency back into store.ts.
+  const mem: AuditEvent[] = [];
+  let seq = 0;
+  return {
+    append(event: AuditEvent): void {
+      const id = event.id ?? `audit_${Date.now().toString(36)}_${(seq++).toString(36)}`;
+      const at = event.at ?? new Date().toISOString();
+      mem.push({ ...event, id, at });
+    },
+    query(filter: AuditQuery = {}): AuditEvent[] {
+      let out = mem;
+      if (filter.type) out = out.filter((e) => e.type === filter.type);
+      if (filter.actor) out = out.filter((e) => e.actor === filter.actor);
+      if (filter.tenant) out = out.filter((e) => e.tenant === filter.tenant);
+      if (filter.limit != null && filter.limit >= 0) out = out.slice(-filter.limit);
+      return out.map((e) => ({ ...e }));
+    },
+    clear(): void {
+      mem.length = 0;
+      seq = 0;
+    },
+  };
+}
