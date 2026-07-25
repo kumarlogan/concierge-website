@@ -26,13 +26,15 @@ export function Hero() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="max-w-2xl"
           >
+            {false && (
             <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm text-primary mb-6">
               <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
               Because Every Family's Journey Deserves Personal Care
             </div>
+            )}
             
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-semibold text-foreground tracking-tight leading-[1.1] mb-6">
-              Your Path to Parenthood, <span className="text-primary">Guided with Care.</span>
+              Because Every Family's Journey <span className="text-primary">Deserves Personal Care.</span>
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
