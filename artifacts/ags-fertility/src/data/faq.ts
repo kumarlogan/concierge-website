@@ -21,6 +21,6 @@ export const faqData = [
   },
   {
     question: 'How am I supported after I return to Canada?',
-    answer: 'Our coordination doesn\'t end when you fly home. We facilitate communication between your specialist in India and your local obstetrician in Canada, ensuring a seamless handover of your medical records and early pregnancy monitoring protocols.'
+    answer: 'We make your transition home as smooth as possible. Before you leave India, we\'ll provide a comprehensive package of your medical records and treatment documents, ready to share with your healthcare provider in Canada.'
   }
 ];
