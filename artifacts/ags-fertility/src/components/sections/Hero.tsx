@@ -31,9 +31,11 @@ export function Hero() {
               Because Every Family's Journey Deserves Personal Care
             </div>
             
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-semibold text-foreground tracking-tight leading-[1.1] mb-6">
-              Your Path to Parenthood, <span className="text-primary">Guided with Care.</span>
-            </h1>
+            <div className="mb-6">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl" style={{ fontFamily: "'Alex Brush', cursive", lineHeight: 1.15, fontWeight: 400, color: '#2a2a2a' }}>
+                AGS Fertility<br />Concierge
+              </h1>
+            </div>
             
             <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
               Trusted fertility treatment coordination for Canadian families — connecting you with experienced specialists in Bangalore, India.
