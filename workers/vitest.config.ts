@@ -28,5 +28,14 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     // Apply D1 migrations before any tests run (runs in Node.js)
     globalSetup: ["./tests/globalSetup.ts"],
+    exclude: [
+      // Workforce persistence tests use FileWorkflowBackend with
+      // renameSync, which fails under the Cloudflare vitest pool.
+      // Run these with the Node-native hermes vitest config instead.
+      "tests/workforce-persistence.test.ts",
+      "tests/workforce-activation.test.ts",
+      // Custom-runner (non-vitest) files
+      "tests-epic0059/p1-smoke.test.ts",
+    ],
   },
 });

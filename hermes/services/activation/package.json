@@ -1,0 +1,10 @@
+{
+  "name": "@hermes/services/activation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./provider-framework.js": "./provider-framework.ts",
+    "./approval-gates.js": "./approval-gates.ts"
+  }
+}

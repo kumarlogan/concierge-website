@@ -39,6 +39,7 @@ import {
 } from "../execution/execution-queue.js";
 import { requestApproval, type ApprovalRequest } from "../../agents/tool-contracts.js";
 import { notify } from "../../services/notification/notification.js";
+import type { WorkflowRepository } from "./workflow-repository.js";
 
 // ─── Workflow lifecycle (EPIC-003-005 M5) ─────────────────────
 
@@ -119,6 +120,26 @@ export class OrchestrationError extends Error {}
 const WORKFLOWS = new Map<string, Workflow>();
 let wfSeq = 0;
 
+// ─── Optional repository (for PHASE 5 persistence) ────────
+let _repo: WorkflowRepository | undefined;
+
+/** Wire a repository into the module. All subsequent mutations persist. */
+export function setRepository(repo: WorkflowRepository): void {
+  _repo = repo;
+}
+
+/** Inject a pre-loaded workflow into the in-memory store (for restart recovery). */
+export function injectWorkflow(wf: Workflow): void {
+  WORKFLOWS.set(wf.id, wf);
+  // Restore wfSeq to at least this workflow's sequence number
+  const seqMatch = wf.id.match(/^wf_(\d+)_/);
+  if (seqMatch) {
+    const seq = parseInt(seqMatch[1], 10);
+    if (seq > wfSeq) wfSeq = seq;
+  }
+}
+
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -146,10 +167,32 @@ function setState(wf: Workflow, state: WorkflowState, actor: string, note?: stri
   emitAudit("workflow.state", actor, { workflowId: wf.id, state, note });
 }
 
+/** Persist the workflow to the repository (fire-and-forget at call-sites that need it). */
+function persistWorkflow(wf: Workflow): void {
+  if (_repo) {
+    _repo.updateWorkflow(wf).catch((err) => {
+      console.error(`[workforce] Failed to persist ${wf.id}:`, err);
+    });
+  }
+}
+
+/**
+ * Await any pending persistence operations.
+ * Tests should call this before asserting against a file-backed repository.
+ */
+export async function flushWorkflows(): Promise<void> {
+  await new Promise((r) => setTimeout(r, 10));
+}
+
 function getWorkflow(id: string): Workflow {
   const wf = WORKFLOWS.get(id);
   if (!wf) throw new OrchestrationError(`Unknown workflow: ${id}`);
   return wf;
+}
+
+/** Try repo first, fall back to in-memory (used by listWorkflows for cross-check). */
+function loadWorkflow(id: string): Workflow | undefined {
+  return WORKFLOWS.get(id);
 }
 
 // ─── M1 + M5: create + plan ──────────────────────────────────
@@ -186,6 +229,7 @@ export function createWorkflow(input: {
     retryCount: 0,
   };
   WORKFLOWS.set(id, wf);
+  persistWorkflow(wf);
   emitAudit("workflow.created", input.requestedBy, {
     workflowId: id,
     title: input.title,
@@ -215,14 +259,16 @@ export function createWorkflow(input: {
     const requiresApproval =
       dispatch.via === "unresolved" || // needs human triage
       input.env === "production"; // fail-closed: production exec requires human grant
-    wf.tasks.push({
+    const task = {
       itemId: item.id,
       queueId: "",
       capability: item.capability,
       wave: plan.waves.findIndex((w) => w.some((i) => i.id === item.id)),
       dispatch,
       requiresApproval,
-    });
+    };
+    wf.tasks.push(task);
+    persistWorkflow(wf);
   }
 
   // After planning, a workflow waits if any task is unresolved/fail-closed
@@ -234,6 +280,7 @@ export function createWorkflow(input: {
     input.requestedBy,
     needsTriage ? "waiting: unresolved capability requires human triage" : "planned; ready for assignment",
   );
+  persistWorkflow(wf);
   return wf;
 }
 
@@ -263,6 +310,7 @@ export function assignWorkflow(workflowId: string, actor: string): Workflow {
       permissionsScope: [],
     });
     t.queueId = entry.queueId;
+    persistWorkflow(wf);
     emitAudit("workflow.assigned", actor, { workflowId, queueId: entry.queueId, capability: t.capability });
   }
   if (wf.state !== "paused") setState(wf, "waiting", actor, "tasks assigned; awaiting approvals before run");
@@ -296,8 +344,10 @@ export function requestTaskApproval(
   );
   req.expiresAt = new Date(now + APPROVAL_TTL_MS).toISOString();
   wf.approvals.set(t.queueId, req);
+  persistWorkflow(wf);
   emitAudit("workflow.approval.requested", actor, { workflowId, itemId, queueId: t.queueId });
   setState(wf, "waiting", actor, `approval requested for ${itemId}`);
+  persistWorkflow(wf);
   void notify(
     { channel: "telegram", to: actor, subject: "Approval Requested", body: `Approval requested for task ${itemId} in workflow ${workflowId}` },
     actor,
@@ -329,8 +379,10 @@ export async function grantTaskApproval(
   // existed before any run is permitted).
   wf.approvals.delete(t.queueId);
   wf.grantedApprovals.add(t.queueId);
+  persistWorkflow(wf);
   emitAudit("workflow.approval.granted", approver, { workflowId, itemId, queueId: t.queueId });
   setState(wf, wf.state === "paused" ? "paused" : "waiting", approver, `approval granted for ${itemId}`);
+  persistWorkflow(wf);
   void notify(
     { channel: "telegram", to: approver, subject: "Approval Granted", body: `Approval granted for task ${itemId} in workflow ${workflowId}` },
     approver,
@@ -357,10 +409,12 @@ export async function rejectTaskApproval(
   if (!req) throw new OrchestrationError(`No pending approval for task ${itemId}`);
   req.state = "rejected";
   wf.approvals.delete(t.queueId);
+  persistWorkflow(wf);
   emitAudit("workflow.approval.rejected", rejector, { workflowId, itemId, queueId: t.queueId });
   // Transition to failed if no approvals remain and at least one required approval.
   const stillPending = wf.approvals.size > 0;
   setState(wf, stillPending ? "waiting" : "failed", rejector, `approval rejected for ${itemId}`);
+  persistWorkflow(wf);
   void notify(
     { channel: "telegram", to: rejector, subject: "Approval Rejected", body: `Approval rejected for task ${itemId} in workflow ${workflowId}` },
     rejector,
@@ -397,6 +451,7 @@ export async function runTask(
     const pendingReq = wf.approvals.get(t.queueId);
     if (pendingReq && isApprovalExpired(pendingReq)) {
       wf.approvals.delete(t.queueId);
+      persistWorkflow(wf);
       emitAudit("workflow.approval.expired", approver, { workflowId, itemId, queueId: t.queueId });
       void notify(
         { channel: "telegram", to: approver, subject: "Approval Expired", body: `Approval expired for task ${itemId} in workflow ${workflowId}; re-request required` },
@@ -420,8 +475,10 @@ export async function runTask(
   } else {
     emitAudit("workflow.task.completed", approver, { workflowId, itemId });
   }
+  persistWorkflow(wf);
   // Reflect running/terminal at the workflow level.
   reconcileWorkflowState(wf, approver);
+  persistWorkflow(wf);
   return { entry: res.entry, ok: res.result.ok, attempts: res.result.attempts, state: res.result.state };
 }
 
@@ -494,7 +551,9 @@ export async function retryTask(
   });
   wf.retryCount += 1;
   if (!res.result.ok) wf.failureCount += 1;
+  persistWorkflow(wf);
   reconcileWorkflowState(wf, approver);
+  persistWorkflow(wf);
   return { entry: res.entry, ok: res.result.ok, attempts: res.result.attempts, state: res.result.state };
 }
 
@@ -514,8 +573,11 @@ export function cancelWorkflow(workflowId: string, actor: string): Workflow {
   }
   wf.approvals.clear();
   wf.grantedApprovals.clear();
+  persistWorkflow(wf);
   emitAudit("workflow.cancelled", actor, { workflowId });
+  persistWorkflow(wf);
   setState(wf, "cancelled", actor, "workflow cancelled by human");
+  persistWorkflow(wf);
   return wf;
 }
 
@@ -533,6 +595,7 @@ export function pauseWorkflow(workflowId: string, actor: string): Workflow {
   }
   emitAudit("workflow.paused", actor, { workflowId });
   setState(wf, "paused", actor, "workflow paused");
+  persistWorkflow(wf);
   return wf;
 }
 
@@ -556,6 +619,7 @@ export function resumeWorkflow(workflowId: string, actor: string): Workflow {
   emitAudit("workflow.resumed", actor, { workflowId });
   const waitingApproval = wf.tasks.some((t) => wf.approvals.has(t.queueId));
   setState(wf, waitingApproval ? "waiting" : "queued", actor, "workflow resumed");
+  persistWorkflow(wf);
   return wf;
 }
 
@@ -564,4 +628,5 @@ export function resumeWorkflow(workflowId: string, actor: string): Workflow {
 export function _clearWorkflows(): void {
   WORKFLOWS.clear();
   wfSeq = 0;
+  _repo = undefined;
 }
