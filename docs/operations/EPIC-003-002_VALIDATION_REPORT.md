@@ -91,7 +91,7 @@ and the full vitest workers suite (green).
 ## 4. Commands to Reproduce
 
 ```bash
-cd /home/ubuntu/hermes-website/workers
+cd /home/ubuntu/concierge-website/workers
 npx vitest run tests/hermes.developer.003.test.ts   # 17/17
 npx vitest run                                      # 316/316 regression
 npx tsc --noEmit 2>&1 | grep "hermes.developer.003" # 0 errors (in-scope)

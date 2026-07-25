@@ -1,6 +1,22 @@
 # Sprints
 
-> Sprint planning, retrospectives, and progress tracking for the AG Synergy Platform.
+> Sprint planning, retrospectives, and progress tracking for the Concierge platform.
+
+## Governance Header
+
+All sprint documents shall include:
+
+```
+Company:        AGS
+Platform:       AI Platform
+Product:        Concierge
+Public Brand:   AG Synergy
+Repository:     concierge-website
+Roadmap:        Concierge Roadmap
+Phase:          ...
+Epic:           ...
+Sprint:         ...
+```
 
 ## Active Sprint
 

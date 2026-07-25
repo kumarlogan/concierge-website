@@ -3,7 +3,7 @@
 > **Mode:** STRICT PLANNING / REVIEW ONLY. No deploys, no Cloudflare/GitHub-secret
 > modifications, no credential rotation, no file deletion, no commits, no tags.
 > The human owner handles credential rotation separately (see A.2 findings).
-> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/hermes-website`
+> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/concierge-website`
 > **Prerequisite:** EPIC-002-006A.2 (script security review) — token leak confirmed.
 
 ---
@@ -127,7 +127,7 @@ archive/        → retired scripts (Category D quarantine, git-ignored or moved
 
 ## 4. .gitignore Improvements (proposed block)
 
-Append to existing `/home/ubuntu/hermes-website/.gitignore`:
+Append to existing `/home/ubuntu/concierge-website/.gitignore`:
 
 ```gitignore
 # ── Category D deprecated scripts (quarantine — contain/ref secrets) ──

@@ -1,6 +1,6 @@
 # Decision Log
 
-> Architecture Decision Records (ADRs) for the AG Synergy Platform.
+> Architecture Decision Records (ADRs) for the Concierge platform.
 > Detailed records live in [`docs/decisions/`](./docs/decisions/).
 
 ## Index

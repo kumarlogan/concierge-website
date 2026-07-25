@@ -90,7 +90,7 @@ No bots, no auth flows, no UI in that task either — enforcement layer only.
 |---|---|
 | Static website deployment | ✅ React 18 + Vite 7 + TypeScript + Tailwind CSS 4 site deployed to Cloudflare Pages. Live at agsynergy.ca and www.agsynergy.ca. |
 | Cloudflare Pages setup | ✅ Pages project `hermes-website` configured. Custom domain with www→apex redirect. Deploy hook active. |
-| GitHub workflow | ✅ Repository `kumarlogan/hermes-website` with CI/CD via GitHub Actions. `wrangler@4` deploy workflow. Push-to-main triggers deploy. |
+| GitHub workflow | ✅ Repository `kumarlogan/concierge-website` with CI/CD via GitHub Actions. `wrangler@4` deploy workflow. Push-to-main triggers deploy. |
 | Project documentation | ✅ `PROJECT.md` v1.0 — Project constitution: vision, mission, engineering principles, technology philosophy, security philosophy, AI operating philosophy, documentation policy, development workflow, future platform vision. |
 | AI Operating Model | ✅ `AI_OPERATING_MODEL.md` v1.0 — Five AI agent roles (Human Product Owner, Architecture Advisor, Implementation Engineer, Operations Assistant, QA Reviewer). Authority boundaries. Collaboration workflow. Change rules. |
 | Product Boundaries | ✅ `PRODUCT_BOUNDARIES.md` v1.0 — Platform scope definition. 9 core services. 6 exclusive healthcare provider domains. 6 permitted + 5 prohibited AI responsibilities. 5 patient data principles. 4 phases with transition rules. |

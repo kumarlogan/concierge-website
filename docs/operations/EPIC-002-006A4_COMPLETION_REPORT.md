@@ -1,6 +1,6 @@
 # EPIC-002-006A4 — Repository Hygiene Implementation: Completion Report
 
-> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/hermes-website`
+> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/concierge-website`
 > **Mode:** Implementation of trust gate (non-code, doc-only, no deploys, no secret access).
 > **Prerequisite EPICs:** A.2 (script review), A.3 (hygiene plan).
 

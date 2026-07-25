@@ -11,7 +11,7 @@
 
 **Command (authoritative gate):**
 ```bash
-cd /home/ubuntu/hermes-website/workers && npx vitest run
+cd /home/ubuntu/concierge-website/workers && npx vitest run
 ```
 
 | Metric | Value |
@@ -46,7 +46,7 @@ suite above, which is green.
 
 **Command (production / library source — the build gate):**
 ```bash
-cd /home/ubuntu/hermes-website && pnpm run typecheck:libs   # tsc --build
+cd /home/ubuntu/concierge-website && pnpm run typecheck:libs   # tsc --build
 ```
 **Result:** ✅ exit 0 — clean. All `hermes/` and `shared/` libraries compile.
 

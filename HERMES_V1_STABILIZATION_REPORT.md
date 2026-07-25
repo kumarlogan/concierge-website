@@ -2,7 +2,7 @@
 
 > **Date:** 2026-07-25
 > **Branch:** `main` @ `85980e9`
-> **Repository:** GitHub `kumarlogan/hermes-website`
+> **Repository:** GitHub `kumarlogan/concierge-website`
 > **Mode:** Stabilization & Quality (No new features)
 
 ---

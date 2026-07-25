@@ -1,11 +1,22 @@
-# AG Synergy Platform — System Architecture
+# Concierge — System Architecture
 
-> Version 2.0 | 2026-07-18
+> Version 2.1 | 2026-07-26
 >
-> Defines the technical architecture for AG Synergy Phase 1: Concierge Platform
-> Foundation. This document describes how platform components interact and
+> Defines the technical architecture for Concierge Phase 1: Digital Concierge
+> Platform Foundation. This document describes how platform components interact and
 > establishes the structural foundation for all Phase 1 development.
->
+
+## Governance Header
+
+```
+Company:        AGS
+Platform:       AI Platform
+Product:        Concierge
+Public Brand:   AG Synergy
+Repository:     concierge-website
+Phase:          Phase 1 — Digital Concierge Platform (Complete)
+```
+
 > **Related Documents:**
 > - [`PROJECT.md`](./PROJECT.md) — Project constitution (highest authority)
 > - [`PRODUCT_BOUNDARIES.md`](./PRODUCT_BOUNDARIES.md) — Product scope and phase boundaries
@@ -85,15 +96,22 @@ graph TD
 
 ### Component Summary
 
-| Component | Technology | Role | Status |
-|---|---|---|---|
-| Static Hosting | Cloudflare Pages | Serve React frontend; global CDN; git-integrated deploys | **Deployed** |
-| Frontend | React 18 + Vite 7 + TypeScript | Patient-facing UI; forms; information presentation | **Deployed** |
-| API Layer | Cloudflare Workers | REST endpoints; business logic; validation; DB access | **Planned** (Phase 1) |
-| Database | Cloudflare D1 (SQLite) | Structured data: leads, contacts, consultations, clinics, FAQs | **Planned** (Phase 1) |
-| Object Storage | Cloudflare R2 (S3-compatible) | Documents, images, files | **Planned** (Phase 1) |
-| Admin Interface | Telegram + Hermes Agent | Repository operations; deployment; monitoring | **Active** |
-| Source Control | GitHub (`kumarlogan/hermes-website`) | Canonical source; CI/CD; PR workflow | **Active** |
+|| Component | Technology | Role | Status |
+|---|---|---|---|---|
+|| Static Hosting | Cloudflare Pages | Serve React frontend; global CDN; git-integrated deploys | ✅ **Deployed** (agsynergy.ca, www.agsynergy.ca) |
+|| Frontend | React 18 + Vite 7 + TypeScript | Patient-facing UI; forms; information presentation | ✅ **Deployed** |
+|| API Layer | Cloudflare Workers | REST endpoints; business logic; RBAC enforcement; DB access | ✅ **Deployed** (agsynergy-api) |
+|| Database | Cloudflare D1 (SQLite) | Structured data: leads, contacts, consultations, clinics, FAQs, users, roles, permissions, audit logs | ✅ **Deployed** (agsynergy-db, 5 migrations applied) |
+|| Object Storage | Cloudflare R2 (S3-compatible) | Documents, images, files | 🔧 **Configured** (ready, not actively used) |
+|| Authorization Engine | Workers `src/auth/` (provider-agnostic) | Identity resolution, Principal building, data-driven RBAC, audit on every decision | ✅ **Deployed** (EPIC-002-002) |
+|| Operations API | Workers `/api/v1/ops/*` | Lead management, dashboard, timeline, concierge operations | ✅ **Deployed** (EPIC-002-003A) |
+|| Admin Interface — Ops | Telegram + Operations Bot | Lead list, detail, update, assign, dashboard, search | ✅ **Deployed** (EPIC-002-004-IMPL) |
+|| Admin Interface — Control Plane | Telegram + Admin Bot | Platform status, workforce, agents, providers, security, health | ✅ **Deployed** (EPIC-002-005) |
+|| Source Control | GitHub (`kumarlogan/concierge-website`) | Canonical source; CI/CD; PR workflow | ✅ **Active** |
+|| Execution Platform | Workers + Hermes `hermes/services/execution/` | Work Planner, Workforce Dispatcher, Execution Queue, Review Pipeline | ✅ **Deployed** (EPIC-003-001) |
+|| Provider Framework | Workers + Hermes `hermes/services/providers/` | Capability Registration, Provider Loader, Discovery, Transport | ✅ **Deployed** (EPIC-003-004) |
+|| Workforce Orchestration | Hermes `hermes/services/workforce/` | Coordinator, lifecycle states, human approval gates, notifications | ✅ **Deployed** (EPIC-003-005) |
+|| Security Platform | Hermes `hermes/services/security/` | Security Agent, Risk Engine, OSS scanner adapters | ✅ **Deployed** (EPIC-003-003/004) |
 
 ---
 
@@ -170,12 +188,13 @@ decisions.
 ### Technology Stack
 
 | Layer | Technology | Status |
-|---|---|---|
-| Compute | Cloudflare Workers | Planned (Phase 1) |
-| Runtime | Workers (V8 isolates) | — |
-| Language | TypeScript | — |
-| Framework | Hono or itty-router (TBD) | — |
-| Deployment | wrangler@4 CLI | Active |
+|---|---|---|---|
+|| Compute | Cloudflare Workers | ✅ **Deployed** (agsynergy-api, agsynergy-api-preview) |
+|| Runtime | Workers (V8 isolates) | ✅ **Live** |
+|| Language | TypeScript | ✅ **Active** |
+|| Router | `URLPattern`-based (no external deps) | ✅ **Deployed** |
+|| Authorization | `src/auth/` — provider-agnostic RBAC engine | ✅ **Deployed** (EPIC-002-002) |
+|| Deployment | wrangler@4 CLI | ✅ **Active** |
 
 ### Responsibilities
 
@@ -680,12 +699,12 @@ and assisting the development and concierge teams.
 graph TD
     Telegram["Telegram<br/>(Admin Chat)"] <-->|Messages / Commands| Hermes["Hermes Agent<br/>(Nous Research)"]
 
-    Hermes -->|git operations| GitHub["GitHub<br/>kumarlogan/hermes-website"]
+    Hermes -->|git operations| GitHub["GitHub<br/>kumarlogan/concierge-website"]
     Hermes -->|wrangler CLI| CFWorkers["Cloudflare Workers<br/>(Deploy + Manage)"]
     Hermes -->|wrangler CLI| CFPages["Cloudflare Pages<br/>(Deploy Frontend)"]
     Hermes -->|wrangler CLI| D1[("D1<br/>(Schema Migrations)")]
     Hermes -->|wrangler CLI| R2[("R2<br/>(Bucket Management)")]
-    Hermes -->|File System| Repo["Local Repo<br/>/home/ubuntu/hermes-website"]
+    Hermes -->|File System| Repo["Local Repo<br/>/home/ubuntu/concierge-website"]
 
     subgraph Ops["Operations via Hermes"]
         direction LR
@@ -858,22 +877,31 @@ the architecture does not preclude their future addition.
 | **Multi-language i18n** | The platform is English-only in Phase 1. Internationalization infrastructure can be added later without architectural change. |
 | **Mobile application** | No native iOS or Android app. The responsive web application serves all devices. |
 
-### Phase 1 Scope Boundary
-
+| Phase 1 Scope Boundary
+|
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     PHASE 1 SCOPE                           │
 │                                                             │
 │  ✅ Static marketing website (deployed)                     │
 │  ✅ Consultation request form (deployed)                    │
+│  ✅ Cloudflare Workers API (deployed)                       │
+│  ✅ D1 database + schema (5 migrations applied)             │
+│  ✅ Worker API: lead capture, clinic listing, FAQ serving   │
+│  ✅ RBAC authorization engine (deployed)                    │
+│  ✅ Operations API (lead management)                        │
+│  ✅ Operations Telegram Bot (deployed)                      │
+│  ✅ Admin Bot — Control Plane (deployed)                    │
+│  ✅ Frontend ↔ API integration (live)                       │
+│  ✅ Hermes Execution Platform (deployed)                    │
+│  ✅ Hermes Provider Framework (deployed)                    │
+│  ✅ Hermes Workforce Orchestration (deployed)               │
+│  ✅ Hermes Security Platform (deployed)                     │
+│  ✅ Hermes Persistent Operations (deployed)                 │
 │  ✅ Automated deployment pipeline (active)                  │
 │  ✅ Hermes admin operations (active)                        │
-│  ✅ Engineering documentation (in progress)                 │
-│  ⬜ Cloudflare Workers API (to build)                       │
-│  ⬜ D1 database + schema (to build)                         │
-│  ⬜ R2 storage configuration (to build)                     │
-│  ⬜ Worker API: lead capture, clinic listing, FAQ serving   │
-│  ⬜ Concierge workflow tools (Hermes-managed)               │
+│  ✅ Engineering documentation (updated)                     │
+│  🔧 R2 storage configuration (ready, unused)               │
 │                                                             │
 ├─────────────────────────────────────────────────────────────┤
 │                     OUT OF SCOPE                            │
@@ -895,17 +923,26 @@ the architecture does not preclude their future addition.
 ## Appendix A: Technology Stack Reference
 
 | Layer | Technology | Status | Free Tier Limit |
-|---|---|---|---|
-| Frontend Hosting | Cloudflare Pages | **Deployed** | Unlimited sites, 500 builds/month |
-| Frontend Framework | React 18 + Vite 7 + TypeScript | **Deployed** | — |
-| Styling | Tailwind CSS 4 | **Deployed** | — |
-| Backend Compute | Cloudflare Workers | **Deployed** | 100,000 requests/day |
-| Database | Cloudflare D1 | **Deployed** | 5 GB, 5M reads/day |
-| Object Storage | Cloudflare R2 | **Configured** | 10 GB, 10M ops/month |
-| Source Control | GitHub | **Active** | Unlimited public repos |
-| CI/CD | GitHub Actions (via wrangler) | **Active** | 2,000 min/month |
-| Admin Interface | Telegram + Hermes Agent | **Active** | — |
-| Package Manager | pnpm 11.13.1 | **Active** | — |
+|---|---|---|---|---|
+| Frontend Hosting | Cloudflare Pages | ✅ **Deployed** (agsynergy.ca) | Unlimited sites, 500 builds/month |
+| Frontend Framework | React 18 + Vite 7 + TypeScript | ✅ **Deployed** | — |
+| Styling | Tailwind CSS 4 | ✅ **Deployed** | — |
+| Backend Compute | Cloudflare Workers | ✅ **Deployed** (agsynergy-api + preview) | 100,000 requests/day |
+| Database | Cloudflare D1 | ✅ **Deployed** (agsynergy-db, 5 migrations) | 5 GB, 5M reads/day |
+| Object Storage | Cloudflare R2 | 🔧 **Configured** (ready, unused) | 10 GB, 10M ops/month |
+| Authorization | Workers `src/auth/` RBAC engine | ✅ **Deployed** | — |
+| Operations API | Workers `/api/v1/ops/*` | ✅ **Deployed** | — |
+| Ops Bot | Telegram webhook (`/telegram/webhook`) | ✅ **Deployed** | — |
+| Admin Bot | Telegram webhook (`/admin/webhook`) | ✅ **Deployed** | — |
+| Execution Platform | `hermes/services/execution/` | ✅ **Deployed** | — |
+| Provider Framework | `hermes/services/providers/` | ✅ **Deployed** | — |
+| Workforce Orchestration | `hermes/services/workforce/` | ✅ **Deployed** | — |
+| Security Platform | `hermes/services/security/` | ✅ **Deployed** | — |
+| Persistent Operations | `hermes/persistence/` | ✅ **Deployed** | — |
+| Source Control | GitHub | ✅ **Active** | Unlimited public repos |
+| CI/CD | GitHub Actions (via wrangler) | ✅ **Active** | 2,000 min/month |
+| Admin Interface | Telegram + Hermes Agent | ✅ **Active** | — |
+| Package Manager | pnpm 11.13.1 | ✅ **Active** | — |
 
 ## Appendix B: Document History
 

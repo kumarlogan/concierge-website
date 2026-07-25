@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": [],
+    "lib": ["ES2022", "DOM"],
+    "useDefineForClassFields": true
+  },
+  "include": [
+    "services/providers/sdk.ts",
+    "services/providers/capability.ts",
+    "services/providers/transport.ts",
+    "services/providers/transport/cli.ts",
+    "services/providers/transport/mcp.ts",
+    "services/providers/executor.ts",
+    "services/providers/transport-health.ts",
+    "services/providers/manifest-v2.ts",
+    "services/providers/trust/lifecycle.ts",
+    "services/providers/marketplace.ts",
+    "services/providers/platform.ts",
+    "services/providers/loader.ts",
+    "services/providers/claude-code/provider.ts",
+    "services/providers/claude-code/index.ts",
+    "audit/event.ts",
+    "audit/emitter.ts"
+  ]
+}

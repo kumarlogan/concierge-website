@@ -11,7 +11,7 @@
 ## Context
 
 AGS today ships a single application (AGS Fertility) as one Cloudflare Workers
-repo (`kumarlogan/hermes-website`). The brief requires AGS to be treated as a
+repo (`kumarlogan/concierge-website`). The brief requires AGS to be treated as a
 **multi-application organization** with an expanding AI workforce, where every
 application is independently deployable, portable across infrastructure
 providers, and isolated from every other application.

@@ -1,8 +1,51 @@
 # Changelog
 
-|> Release history for the AG Synergy Platform.
+> Release history for the Concierge platform.
 > Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 > Versioning: [Semantic Versioning](https://semver.org/)
+
+---
+
+## [1.13.0] — Phase 1 Exit: Governance Dashboards & Production Enablement
+
+**Date:** 2026-07-26
+**Status:** ✅ Complete
+**Phase:** 1 — Digital Concierge Platform
+**Related:** PHASE_1_EXIT.md, PROGRAM_STATUS.md, AI_PLATFORM_STATUS.md, PRODUCT_STATUS.md, PRODUCTION_ENABLEMENT_REPORT.md
+
+### Added
+
+- **`docs/governance/PROGRAM_STATUS.md`** — Executive program dashboard: organization hierarchy, platform layers, product inventory, deployment status, blockers, overall progress, commercial readiness. Authoritative status reference.
+- **`docs/governance/AI_PLATFORM_STATUS.md`** — Reusable platform capabilities dashboard: execution platform, provider framework, workforce orchestration, security, observability, extraction progress, future roadmap. Tracks cross-product platform assets.
+- **`docs/products/concierge/PRODUCT_STATUS.md`** — Concierge product dashboard: product health metrics, MVP completion checklist, production readiness, release history, testing status, documentation health, resume point. Single source of truth for product state.
+- **`docs/releases/PHASE_1_EXIT.md`** — Permanent engineering closeout: phase summary, epic inventory (25 entries), delivery checklist, infrastructure state, known gaps, verification summary, Phase 2 handoff, blocked/unblocked preparation. Authoritative closeout record.
+- **`docs/governance/PRODUCTION_ENABLEMENT_REPORT.md`** — Production readiness baseline: infrastructure, security, operations, data domain assessments, gap priority matrix, pre-production gate checklist, assessment methodology, future cadence.
+
+### Changed
+
+- `PROJECT.md` — Definition of Done extended with "Governance dashboards updated" condition; added Governance Dashboards reference table (§12); version 1.1
+- `CURRENT_SPRINT.md` — Added reference to new governance dashboards in Phase 1 validation section
+- `ROADMAP.md` — Added governance metadata block to file header; synchronized Phase 1 exit metadata
+- `ARCHITECTURE.md` — Verified: Execution Platform, Provider Framework, Workforce Orchestration, Security Architecture all already documented; added governance metadata block
+
+### Verified
+
+- ✅ **465/465 tests pass** (34 test files) — no regressions
+- ✅ **TypeScript compilation** — zero errors across all workspace packages
+- ✅ **Frontend build** — zero errors (2221 modules)
+- ✅ **Secret scan** — clean
+- ✅ **Health endpoint** — `GET /api/v1/health` → 200 (status=healthy, service=agsynergy-api)
+- ✅ **Website** — `agsynergy.ca` HTTP/2 200
+- ✅ **API (workers.dev)** — `agsynergy-api.kumarlogan.workers.dev` operational
+- ✅ **D1 database** — 5 migrations applied, 24 tables operational
+- ✅ **Git diff** — Phase 1: 43 files changed, 634 insertions, 567 deletions (`cf8b0b5` → `c4172b1`)
+- ✅ **Documentation synchronized** — All Phase 1 governance dashboards reference the same facts, commit, and verification results
+
+### Known Gaps (Documented in PHASE_1_EXIT.md)
+
+- Production Worker not deployed to `api.agsynergy.ca` (requires `npx wrangler deploy --env production`)
+- Operations Bot token not provisioned (requires BotFather)
+- Admin Bot token not provisioned (requires BotFather)
 
 ---
 
@@ -614,7 +657,7 @@
 - Static marketing website (React 18 + Vite 7 + TypeScript + Tailwind CSS 4)
 - Responsive frontend design
 - Cloudflare Pages deployment (agsynergy.ca, www.agsynergy.ca)
-- GitHub repository (`kumarlogan/hermes-website`) + CI/CD pipeline
+- GitHub repository (`kumarlogan/concierge-website`) + CI/CD pipeline
 - Automated deployment workflow (deploy-website skill)
 - Telegram/Hermes development workflow
 - Consultation request form (Express 5 + PostgreSQL prototype)
@@ -754,6 +797,210 @@
 - Wrangler v4 requires `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` for both `dev` and `deploy`
 - Production deployment (`--env production`) requires the `api.agsynergy.ca` DNS record pointing to the Worker — will be configured when the API goes live
 - D1 bindings and secrets will be added in EPIC-001-005
+
+---
+
+## [1.8.0] — EPIC-003-001 through EPIC-003-004: Hermes Platform Foundation
+
+**Date:** 2026-07-19 → 2026-07-20
+**Status:** ✅ Complete
+**Phase:** 1 — Digital Concierge Platform
+
+### Added (EPIC-003-001)
+
+- **`hermes/services/execution/`** — Hermes Execution Platform:
+  - Work Planner (`work-planner.ts`) — dependency-ordered waves, cycle fail-closed
+  - Workforce Dispatcher (`workforce-dispatch.ts`) — registry → workforce → fail-closed
+  - Execution Queue (`execution-queue.ts`) — human approval gate, retry/pause/cancel, audit
+  - Review Pipeline (`review-pipeline.ts`) — aggregate, conflict detect, human approval gate
+  - Multi-Agent Coordination — dev/qa/security/docs/research domains
+  - Provider Abstraction — replaceable backends, no lock-in
+  - Application Automation — simulation-only, privileged blocked
+- **Validation:** `hermes.execution.003.test.ts` **28/28 pass**; full workers suite **299/299 pass**
+
+### Added (EPIC-003-002)
+
+- **`hermes/services/developer/`** — Hermes Developer Automation Pipeline:
+  - M1 · Development Work Request spec + normalization
+  - M2 · Engineering Planner (GoalSpec, waves, ADR heuristic)
+  - M3 · Claude Code ToolProvider (fail-closed, simulated executor)
+  - M4 · QA Pipeline (5 suites, boundary fail)
+  - M5 · Security Pipeline (permission / approval / aggregate)
+  - M6 · Docs Pipeline (doc rec + ADR authoring)
+  - M7 · Contribution Aggregator (blocks on security fail)
+  - M8 · Review Package + Simulated Git Plan
+  - M9 · End-to-End Simulation (no real side effects)
+- **Validation:** `hermes.developer.003.test.ts` **17/17 pass**; full workers suite **316/316 pass**
+
+### Added (EPIC-003-003)
+
+- **`hermes/services/security/`** — Hermes Security Automation Platform:
+  - M1 · Security Work Model (provider-neutral contracts)
+  - M2 · Security Agent Runtime (fail-closed execution)
+  - M3 · Security Provider Framework (reuses activation/provider-framework.ts)
+  - M4 · OSS Compatibility Layer (scanner adapter specs + simulated executor)
+  - M5 · Developer → Security Integration (orchestrator hook)
+  - M6 · Risk Engine (aggregate + score, fail-closed)
+  - M7 · Admin Visibility (read model + admin facade)
+  - M8 · Test Suite
+  - M9 · Docs (roadmap, completion, validation reports)
+- **Validation:** `hermes.security.003.test.ts` **28/28 pass**; in-scope `tsc --noEmit` clean
+
+### Added (EPIC-003-004)
+
+- **`hermes/services/security/providers/`** — Security Provider Integration:
+  - M1 · Security module barrel (`services/security`)
+  - M2 · Real OSS scanner adapters (gitleaks / semgrep / osv-scanner / trivy — fail-closed `not_installed`)
+  - M3 · Provider discovery (version + installation state + health)
+  - M4 · Developer pipeline integration (simulated executor, baseline findings)
+  - M5 · Provider-health platform (monitor + select-healthy)
+  - M6 · Multi-provider finding aggregation + deduplication
+  - M7 · Admin security visibility (version / install state / last scan)
+  - M8 · Local-first tool detection (no install required)
+  - M9 · Docs (roadmap, completion, validation reports)
+- **Validation:** `hermes.security.004.test.ts` **19/19 pass**; full workers suite **375/375 pass**
+
+---
+
+## [1.9.0] — EPIC-004: Persistent Operations Platform
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+**Phase:** 1 — Digital Concierge Platform
+
+### Added
+
+- **`hermes/persistence/`** — Durable state boundaries behind provider-neutral seams:
+  - Agent state store (`agent-state-store.ts`)
+  - Execution store (`execution-store.ts`)
+  - Tenant boundary enforcement (`tenant.ts`)
+  - Persistence provider interface (`provider.ts`)
+  - Workflow store (`workflow-store.ts`)
+- **Validation:** full workers suite **415/415 pass** (40 EPIC-004 + 375 prior)
+
+---
+
+## [1.10.0] — EPIC-004.5: Execution Durability Alignment
+
+**Date:** 2026-07-20
+**Status:** ✅ Complete
+**Phase:** 1 — Digital Concierge Platform
+
+### Added
+
+- Execution domain contracts (`ExecutionTask`, `ExecutionAttempt`, `ExecutionTransition`, `ExecutionResult`)
+- `ExecutionStore` boundary + `MemoryExecutionBackend` (no DB impl)
+- Execution queue → coordinator refactor (state lives in store, not queue)
+- Approval durability (`approver`, `at`, `scope`, `expiry`; lost/expired/unknown → DENY)
+- Recovery model (restart simulation; no dup exec, no approval bypass)
+- Architecture review (7 questions answered)
+
+### Changed
+
+- Execution truth moved from queue's in-memory `ENTRIES` Map to canonical `ExecutionStore` boundary
+- Reuses canonical task lifecycle transitions (no duplicate state machine)
+- Tenant isolation enforced on every store op via EPIC-004 `enforceTenant`
+- D1/Postgres/KV remain future seams — only `ExecutionPersistenceBackend` interface references them
+
+**Validation:** EPIC-004.5 tests **19/19 pass**; full workers suite **434/434 pass**
+
+---
+
+## [1.11.0] — EPIC-003-005: Workforce Orchestration Platform
+
+**Date:** 2026-07-26
+**Status:** ✅ Complete
+**Phase:** 1 — Digital Concierge Platform
+
+### Added
+
+- **`hermes/services/workforce/orchestration.ts`** — Coordinator + 8 lifecycle states (in-memory):
+  - Coordination ops: assign, monitor, retry, cancel, recover
+  - Dynamic capability resolution (registry → workforce → fail-closed)
+  - Human approval gate (env-driven fail-closed, production always gated)
+  - Audit every orchestration event
+  - Admin read-only `adminViewWorkflows` (no public route)
+- **`hermes/services/notification/notification.ts`** — Notification integration for approval lifecycle events:
+  - `Approval Requested`, `Approval Granted`, `Approval Rejected`, `Approval Expired`
+  - Fire-and-forget delivery; recorded in audit trail
+- **Recovery fixes:**
+  - R4 · sync/async bugs, queue helpers, missing rejection
+  - R5 · notification integration (approval lifecycle events)
+  - R6 · documentation synchronization
+
+**Validation:** `hermes.workforce.orchestration.test.ts` **17/17 pass**; full workforce suite **44/44 pass**
+
+---
+
+## [1.12.0] — EPIC-003-006: Platform Hardening & Boundary Segregation
+
+**Date:** 2026-07-26
+**Status:** ✅ Complete
+**Phase:** 1 — Digital Concierge Platform
+
+### Added
+
+- **Agent lifecycle** — `shared/contracts/lifecycle.ts` + `hermes/agents/registry.ts`:
+  - Two orthogonal axes: lifecycle (`registered→assigned→approved→active→paused|suspended→retired`) enforced by canonical transition table
+  - Activation (`disabled|enabled`) explicit and authorized out-of-band
+  - `canAgentAct()` is the single execution gate (enabled AND active)
+- **Audit persistence** — `shared/interfaces/audit.ts` + `hermes/audit/store.ts`:
+  - One canonical `AuditEvent` + provider-neutral `AuditStore` interface
+  - `MemoryAuditStore` default, swappable for D1 behind the same interface
+  - Append-only, non-blocking
+- **Tenant boundary** — `hermes/contracts/platform-api.ts` + `hermes/admin/access.ts`:
+  - `Principal` carries `organizationId`, `tenantId`, `scopes`
+  - `withinTenantScope()` single enforcement point — hard cross-org wall
+- **Provider seam** — `hermes/services/providers/capability.ts`:
+  - `ProviderManifest` (data) → `ProviderLoader` (only place vendor code enters) → `CapabilityRegistry` (single source of truth)
+
+**Validation:** `pnpm run typecheck` → EXIT 0; full test suite **375/375 pass**; secret scan clean; boundary checks verified (tenant isolation, agent-safety rejection, audit persistence, capability registry)
+
+---
+
+## [1.7.0] — EPIC-002-006: Frontend ↔ Workers API Integration
+
+**Date:** 2026-07-25
+**Status:** ✅ Complete
+**Epic:** 2 — Operations Platform Foundation
+
+### Added
+
+- **`artifacts/ags-fertility/.env`** — Environment-specific API base URL configuration:
+  - `.env` — Production endpoint: `https://agsynergy-api.kumarlogan.workers.dev`
+  - `.env.development` — Empty base URL (uses Vite proxy → local Miniflare)
+  - `.env.example` — Documented setup with all options
+- **`artifacts/ags-fertility/vite.config.ts`** — Added `/api/v1` dev proxy to `localhost:8787`
+- **`workers/tests/integration/api.test.ts`** — 3 new CORS integration tests:
+  - `localhost:23815` origin allowed
+  - `localhost:5173` origin allowed
+  - CORS headers present on POST responses (not just OPTIONS preflight)
+
+### Verified
+
+- ✅ `GET /api/v1/health` — 200 healthy, full response contract validated
+- ✅ `POST /api/v1/consultations` — 201 success with lead creation
+- ✅ Duplicate detection — 409 `duplicate_lead`
+- ✅ Validation errors — 400 `validation_error` (missing fields, bad email, empty strings, bad JSON)
+- ✅ CORS — Preflight OPTIONS 204, dev origins allowed, POST response includes CORS headers
+- ✅ Frontend build — 0 errors, 2221 modules transformed
+- ✅ TypeScript — All workspace packages compile clean (libs + artifacts + scripts)
+- ✅ 465/465 tests pass (462 prior + 3 new CORS tests)
+
+### Components Integrated
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| ConsultationForm → Workers API | ✅ Live | Uses `useSubmitConsultation` from `@workspace/api-client-react` |
+| `customFetch` API client | ✅ Complete | Handles 2xx/4xx/5xx, network errors, JSON parsing |
+| Health endpoint | ✅ Operational | Full contract: status, version, environment, database, timestamp |
+| CORS | ✅ Configured | `agsynergy.ca` + `www.agsynergy.ca` + `localhost:23815` + `localhost:5173` |
+
+### Documentation Updated
+
+- `CHANGELOG.md` — EPIC-002-006 entry
+- `CURRENT_SPRINT.md` — EPIC-002-006 completion
+- `.env.example` — Frontend environment variable reference
 
 ---
 

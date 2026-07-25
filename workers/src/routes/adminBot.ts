@@ -136,6 +136,19 @@ export const adminWebhook: RouteHandler = async (request, env, _params) => {
     return adminAck();
   }
 
+  // 🔒 Authorized Telegram user IDs only
+  const AUTHORIZED_USERS = new Set(["8117947039"]);
+  if (!AUTHORIZED_USERS.has(String(message.from.id))) {
+    return new Response(
+      JSON.stringify({
+        method: "sendMessage",
+        chat_id: message.chat.id,
+        text: "⛔ Unauthorized — you are not authorized to use this bot.",
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   const chatId = String(message.chat.id);
   const displayName = formatDisplayName(message.from);
 

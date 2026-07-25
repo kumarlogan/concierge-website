@@ -2,7 +2,7 @@
 
 > **Objective:** Prepare a clean, trustworthy baseline before `git tag baseline-002-006`.
 > **Mode:** REVIEW ONLY. No commits, stashes, code/migration/Cloudflare changes, or deploys.
-> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/hermes-website`
+> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/concierge-website`
 > **Current commit:** `8f836548985d4803abb290172a5adcbdcb07bd5b` (branch `main`)
 
 > ⚠️ **Tag NOT created** (per task rules). This review only classifies and recommends.

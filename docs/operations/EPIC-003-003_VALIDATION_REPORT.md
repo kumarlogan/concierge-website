@@ -92,9 +92,9 @@ isolated security suite (`28/28`) plus the full-project `tsc --noEmit` (0 errors
 ## 4. Commands to Reproduce
 
 ```bash
-cd /home/ubuntu/hermes-website/workers
+cd /home/ubuntu/concierge-website/workers
 npx vitest run tests/hermes.security.003.test.ts   # 28/28
-cd /home/ubuntu/hermes-website
+cd /home/ubuntu/concierge-website
 npx tsc --noEmit                                    # 0 errors (whole repo)
 npx tsc --noEmit 2>&1 | grep "services/security"    # 0 errors (in-scope)
 ```

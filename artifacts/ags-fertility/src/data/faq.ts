@@ -9,7 +9,7 @@ export const faqData = [
   },
   {
     question: 'How long will I need to stay in Bangalore, India?',
-    answer: 'The typical length of stay for an IVF cycle is approximately 3 weeks. However, this varies depending on your specific treatment protocol. We help coordinate travel, accommodation, and appointments to optimize your time abroad.'
+    answer: 'The typical length of stay for an IVF cycle is approximately 3-5 weeks. However, this varies depending on your specific treatment protocol. We help coordinate travel, accommodation, and appointments to optimize your time abroad.'
   },
   {
     question: 'What is AGS Fertility Concierge\'s role in my journey?',

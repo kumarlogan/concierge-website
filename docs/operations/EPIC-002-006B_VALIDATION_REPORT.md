@@ -18,7 +18,7 @@ unchanged; keep every phase reversible.
 
 ## 2. Validation Method
 
-All checks were executed in the live environment (`/home/ubuntu/hermes-website`)
+All checks were executed in the live environment (`/home/ubuntu/concierge-website`)
 against the actual extracted code. No results are simulated.
 
 ### 2.1 Static checks

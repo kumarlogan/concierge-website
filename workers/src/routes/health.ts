@@ -58,7 +58,7 @@ export const health: RouteHandler = async (_request, env, _params) => {
 
     // Migration tracking — d1_migrations is wrangler's applied-migrations table.
     const row = (await env.DB.prepare(
-      "SELECT MAX(version) AS v, COUNT(*) AS c FROM d1_migrations",
+      "SELECT MAX(id) AS v, COUNT(*) AS c FROM d1_migrations",
     ).first()) as { v: number | null; c: number | null } | null;
 
     migrationVersion = row?.v ?? 0;

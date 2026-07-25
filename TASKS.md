@@ -1,7 +1,7 @@
 # Tasks
 
-> Living task registry for the AG Synergy Platform.
-> All implementation work is tracked here. Tasks flow from Epics → Sprints → this registry.
+> Living task registry for the Concierge platform.
+> All implementation work is tracked here. Tasks flow from Roadmap → Phase → Epic → Sprint → this registry.
 
 ## Legend
 

@@ -8,7 +8,7 @@
 ```yaml
 audit_date: 2026-07-25
 audit_mode: read-only
-repository: kumarlogan/hermes-website
+repository: kumarlogan/concierge-website
 branch: main
 commit: 85980e9
 last_commit_message: "docs: EPIC-005.9 Execution Gateway release notes"

@@ -70,7 +70,7 @@ Application Layer.
 
 ## 3. AGS Fertility = Application #1
 
-Today's `kumarlogan/hermes-website` repo is, in this model, **Application #1**.
+Today's `kumarlogan/concierge-website` repo is, in this model, **Application #1**.
 Its current components map as:
 
 | Current | Target classification |

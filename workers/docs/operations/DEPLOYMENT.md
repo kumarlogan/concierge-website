@@ -17,7 +17,7 @@ Worker + D1 migrations, run from an *authenticated* Wrangler environment.
 ## 0. Setup (one-time per shell)
 
 ```bash
-cd /home/ubuntu/hermes-website/workers
+cd /home/ubuntu/concierge-website/workers
 export CLOUDFLARE_API_TOKEN="<YOUR_WORKERS+D1_TOKEN>"   # or: wrangler login
 export CLOUDFLARE_ACCOUNT_ID="d0a58133c1495fa5e42cbca0aebaa36b"
 ACCOUNT_NAME="Nous Research"
@@ -85,7 +85,7 @@ npx wrangler d1 migrations apply "$DB" --env production --remote
 ## 4. Deploy the Worker (safe replace)
 
 ```bash
-npx wrangler deploy --env production
+npx wrangler deploy --tsconfig tsconfig.json --env production
 ```
 
 **Expected:**

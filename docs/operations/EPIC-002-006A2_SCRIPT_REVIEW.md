@@ -4,7 +4,7 @@
 > deployed, or executed. No production secrets accessed. Token values are shown
 > only to evidence the leak and to support rotation — they must be treated as
 > COMPROMISED.
-> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/hermes-website`
+> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/concierge-website`
 
 ---
 

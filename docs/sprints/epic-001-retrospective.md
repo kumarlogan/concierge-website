@@ -4,6 +4,20 @@
 > **Sprint dates:** 2026-07-18 | **Retro held:** 2026-07-18
 > **Outcome:** 9/10 tasks complete — one day, single-session execution
 
+## Governance Header
+
+| Field | Value |
+|---|---|
+| **Company** | AGS |
+| **Platform** | AI Platform |
+| **Product** | Concierge |
+| **Public Brand** | AG Synergy |
+| **Repository** | concierge-website |
+| **Roadmap** | Concierge Roadmap |
+| **Phase** | Phase 1 — Digital Concierge Platform |
+| **Epic** | EPIC-001 — Backend Foundation |
+| **Status** | ✅ Complete |
+
 ## Sprint Goal vs. Outcome
 
 **Goal:** Create the foundational backend infrastructure for AG Synergy Phase 1 Concierge Platform — a working Cloudflare Workers API connected to D1, ready to receive the first production workflow.

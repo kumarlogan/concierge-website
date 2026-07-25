@@ -1,6 +1,6 @@
 # EPIC-002-006A4C — Final Verification Report
 
-> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/hermes-website`
+> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/concierge-website`
 > **Scope:** Phase 1 closure verification after owner confirmed all credential rotations.
 > **Method:** Real tool output only. No fabricated results.
 

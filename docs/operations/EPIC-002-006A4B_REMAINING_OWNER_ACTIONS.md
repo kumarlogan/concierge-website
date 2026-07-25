@@ -25,11 +25,11 @@ the owner's highest-privilege accounts. Do these in order:
 - **Why owner:** needs valid GitHub PAT with repo admin (local `gh` token is invalid).
 - **Steps:**
   1. `gh auth login` (or dashboard).
-  2. `gh secret delete CLOUDFLARE_API_TOKEN --repo kumarlogan/hermes-website`
+  2. `gh secret delete CLOUDFLARE_API_TOKEN --repo kumarlogan/concierge-website`
      (or Settings → Secrets → Actions → delete).
   3. **Re-create** `CLOUDFLARE_API_TOKEN` with a **NEW rotated** Cloudflare token.
      > Required: `deploy.yml` reads this secret. Without it the official CI deploy fails.
-- **Verify:** `gh secret list --repo kumarlogan/hermes-website` shows the new value only.
+- **Verify:** `gh secret list --repo kumarlogan/concierge-website` shows the new value only.
 
 ## 4. Confirm to Hermes
 Reply "rotation complete" → Hermes creates the `baseline-002-006` tag.

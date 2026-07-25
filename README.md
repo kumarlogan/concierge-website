@@ -1,10 +1,11 @@
-# AG Synergy Platform
+# Concierge Website
 
 > Digital fertility concierge platform connecting Canadian patients with carefully selected fertility clinics in India.
 
 ## Status
-**Phase:** Platform Initialization  
-**Current Sprint:** Not yet started (awaiting Epic 1 kickoff)  
+**Phase:** Phase 1 — Digital Concierge Platform ✅ Complete  
+**Product:** Concierge  
+**Public Brand:** AG Synergy  
 **Last Deployed:** See [deployment history](./CHANGELOG.md)
 
 ## Quick Links

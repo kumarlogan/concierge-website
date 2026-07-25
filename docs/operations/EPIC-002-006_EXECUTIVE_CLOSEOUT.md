@@ -1,6 +1,6 @@
 # EPIC-002-006 — Executive Closeout
 
-> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/hermes-website`
+> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/concierge-website`
 > **Baseline:** `baseline-002-006` (commit `ded1c9538ee5327027a4db6a042bdce9dcc027bb`)
 > **Status:** ✅ COMPLETE
 

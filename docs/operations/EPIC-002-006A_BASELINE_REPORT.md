@@ -4,7 +4,7 @@
 > **Status:** REPORTING ONLY · No production changes made · No code/migration/Worker/Cloudflare/secrets modified
 > **Governing decision:** ADR-007 (Proposed)
 > **Date:** 2026-07-19
-> **Repo:** `/home/ubuntu/hermes-website`
+> **Repo:** `/home/ubuntu/concierge-website`
 
 ---
 

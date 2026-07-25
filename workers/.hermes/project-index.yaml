@@ -1,0 +1,68 @@
+# .hermes/project-index.yaml
+# Hermes AI Platform — Project Knowledge Index entry for concierge-website
+#
+# This file provides lightweight repository metadata for the Intent Engine.
+# It is the source of truth for this project's PKI entry.
+# Schema: docs/platform/PROJECT_KNOWLEDGE_INDEX.md §4
+
+project:
+  name: concierge-website
+  description: AG Synergy public website — Cloudflare Workers, D1, TypeScript
+  status: active
+
+technology:
+  framework: hono
+  language: typescript
+  runtime: cloudflare-workers
+  package_manager: pnpm
+
+documentation:
+  roadmap: ROADMAP.md
+  architecture: ARCHITECTURE.md
+  operations: docs/operations/DEPLOYMENT.md
+  security: SECURITY.md
+  database: DATABASE.md
+  api: API.md
+
+components:
+  - name: API Router
+    path: workers/src/index.ts
+    type: backend
+  - name: Authentication
+    path: workers/src/auth.ts
+    type: backend
+  - name: Dashboard
+    path: workers/src/dashboard/dashboard.tsx
+    type: ui
+  - name: Hero
+    path: workers/src/components/hero.ts
+    type: ui
+  - name: Navigation
+    path: workers/src/components/navigation.ts
+    type: ui
+  - name: Footer
+    path: workers/src/components/footer.ts
+    type: ui
+  - name: Database Layer
+    path: workers/src/db.ts
+    type: data
+  - name: Deployment Pipeline
+    path: deploy.sh
+    type: infra
+
+operations:
+  build: pnpm run build
+  test: pnpm run test
+  deployment_targets:
+    - production
+    - staging
+    - preview
+  environments:
+    - production
+    - staging
+    - preview
+
+metadata:
+  version: 1.0.0
+  last_indexed: 2026-07-25T22:30:00Z
+  active_branch: main

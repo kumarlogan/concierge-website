@@ -3,7 +3,7 @@
 > **Status:** FROZEN
 > **Date:** 2026-07-25
 > **Branch:** `main` @ `85980e9`
-> **Repository:** GitHub `kumarlogan/hermes-website`
+> **Repository:** GitHub `kumarlogan/concierge-website`
 >
 > This baseline freezes the state of the Hermes platform after EPIC-003-005
 > (Workforce Orchestration), EPIC-004 (Persistent Operations), EPIC-004.5

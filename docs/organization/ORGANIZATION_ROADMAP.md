@@ -11,7 +11,7 @@ phase modifies running production behavior until explicitly stated.
 ---
 
 ## Current State
-- Single repo `kumarlogan/hermes-website`, one Cloudflare Worker app
+- Single repo `kumarlogan/concierge-website`, one Cloudflare Worker app
   (AGS Fertility = Application #1, implicit).
 - Hermes present only as the app's assistant/bot — **not yet formalized** as a
   platform.

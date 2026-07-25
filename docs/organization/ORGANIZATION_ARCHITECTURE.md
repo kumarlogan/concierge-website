@@ -243,7 +243,7 @@ application, with **no coupling to AGS Fertility**.
 ## 9. Repository Structure Recommendation
 
 Refined from the illustrative layout. The current repo
-(`kumarlogan/hermes-website`, a pnpm monorepo) becomes the **AGS Fertility
+(`kumarlogan/concierge-website`, a pnpm monorepo) becomes the **AGS Fertility
 application package** inside a larger org workspace.
 
 ```

@@ -1,7 +1,7 @@
 # EPIC-002-006A — Implementation Readiness Report
 
 **Milestone:** Phase 0 Baseline · Hermes Platform Extraction
-**Date:** 2026-07-19 · **Repo:** `/home/ubuntu/hermes-website`
+**Date:** 2026-07-19 · **Repo:** `/home/ubuntu/concierge-website`
 **Governing decision:** ADR-007 (Proposed)
 **Mode:** Documentation only — no production changes
 

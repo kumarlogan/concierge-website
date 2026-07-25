@@ -1,7 +1,7 @@
 # Hermes Platform v1.0.0 — Release Notes
 
 **Release Date:** 2026-07-25
-**Repository:** kumarlogan/hermes-website
+**Repository:** kumarlogan/concierge-website
 **Baseline Commit:** `749d017`
 **Release Tag:** `v1.0.0`
 

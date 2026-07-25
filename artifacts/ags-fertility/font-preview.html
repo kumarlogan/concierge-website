@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Font Preview — AGS Fertility Concierge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Serif+Display:ital@0;1&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #FAFAF8;
+      color: #2e2e2e;
+      padding: 40px 24px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-family: 'Cormorant Garamond', serif;
+    }
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 36px;
+      font-size: 15px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      padding: 28px 24px;
+      transition: box-shadow 0.2s;
+      position: relative;
+    }
+    .card:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .font-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge {
+      font-size: 11px;
+      background: #f3f4f6;
+      padding: 3px 10px;
+      border-radius: 20px;
+      color: #6b7280;
+    }
+    .badge.current {
+      background: #e8f5e9;
+      color: #2e7d32;
+      font-weight: 600;
+    }
+    .badge.chosen {
+      background: #e8e0f5;
+      color: #6d28d9;
+      font-weight: 600;
+    }
+    .brand-preview {
+      margin-bottom: 18px;
+    }
+    .brand-text {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+    .brand-sub {
+      font-size: 13px;
+      color: #9ca3af;
+      letter-spacing: 0.02em;
+    }
+    .button-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .button-label {
+      font-size: 11px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 28px;
+      border-radius: 9999px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      cursor: default;
+      transition: all 0.15s;
+      text-decoration: none;
+      width: fit-content;
+    }
+    .btn-primary {
+      background: #9bbf9b;
+      color: white;
+    }
+    .btn-outline {
+      background: transparent;
+      color: #2e2e2e;
+      border: 1px solid #d1d5db;
+    }
+    .vibe-tag {
+      font-size: 12px;
+      color: #8b5cf6;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .vibe-tag.chosen-vibe {
+      color: #6d28d9;
+      font-weight: 600;
+    }
+    .chosen-ring {
+      outline: 3px solid #6d28d9;
+      outline-offset: -3px;
+      border-color: #6d28d9 !important;
+    }
+    .checkmark {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #6d28d9;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    .footer-note {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 13px;
+      color: #9ca3af;
+      text-align: center;
+    }
+    .live-link {
+      display: inline-block;
+      margin-top: 28px;
+      padding: 12px 24px;
+      background: #6d28d9;
+      color: white;
+      border-radius: 9999px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .live-link:hover {
+      background: #5b21b6;
+    }
+  </style>
+</head>
+<body>
+  <h1>✧ Font Preview — Calm & Compassionate</h1>
+  <p class="subtitle">How "AGS Fertility Concierge" feels in each typeface</p>
+
+  <div class="grid">
+
+    <!-- CURRENT -->
+    <div class="card">
+      <div class="card-header">
+        <span class="font-name">Current</span>
+        <span class="badge current">was</span>
+      </div>
+      <div class="brand-preview" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+        <div class="brand-text">AGS Fertility<br>Concierge</div>
+        <div class="brand-sub">Plus Jakarta Sans · Sans-serif</div>
+      </div>
+      <div class="button-preview" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+        <span class="button-label">CTA Buttons</span>
+        <span class="btn btn-primary">Book a Free Consultation</span>
+        <span class="btn btn-outline">Explore Our Process</span>
+      </div>
+      <div class="vibe-tag">✦ Modern, clean, professional</div>
+    </div>
+
+    <!-- CORMORANT GARAMOND ★ CHOSEN -->
+    <div class="card chosen-ring">
+      <div class="checkmark">✓</div>
+      <div class="card-header">
+        <span class="font-name">★ Chosen</span>
+        <span class="badge chosen">Cormorant Garamond</span>
+      </div>
+      <div class="brand-preview" style="font-family: 'Cormorant Garamond', serif;">
+        <div class="brand-text">AGS Fertility<br>Concierge</div>
+        <div class="brand-sub">Cormorant Garamond · Serif</div>
+      </div>
+      <div class="button-preview" style="font-family: 'Cormorant Garamond', serif;">
+        <span class="button-label">CTA Buttons</span>
+        <span class="btn btn-primary">Book a Free Consultation</span>
+        <span class="btn btn-outline">Explore Our Process</span>
+      </div>
+      <div class="vibe-tag chosen-vibe">✦ Warm, graceful, intimate · applied to live site</div>
+    </div>
+
+    <!-- PLAYFAIR DISPLAY -->
+    <div class="card">
+      <div class="card-header">
+        <span class="font-name">Playfair Display</span>
+        <span class="badge">serif</span>
+      </div>
+      <div class="brand-preview" style="font-family: 'Playfair Display', serif;">
+        <div class="brand-text">AGS Fertility<br>Concierge</div>
+        <div class="brand-sub">Playfair Display · Serif</div>
+      </div>
+      <div class="button-preview" style="font-family: 'Playfair Display', serif;">
+        <span class="button-label">CTA Buttons</span>
+        <span class="btn btn-primary">Book a Free Consultation</span>
+        <span class="btn btn-outline">Explore Our Process</span>
+      </div>
+      <div class="vibe-tag">✦ Elegant, refined, premium</div>
+    </div>
+
+    <!-- LORA -->
+    <div class="card">
+      <div class="card-header">
+        <span class="font-name">Lora</span>
+        <span class="badge">serif</span>
+      </div>
+      <div class="brand-preview" style="font-family: 'Lora', serif;">
+        <div class="brand-text">AGS Fertility<br>Concierge</div>
+        <div class="brand-sub">Lora · Serif</div>
+      </div>
+      <div class="button-preview" style="font-family: 'Lora', serif;">
+        <span class="button-label">CTA Buttons</span>
+        <span class="btn btn-primary">Book a Free Consultation</span>
+        <span class="btn btn-outline">Explore Our Process</span>
+      </div>
+      <div class="vibe-tag">✦ Warm, approachable, grounded</div>
+    </div>
+
+    <!-- DM SERIF DISPLAY -->
+    <div class="card">
+      <div class="card-header">
+        <span class="font-name">DM Serif Display</span>
+        <span class="badge">serif</span>
+      </div>
+      <div class="brand-preview" style="font-family: 'DM Serif Display', serif;">
+        <div class="brand-text">AGS Fertility<br>Concierge</div>
+        <div class="brand-sub">DM Serif Display · Serif</div>
+      </div>
+      <div class="button-preview" style="font-family: 'DM Serif Display', serif;">
+        <span class="button-label">CTA Buttons</span>
+        <span class="btn btn-primary">Book a Free Consultation</span>
+        <span class="btn btn-outline">Explore Our Process</span>
+      </div>
+      <div class="vibe-tag">✦ Clean, modern serif, confident</div>
+    </div>
+
+    <!-- EB GARAMOND -->
+    <div class="card">
+      <div class="card-header">
+        <span class="font-name">EB Garamond</span>
+        <span class="badge">serif</span>
+      </div>
+      <div class="brand-preview" style="font-family: 'EB Garamond', serif;">
+        <div class="brand-text">AGS Fertility<br>Concierge</div>
+        <div class="brand-sub">EB Garamond · Serif</div>
+      </div>
+      <div class="button-preview" style="font-family: 'EB Garamond', serif;">
+        <span class="button-label">CTA Buttons</span>
+        <span class="btn btn-primary">Book a Free Consultation</span>
+        <span class="btn btn-outline">Explore Our Process</span>
+      </div>
+      <div class="vibe-tag">✦ Timeless, classic, gentle</div>
+    </div>
+
+  </div>
+
+  <div class="footer-note">
+    <a class="live-link" href="http://100.127.50.81:23815" target="_blank">🌿 View Live Site with Cormorant Garamond →</a>
+    <br><br>
+    Body font stays as Inter &middot; Display font changed to Cormorant Garamond
+  </div>
+</body>
+</html>

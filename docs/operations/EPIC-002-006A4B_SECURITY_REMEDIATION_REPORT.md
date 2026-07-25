@@ -1,6 +1,6 @@
 # EPIC-002-006A4B — Security Remediation Report
 
-> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/hermes-website`
+> **Date:** 2026-07-19 · **Repo:** `/home/ubuntu/concierge-website`
 > **Mode:** Authorized credential remediation (repository-side executed; platform-side blocked on owner privileges).
 > **Authorizing task:** EPIC-002-006A4B.
 
@@ -63,12 +63,12 @@ These were blocked in A4B because they required the owner's highest-privilege ac
 
 ### 3.3 Delete the GitHub repo secret `CLOUDFLARE_API_TOKEN`
 - **Which:** repo secret `CLOUDFLARE_API_TOKEN` written by `setup_github_secret.py` (now quarantined).
-- **Why owner:** requires valid GitHub PAT with `repo` admin on `kumarlogan/hermes-website`; the local `gh` token is invalid.
+- **Why owner:** requires valid GitHub PAT with `repo` admin on `kumarlogan/concierge-website`; the local `gh` token is invalid.
 - **Manual steps:**
   1. Re-auth `gh auth login` (or use dashboard).
-  2. `gh secret delete CLOUDFLARE_API_TOKEN --repo kumarlogan/hermes-website`
+  2. `gh secret delete CLOUDFLARE_API_TOKEN --repo kumarlogan/concierge-website`
      — or dashboard → **Settings → Secrets and variables → Actions → delete**.
-- **Verify:** `gh secret list --repo kumarlogan/hermes-website` → `CLOUDFLARE_API_TOKEN` absent.
+- **Verify:** `gh secret list --repo kumarlogan/concierge-website` → `CLOUDFLARE_API_TOKEN` absent.
   > Note: `deploy.yml` references `secrets.CLOUDFLARE_API_TOKEN`. The owner must **re-create** this secret with a *new, rotated* token after deletion, or the official CI deploy will fail. This is intentional: the old value is compromised.
 
 ---

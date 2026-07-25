@@ -50,7 +50,7 @@ export function Header() {
         <div className="container mx-auto px-6 md:px-12">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <span className="font-display font-semibold text-xl tracking-tight text-foreground">
+              <span className="font-display font-semibold text-2xl tracking-tight text-foreground">
                 AGS Fertility Concierge
               </span>
             </Link>

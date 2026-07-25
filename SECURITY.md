@@ -95,7 +95,7 @@ See [`PRODUCT_BOUNDARIES.md`](./PRODUCT_BOUNDARIES.md) for the full platform sco
 
 | Concern | Action |
 |---|---|
-| Bug reports, vulnerabilities | Create GitHub issue in `agsynergy/hermes-website` |
+| Bug reports, vulnerabilities | Create GitHub issue in `agsynergy/concierge-website` |
 | Production incidents | Hermes admin via Telegram |
 | Access requests | Through AG Synergy concierge staff |
 

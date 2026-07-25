@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typography Exploration — AGS Fertility Concierge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Homemade+Apple&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Manrope:wght@300;400;500;600;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Parisienne&family=IM+Fell+Great+Primer:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #FAFAF8;
+    color: #1a1a1a;
+    line-height: 1.5;
+    padding: 0;
+  }
+  .page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 60px 40px 80px;
+  }
+  .header {
+    text-align: center;
+    padding-bottom: 56px;
+    border-bottom: 1px solid #e5e2dc;
+    margin-bottom: 56px;
+  }
+  .header h1 {
+    font-size: 32px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: #2a2a2a;
+    margin-bottom: 12px;
+  }
+  .header h1 span {
+    font-weight: 600;
+  }
+  .header .subtitle {
+    font-size: 15px;
+    color: #88817a;
+    letter-spacing: 0.3px;
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 40px 36px 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 200px;
+    position: relative;
+    border: 1px solid #f0eee9;
+  }
+  .card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06), 0 2px 6px rgba(0,0,0,0.04);
+    transform: translateY(-2px);
+  }
+  .card-headline {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 12px 0;
+    text-align: center;
+    line-height: 1.15;
+  }
+  .card-label {
+    text-align: center;
+    padding-top: 16px;
+    border-top: 1px solid #f0eee9;
+    margin-top: 8px;
+  }
+  .card-label .name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2a2a2a;
+    letter-spacing: 0.5px;
+  }
+  .card-label .inspired {
+    font-size: 12px;
+    color: #99938c;
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+  }
+  .card-label .badge {
+    display: inline-block;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 8px;
+    background: #f5f2ec;
+    color: #7a7269;
+  }
+
+  /* Font 1: Swarsh → Alex Brush */
+  .font-alex-brush { font-family: 'Alex Brush', cursive; }
+  .card-1 .size { font-size: 46px; }
+
+  /* Font 2: Daisy → Homemade Apple */
+  .font-homemade-apple { font-family: 'Homemade Apple', cursive; }
+  .card-2 .size { font-size: 30px; line-height: 1.3; }
+
+  /* Font 3: Canela → Spectral */
+  .font-spectral { font-family: 'Spectral', serif; }
+  .card-3 .size { font-size: 38px; font-weight: 300; font-style: italic; letter-spacing: -0.01em; }
+
+  /* Font 4: Didot → Playfair Display */
+  .font-playfair { font-family: 'Playfair Display', serif; }
+  .card-4 .size { font-size: 36px; font-weight: 400; letter-spacing: 0.3px; }
+
+  /* Font 5: Cormorant Garamond */
+  .font-cormorant { font-family: 'Cormorant Garamond', serif; }
+  .card-5 .size { font-size: 44px; font-weight: 400; font-style: italic; letter-spacing: -0.02em; }
+
+  /* Font 6: Classic serif → IM Fell Great Primer */
+  .font-im-fell { font-family: 'IM Fell Great Primer', serif; }
+  .card-6 .size { font-size: 40px; font-weight: 400; line-height: 1.15; }
+
+  /* Font 7: Lora */
+  .font-lora { font-family: 'Lora', serif; }
+  .card-7 .size { font-size: 36px; font-weight: 400; letter-spacing: -0.01em; }
+
+  /* Font 8: Avenir → Jost */
+  .font-jost { font-family: 'Jost', sans-serif; }
+  .card-8 .size { font-size: 40px; font-weight: 400; letter-spacing: -0.02em; }
+
+  /* Font 9: Optima → Barlow */
+  .font-barlow { font-family: 'Barlow', sans-serif; }
+  .card-9 .size { font-size: 38px; font-weight: 300; letter-spacing: 0.02em; }
+
+  /* Font 10: Manrope */
+  .font-manrope { font-family: 'Manrope', sans-serif; }
+  .card-10 .size { font-size: 38px; font-weight: 400; letter-spacing: -0.02em; }
+
+  /* Font 11: Inter Display */
+  .font-inter { font-family: 'Inter', sans-serif; }
+  .card-11 .size { font-size: 40px; font-weight: 400; letter-spacing: -0.03em; }
+
+  /* Font 12: Signature → Parisienne */
+  .font-parisienne { font-family: 'Parisienne', cursive; }
+  .card-12 .size { font-size: 38px; line-height: 1.15; }
+
+  @media (max-width: 800px) {
+    .grid { grid-template-columns: 1fr; }
+    .page { padding: 32px 20px 48px; }
+    .header h1 { font-size: 26px; }
+    .card { min-height: 170px; padding: 28px 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>Typography <span>Exploration</span></h1>
+    <p class="subtitle">Twelve distinct font directions for the AGS Fertility Concierge hero headline — each evaluated for warmth, trust, and boutique healthcare elegance.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- 1. Swarsh → Alex Brush -->
+    <div class="card card-1">
+      <div class="card-headline font-alex-brush size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Alex Brush</div>
+        <div class="inspired">Inspired by: Swarsh — elegant, flowing calligraphy</div>
+        <span class="badge">script · calligraphy</span>
+      </div>
+    </div>
+
+    <!-- 2. Daisy → Homemade Apple -->
+    <div class="card card-2">
+      <div class="card-headline font-homemade-apple size">AGS Fertility Concierge</div>
+      <div class="card-label">
+        <div class="name">Homemade Apple</div>
+        <div class="inspired">Inspired by: Daisy — soft handwritten script</div>
+        <span class="badge">script · handwritten</span>
+      </div>
+    </div>
+
+    <!-- 3. Canela → Spectral -->
+    <div class="card card-3">
+      <div class="card-headline font-spectral size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Spectral</div>
+        <div class="inspired">Inspired by: Canela — luxury modern serif</div>
+        <span class="badge">serif · modern luxury</span>
+      </div>
+    </div>
+
+    <!-- 4. Didot → Playfair Display -->
+    <div class="card card-4">
+      <div class="card-headline font-playfair size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Playfair Display</div>
+        <div class="inspired">Inspired by: Didot — high-fashion serif</div>
+        <span class="badge">serif · high fashion</span>
+      </div>
+    </div>
+
+    <!-- 5. Cormorant Garamond -->
+    <div class="card card-5">
+      <div class="card-headline font-cormorant size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Cormorant Garamond</div>
+        <div class="inspired">Inspired by: Editorial serif</div>
+        <span class="badge">serif · editorial</span>
+      </div>
+    </div>
+
+    <!-- 6. Classic serif → IM Fell Great Primer -->
+    <div class="card card-6">
+      <div class="card-headline font-im-fell size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">IM Fell Great Primer</div>
+        <div class="inspired">Inspired by: Playfair Display — classic serif</div>
+        <span class="badge">serif · classic</span>
+      </div>
+    </div>
+
+    <!-- 7. Lora -->
+    <div class="card card-7">
+      <div class="card-headline font-lora size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Lora</div>
+        <div class="inspired">Inspired by: Soft luxury serif</div>
+        <span class="badge">serif · soft luxury</span>
+      </div>
+    </div>
+
+    <!-- 8. Avenir → Jost -->
+    <div class="card card-8">
+      <div class="card-headline font-jost size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Jost</div>
+        <div class="inspired">Inspired by: Avenir — minimal geometric sans</div>
+        <span class="badge">sans · geometric</span>
+      </div>
+    </div>
+
+    <!-- 9. Optima → Barlow -->
+    <div class="card card-9">
+      <div class="card-headline font-barlow size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Barlow</div>
+        <div class="inspired">Inspired by: Optima — elegant humanist sans</div>
+        <span class="badge">sans · humanist</span>
+      </div>
+    </div>
+
+    <!-- 10. Manrope -->
+    <div class="card card-10">
+      <div class="card-headline font-manrope size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Manrope</div>
+        <div class="inspired">Inspired by: Modern premium sans</div>
+        <span class="badge">sans · modern premium</span>
+      </div>
+    </div>
+
+    <!-- 11. Inter Display -->
+    <div class="card card-11">
+      <div class="card-headline font-inter size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Inter</div>
+        <div class="inspired">Inspired by: Inter Display — refined humanist sans</div>
+        <span class="badge">sans · refined humanist</span>
+      </div>
+    </div>
+
+    <!-- 12. Signature → Parisienne -->
+    <div class="card card-12">
+      <div class="card-headline font-parisienne size">AGS Fertility<br>Concierge</div>
+      <div class="card-label">
+        <div class="name">Parisienne</div>
+        <div class="inspired">Inspired by: Signature handwritten script</div>
+        <span class="badge">script · signature</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</body>
+</html>

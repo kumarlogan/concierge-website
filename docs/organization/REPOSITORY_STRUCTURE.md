@@ -11,7 +11,7 @@ and explains the refinements made to the illustrative layout from the brief.
 
 ## 1. Current State (ground truth)
 
-- **Repo:** `kumarlogan/hermes-website` (single GitHub repo, pnpm workspace).
+- **Repo:** `kumarlogan/concierge-website` (single GitHub repo, pnpm workspace).
 - **Stack:** Cloudflare Workers (`workers/` package) + Cloudflare Pages, D1.
 - **Top-level docs:** `ARCHITECTURE.md`, `API.md`, `DATABASE.md`,
   `SECURITY.md`, `CHANGELOG.md`, `ROADMAP.md`, `PROJECT.md`,

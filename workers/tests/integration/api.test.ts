@@ -363,6 +363,54 @@ describe("CORS (integration)", () => {
     );
     expect(response.status).toBe(204);
   });
+
+  it("allows localhost dev origin (23815)", async () => {
+    const response = await exports.default.fetch(
+      new Request(makeUrl("/health"), {
+        headers: { Origin: "http://localhost:23815" },
+      }),
+      env,
+    );
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
+      "http://localhost:23815",
+    );
+  });
+
+  it("allows localhost dev origin (5173)", async () => {
+    const response = await exports.default.fetch(
+      new Request(makeUrl("/health"), {
+        headers: { Origin: "http://localhost:5173" },
+      }),
+      env,
+    );
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
+      "http://localhost:5173",
+    );
+  });
+
+  it("returns CORS headers on POST responses", async () => {
+    const runId = Date.now().toString(36);
+    const response = await exports.default.fetch(
+      new Request(makeUrl("/consultations"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://agsynergy.ca",
+        },
+        body: JSON.stringify({
+          name: "CORS Test",
+          email: `cors-post-${runId}@example.com`,
+          phone: "+1-555-000-0000",
+          treatment_interest: "IVF",
+        }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(201);
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
+      "https://agsynergy.ca",
+    );
+  });
 });
 
 // ══════════════════════════════════════════════════════════════

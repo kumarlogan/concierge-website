@@ -5,7 +5,7 @@
 > and [ADR-004](../../docs/decisions/ADR-004-organization-architecture.md).
 
 This describes how to move from the **current single repo**
-(`kumarlogan/hermes-website`, one Cloudflare Workers app) to the **target
+(`kumarlogan/concierge-website`, one Cloudflare Workers app) to the **target
 multi-application organization** without breaking the live AGS Fertility
 service at any step.
 
