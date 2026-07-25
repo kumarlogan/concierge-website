@@ -1,6 +1,7 @@
 // ┌─────────────────────────────────────────────────────────────┐
 // │ AG Synergy Platform — Health Route Handler                  │
 // │ EPIC-001-004 (base) + EPIC-002-003.5 (expanded)             │
+// │ GOV-002: Version sourced from CHANGELOG.md (authoritative). │
 // └─────────────────────────────────────────────────────────────┘
 //
 // GET /api/v1/health
@@ -9,24 +10,15 @@
 //   - database connectivity   (live SELECT 1 against the D1 binding)
 //   - migration status/version (highest applied migration in d1_migrations)
 //   - environment             (env.ENVIRONMENT)
-//   - service version         (SERVICE_VERSION constant / env override)
+//   - service version         (sourced from CHANGELOG.md — single source of truth)
 //
 // SECURITY: This endpoint intentionally exposes NO secrets, tokens, DSNs,
 // internal IPs, or sensitive operational detail. The migration version is a
 // non-sensitive build/ops signal safe to surface to authenticated monitors.
 
-import type { RouteHandler, Env } from "../types/env.js";
+import type { RouteHandler } from "../types/env.js";
 import { info } from "../middleware/logger.js";
-
-/** Service version — bump on each deploy (also overridable via SERVICE_VERSION env). */
-const SERVICE_VERSION = "1.3.0";
-
-function resolveVersion(env?: Env): string {
-  // Prefer the deployed env override; fall back to the build constant.
-  return env?.SERVICE_VERSION && env.SERVICE_VERSION.length > 0
-    ? env.SERVICE_VERSION
-    : SERVICE_VERSION;
-}
+import { SERVICE_VERSION } from "../version.js";
 
 interface HealthResponse {
   status: "healthy" | "degraded";
@@ -73,7 +65,7 @@ export const health: RouteHandler = async (_request, env, _params) => {
   const body: HealthResponse = {
     status,
     service: "agsynergy-api",
-    version: resolveVersion(env),
+    version: SERVICE_VERSION,
     environment,
     timestamp,
     database: {

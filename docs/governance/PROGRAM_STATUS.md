@@ -4,7 +4,7 @@
 > Single source of truth for engineering and commercial program status.
 > Updated every epic completion.
 
-**Last Updated:** 2026-07-26
+**Last Updated:** 2026-07-25
 
 ---
 
@@ -74,21 +74,21 @@ Roadmap        Concierge Roadmap
 
 ## 7. Current Epic
 
-**None.** Phase 1 epics all closed. Phase 2 epics pending planning sprint.
+**None.** Phase 1 epics all closed. GOV-002 governance sprint complete. Phase 2 epics awaiting Phase Gate assessment.
 
 ---
 
 ## 8. Current Sprint
 
-**Phase 1** — ✅ **Closed** (2026-07-18 → 2026-07-26)
+**GOV-002-S001** — ✅ **Closed** (2026-07-25 → 2026-07-25)
 
-Next sprint: Phase 2 Planning (TBD)
+Next sprint: **Phase 2 Planning Sprint** (pending Phase Gate entry assessment)
 
 ---
 
 ## 9. Current Git Commit
 
-`c4172b1` — `EPIC-002-005: Hermes Control Plane — Admin Bot Foundation`
+`HEAD` — `GOV-002: Operational Governance & Phase 2 Kickoff`
 
 ---
 
@@ -96,6 +96,7 @@ Next sprint: Phase 2 Planning (TBD)
 
 | Version | Tag | Date | Content |
 |---|---|---|---|
+| v1.14.0 | `v1.14.0` | 2026-07-26 | GOV-002 — Operational Governance & Phase 2 Kickoff |
 | v1.0.0 | `v1.0.0` | 2026-07-26 | Phase 1 engineering baseline |
 
 ---
@@ -136,12 +137,16 @@ Next sprint: Phase 2 Planning (TBD)
 
 ## 13. Resume Point
 
-The next action to take after interruption.
+**GOV-002 completed. Phase 2 Phase Gate assessment required before implementation.**
 
-1. Run `PHASE_1_EXIT.md` closeout checklist — verify all 16 epics documented
-2. Deploy production Worker: `cd workers && npx wrangler deploy --env production`
-3. Set secrets for Operations Bot and Admin Bot tokens
-4. Begin Phase 2 planning sprint (patient accounts, auth flows, data model)
+1. ✅ GOV-002 deliverables complete: DECISION_LOG.md, GOVERNANCE_INDEX.md, PHASE_GATES.md, templates, version sync, admin bot fix
+2. ✅ Tests: 465/465 passing (34 files) — no regressions
+3. ✅ Git state: Clean (pending v1.14.0 commit and tag)
+4. ✅ Version: 1.14.0 — SERVICE_VERSION auto-generated from CHANGELOG.md
+5. ❓ **Phase 2 entry gate assessment: EC-1 through EC-9** — must be verified before Sprint 2.1.1 begins
+6. Next: **Phase 2 — Patient Workflow Platform**:
+   - Epic 2.1: Patient Identity & Authentication
+   - Sprint 2.1.1: Architecture & Data Model
 
 ---
 
@@ -151,7 +156,8 @@ The next action to take after interruption.
 |---|---|---|---|---|
 | Phase 0 | 1 | ~10 | — | ✅ Complete |
 | Phase 1 | 16 | ~160+ | 465/465 | ✅ **Complete** |
-| **Total** | **17** | **~170+** | **465/465** | 🎯 **MVP Foundation Complete** |
+| GOV-002 | 1 | ~20+ | 465/465 | ✅ **Complete** |
+| **Total** | **18** | **~190+** | **465/465** | 🎯 **GOV-002 Complete — Phase 2 Next** |
 
 ---
 

@@ -14,6 +14,7 @@
 
 import { describe, it, expect } from "vitest";
 import { health } from "../../src/routes/health.js";
+import { SERVICE_VERSION } from "../../src/version.js";
 import type { Env } from "../../src/types/env.js";
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -65,10 +66,10 @@ describe("Health Endpoint — degraded path (unit, no runtime)", () => {
       expect(body.service).toBe("agsynergy-api");
     });
 
-    it("reports version '1.3.0' (canonical build version)", async () => {
+    it("reports version from CHANGELOG.md (single source of truth)", async () => {
       const response = await health(makeRequest(), makeEnv(), {});
       const body = (await response.json()) as Record<string, unknown>;
-      expect(body.version).toBe("1.3.0");
+      expect(body.version).toBe(SERVICE_VERSION);
     });
 
     it("reads environment from ENVIRONMENT binding", async () => {

@@ -21,9 +21,6 @@ export interface Env {
   // Environment variable injected by wrangler per environment
   ENVIRONMENT?: string;
 
-  // Service version (overrides the in-code default when set)
-  SERVICE_VERSION?: string;
-
   // Rate limiting (optional overrides; sensible defaults if absent)
   RATE_LIMIT_WINDOW_MS?: string;
   RATE_LIMIT_LIMIT?: string;

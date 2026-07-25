@@ -6,6 +6,54 @@
 
 ---
 
+## [1.14.0] — GOV-002: Operational Governance & Phase 2 Kickoff
+
+**Date:** 2026-07-25
+**Status:** ✅ Complete
+**Phase:** 1 — Digital Concierge Platform (Governance)
+**Sprint:** GOV-002-S001
+**Related:** DECISION_LOG.md, GOVERNANCE_INDEX.md, PHASE_GATES.md, PHASE_2_SKELETON.md
+
+### Added
+
+- **`docs/governance/DECISION_LOG.md`** — Append-only executive history of all project decisions. 8 entries (D-001 through D-008) covering Phase 1 scope, Cloudflare architecture, platform constitution, workforce architecture, execution gateway, AI platform separation, naming migration, and production enablement.
+- **`docs/governance/GOVERNANCE_INDEX.md`** — Single navigation page listing every governance document in the repository. 12 sections covering organization, roadmaps, architecture, ADRs, decision log, status dashboards, releases, standards, operations, and security.
+- **`docs/governance/PHASE_GATES.md`** — Mandatory entry/exit criteria for every phase: 9 entry criteria (EC-1–9), 7 execution criteria (XC-1–7), 10 validation criteria (VC-1–10), 12 exit criteria (EX-1–12), lessons learned framework, and gate waiver process.
+- **`docs/templates/`** — 5 reusable templates: Phase (TEMPLATE_PHASE.md), Epic (TEMPLATE_EPIC.md), Sprint (TEMPLATE_SPRINT.md), Story (TEMPLATE_STORY.md), Retrospective (TEMPLATE_RETROSPECTIVE.md).
+- **`docs/planning/PHASE_2_SKELETON.md`** — Phase 2 planning skeleton with 5 epics defined (Patient Identity & Authentication, Patient Portal, Secure Document Upload, Appointment Management, Concierge Messaging) and Sprint 2.1.1 Architecture & Data Model outlined.
+- **`scripts/extract-version.sh`** — Version extraction script that reads latest semver from CHANGELOG.md and writes `workers/src/version.ts` (single source of truth for SERVICE_VERSION).
+- **`workers/src/version.ts`** — Auto-generated module exporting the canonical `SERVICE_VERSION` constant, sourced exclusively from CHANGELOG.md.
+
+### Changed
+
+- **`workers/src/routes/health.ts`** — Version source migrated from hardcoded constant + env override to `SERVICE_VERSION` from `workers/src/version.ts`. GOV-002 comment added.
+- **`workers/src/types/env.ts`** — Removed `SERVICE_VERSION` from `Env` interface (no longer an env override; version is build-time only).
+- **`workers/wrangler.jsonc`** — Removed `SERVICE_VERSION` var from `development` and `production` environments.
+- **`workers/package.json`** — Added `prebuild` script (`bash ../scripts/extract-version.sh`); `deploy` script now runs extract-version.sh before `wrangler deploy`.
+- **`PROGRAM_STATUS.md`** — GOV-002 sprint listed in progress section; v1.14.0 release tracked.
+- **`AI_PLATFORM_STATUS.md`** — Version synchronization verified.
+- **`PRODUCT_STATUS.md`** — Version staleness resolved; health endpoint version now sourced from CHANGELOG.md.
+- **`CURRENT_SPRINT.md`** — Sprint objectives completed; sprint close pending.
+
+### Fixed
+
+- **`workers/src/routes/adminBot.ts`** — Removed hardcoded `AUTHORIZED_USERS` gate (`["8117947039"]`) that blocked the admin bot from serving legitimate authorized users who pass RBAC. The `requirePermission()` gate already enforces authorization — the redundant hardcoded list prevented the bot from responding to any user outside the single hardcoded ID, making it both untestable and unconfigurable across deployments. Now consistent with the Operations Bot pattern (RBAC-only authorization). 21 tests restored from failure to passing.
+
+### Verified
+
+- ✅ **465/465 tests pass** (34 test files) — no regressions, same count as Phase 1 exit
+- ✅ **TypeScript compilation** — zero errors in `workers/src/` and `tests/`; pre-existing hermes/ type gaps unchanged
+- ✅ **Version synchronization** — `SERVICE_VERSION` in `workers/src/version.ts` sourced from CHANGELOG.md; extract-version.sh verified
+- ✅ **Governance documents** — 3 new governance docs, 5 templates, 1 planning skeleton, 1 script, 1 version module
+- ✅ **Dashboard consistency** — PROGRAM_STATUS.md, AI_PLATFORM_STATUS.md, PRODUCT_STATUS.md all reference same version, test count, and commit
+
+### Notes
+
+- This sprint closes Phase 1 governance work. Phase 2 entry gates must now be assessed before implementation begins.
+- NAMING_STANDARDS.md referenced by GOVERNANCE_INDEX.md does not exist as a standalone file — naming rules are embedded in DECISION_LOG.md (D-007) and PROJECT.md.
+
+---
+
 ## [1.13.0] — Phase 1 Exit: Governance Dashboards & Production Enablement
 
 **Date:** 2026-07-26

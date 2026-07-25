@@ -85,7 +85,53 @@ Overall Progress: ...
 
 ---
 
-## Sprint: Phase 2 — Patient Workflow Platform (Planning)
+## Sprint: GOV-002 — Operational Governance & Phase 2 Kickoff (✅ Complete)
+
+**Sprint ID:** GOV-002-S001
+**Start Date:** 2026-07-25
+**End Date:** 2026-07-25
+**Status:** ✅ **Complete**
+
+### Sprint Goal
+
+Complete governance improvements, version synchronization, and Phase 2 planning skeleton.
+
+### Sprint Objectives
+
+- [x] Decision Log created (DECISION_LOG.md)
+- [x] Governance Index created (GOVERNANCE_INDEX.md)
+- [x] Phase Gate Framework documented (PHASE_GATES.md)
+- [x] Templates created (Phase, Epic, Sprint, Story, Retrospective)
+- [x] Version synchronization — health endpoint sourced from CHANGELOG.md
+- [x] Dashboard consistency verified and corrected
+- [x] Phase 2 planning skeleton created
+- [x] Admin Bot hardcoded auth gate removed — RBAC-only authorization restored; 21 tests fixed
+
+### Sprint Retrospective
+
+**What went well:**
+- All governance deliverables completed in a single sprint
+- Version synchronization established single source of truth
+- Phase 2 planning skeleton ready for immediate execution
+- Admin bot tests restored to green (21 tests)
+
+**Improvements for next sprint:**
+- NAMING_STANDARDS.md referenced by GOVERNANCE_INDEX.md but doesn't exist as a standalone file — naming rules are embedded in DECISION_LOG.md (D-007) and PROJECT.md
+- Sprint closeout commit should be performed immediately after final verification to avoid dirty-tree drift
+
+### Resume Point
+
+```
+Sprint completed: GOV-002-S001
+Git:         Commit and tag v1.14.0
+Next action: Assess Phase 2 Phase Gate entry criteria (PHASE_GATES.md §3)
+             → Begin Epic 2.1 — Patient Identity & Authentication
+             → Sprint 2.1.1: Architecture & Data Model
+```
+
+---
+
+## Sprint: Phase 2 — Patient Workflow Platform (📋 Planning)
 
 **Sprint ID:** Phase 2
 **Start Date:** TBD

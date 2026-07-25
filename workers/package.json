@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "deploy": "bash ../scripts/extract-version.sh && wrangler deploy",
+    "prebuild": "bash ../scripts/extract-version.sh",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

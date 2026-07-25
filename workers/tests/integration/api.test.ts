@@ -11,6 +11,7 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { env, exports } from "cloudflare:workers";
+import { SERVICE_VERSION } from "../../src/version.js";
 
 // ── Schema seed (runs once before all integration tests) ─────
 // Miniflare creates a fresh D1 per test run — we need to
@@ -96,7 +97,7 @@ describe("GET /api/v1/health (integration)", () => {
     const body = (await response.json()) as Record<string, unknown>;
     expect(body.status).toBe("healthy");
     expect(body.service).toBe("agsynergy-api");
-    expect(body.version).toBe("1.3.0");
+    expect(body.version).toBe(SERVICE_VERSION);
     expect(body).toHaveProperty("timestamp");
     expect(body).toHaveProperty("environment");
     // EPIC-002-003.5 expanded health contract.

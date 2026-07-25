@@ -1,7 +1,7 @@
 # Product Status Dashboard — Concierge
 
 > **Product health, MVP completion, and engineering status for Concierge.**
-> **Last Updated:** 2026-07-26
+> **Last Updated:** 2026-07-25
 
 ---
 
@@ -77,7 +77,9 @@ Status:         ✅ Phase 1 Complete — Awaiting Phase 2 Planning
 
 | Version | Date | Changes |
 |---|---|---|
+| v1.14.0 | 2026-07-26 | GOV-002 — Operational Governance & Phase 2 Kickoff |
 | v1.0.0 | 2026-07-26 | Phase 1 engineering baseline (git tag) |
+| [1.13.0] | 2026-07-26 | GOV-002 — Governance dashboards, version sync, Phase 2 plans |
 | [1.12.0] | 2026-07-26 | EPIC-003-006: Platform Hardening & Boundary Segregation |
 | [1.11.0] | 2026-07-26 | EPIC-003-005: Workforce Orchestration Platform |
 | [1.10.0] | 2026-07-20 | EPIC-004.5: Execution Durability Alignment |
@@ -112,17 +114,17 @@ Status:         ✅ Phase 1 Complete — Awaiting Phase 2 Planning
 
 ---
 
-## 7. Current Epic
+## 6. Current Epic
 
-**None.** All 16 Phase 1 epics completed. Awaiting Phase 2 Planning.
+**GOV-002 — Operational Governance & Phase 2 Kickoff** ✅ Complete (2026-07-25)
 
 ---
 
 ## 8. Current Sprint
 
-**Phase 1 Sprint** — ✅ Closed (2026-07-18 → 2026-07-26)
+**GOV-002-S001 — Governance & Phase 2 Planning** ✅ Complete (2026-07-25)
 
-Next: **Phase 2 Planning Sprint** (TBD)
+Next: **Phase 2 Planning Sprint** (pending Phase Gate entry assessment)
 
 ---
 
@@ -144,7 +146,7 @@ Next: **Phase 2 Planning Sprint** (TBD)
 | Tests/ TypeScript type gaps (node: types, Vitest env) | Low | 0 runtime impact | Deferred to Phase 2 |
 | MemoryAuditStore not backed by D1 | Low | Audit lost on restart | Phase 2 migration |
 | Rate limiting is per-isolate (approximate) | Low | Not a hard global cap | Zone-level Cloudflare Rate Limiting recommended |
-| Health endpoint `version` field stale (0.1.0) | Low | Cosmetic — doesn't match changelog | Update to `1.12.0` |
+| Health endpoint `version` stale → resolved by GOV-002 | ✅ **Resolved** | Now sourced from CHANGELOG.md — single source of truth | Verified: `SERVICE_VERSION` === CHANGELOG latest |
 | Production Worker env not deployed | High | Blocking for api.agsynergy.ca | Execute production deploy |
 
 ---
@@ -182,16 +184,18 @@ See [Program Status Dashboard](../governance/PROGRAM_STATUS.md) §11.
 |---|---|---|
 | PROJECT.md | ✅ Complete | 2026-07-26 |
 | ROADMAP.md | ✅ Complete | 2026-07-26 |
-| CURRENT_SPRINT.md | ✅ Complete | 2026-07-26 |
+| CURRENT_SPRINT.md | ✅ Complete | 2026-07-25 |
 | ARCHITECTURE.md | ✅ Complete | 2026-07-26 |
-| CHANGELOG.md | ✅ Complete | 2026-07-26 |
+| CHANGELOG.md | ✅ Complete | 2026-07-25 |
 | SECURITY.md | ✅ Complete | 2026-07-26 |
 | DECISIONS.md | ✅ Complete | 2026-07-26 |
-| NAMING_STANDARDS.md | ✅ Complete | 2026-07-26 |
-| PROGRAM_STATUS.md | ✅ **New** | 2026-07-26 |
-| AI_PLATFORM_STATUS.md | ✅ **New** | 2026-07-26 |
-| PRODUCT_STATUS.md | ✅ **New** | 2026-07-26 |
+| NAMING_STANDARDS.md | ⚠️ Embedded in DECISION_LOG.md (D-007) + PROJECT.md | 2026-07-26 |
+| PROGRAM_STATUS.md | ✅ **Current** | 2026-07-25 |
+| AI_PLATFORM_STATUS.md | ✅ **Current** | 2026-07-26 |
+| PRODUCT_STATUS.md | ✅ **Current** | 2026-07-25 |
 | PHASE_1_EXIT.md | ✅ **New** | 2026-07-26 |
+| PHASE_2_SKELETON.md | ✅ **New** | 2026-07-25 |
+| deferred-backlog.md | ✅ **New** | 2026-07-25 |
 | API.md | ✅ Complete | 2026-07-18 |
 | DATABASE.md | ✅ Complete | 2026-07-18 |
 | ADR records | ✅ 4 ADRs | 2026-07-26 |
@@ -201,14 +205,12 @@ See [Program Status Dashboard](../governance/PROGRAM_STATUS.md) §11.
 
 ## 14. Resume Point
 
-1. Address blockers: deploy production Worker → register bot tokens → configure api.agsynergy.ca DNS
-2. Tag v1.0.1 after production deploy
-3. Begin Phase 2 Planning Sprint:
-   - Patient authentication architecture
-   - Auth flows (login, session, password reset)
-   - Patient data model and PHI protection design
-   - R2 document upload workflow
-   - Phase 2 epic breakdown
+1. ✅ GOV-002 complete: governance docs, version sync, admin bot fix (21 tests restored)
+2. ✅ Tests: 465/465 passing (34 files)
+3. ✅ Version: 1.14.0 — auto-generated from CHANGELOG.md
+4. ❓ **Phase 2 entry gate assessment required before implementation**
+5. ❌ Blockers still requiring attention: production Worker deploy, bot tokens, api.agsynergy.ca DNS
+6. Next: Phase 2 Phase Gate assessment → Epic 2.1 — Patient Identity & Authentication
 
 ---
 

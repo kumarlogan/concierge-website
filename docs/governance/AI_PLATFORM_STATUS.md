@@ -2,7 +2,7 @@
 
 > **Tracks reusable platform capabilities independent of Concierge.**
 > The AI Platform is the organizational layer between AGS (company) and individual products like Concierge.
-> **Last Updated:** 2026-07-26
+> **Last Updated:** 2026-07-25
 
 ---
 
@@ -98,7 +98,7 @@ Repository:     concierge-website
 
 | Capability | Implementation | Status |
 |---|---|---|
-| Health Endpoint | `GET /api/v1/health` | ✅ Live |
+| Health Endpoint | `GET /api/v1/health` → version sourced from CHANGELOG.md (single source of truth) | ✅ Live |
 | Structured Logging | Workers Observability (JSON-line logs) | ✅ Enabled |
 | Rate Limiting | In-memory sliding window (per-isolate, approximate) | ✅ Implemented |
 | Deployment Monitoring | Workers CI → GitHub check runs | ✅ Configured |
