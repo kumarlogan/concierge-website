@@ -3,8 +3,33 @@
 > **Concierge Launch Readiness — Workstream C**
 > Documents PSER (Project State & Execution Registry) activation state, runtime requirements, integration points, Wave 9 registration, and resume point update.
 >
-> **Date:** 2026-07-27
-> **Status:** 📋 Assessment Complete
+**Date:** 2026-07-27
+**Status:** ✅ **Production Live — v1.0.0 Deployed**
+
+---
+
+## Deployment Summary
+
+| Event | Timestamp | Result |
+|-------|-----------|--------|
+| D1 Migrations (0002, 0006, 0007) | 23:12 UTC | ✅ 8/8 applied |
+| Workers deploy (v1.0.0) | 23:13 UTC | ✅ api.agsynergy.ca live |
+| Frontend build | 23:26 UTC | ✅ 2314 modules, 9.40s |
+| Pages deploy | 23:44 UTC | ✅ agsynergy-website.pages.dev |
+| Custom domain registration | 23:44 UTC | ✅ agsynergy.ca (initializing) |
+| Health verification | 23:48 UTC | ✅ Version 1.0.0, DB migration 8 |
+| Smoke tests | 23:48 UTC | ✅ All 8 checks pass |
+| Unit tests | 23:46 UTC | ✅ 614/614 passing |
+
+### Deployment Artifacts
+
+| Artifact | Location / URL |
+|----------|---------------|
+| API | `https://api.agsynergy.ca` |
+| Frontend | `https://agsynergy-website.pages.dev` → `agsynergy.ca` (pending) |
+| Git Tag | `v1.0.0` |
+| Git Commit | `3d1e434` |
+| Worker Version ID | `54db75c6-4ba6-4cd2-a825-cea6690e8036` |
 
 ---
 

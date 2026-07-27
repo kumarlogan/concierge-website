@@ -42,12 +42,6 @@
           "database_id": "45f52102-74e1-4ba2-86ca-f4d5f88e16c4"
         }
       ],
-      "r2_buckets": [
-        {
-          "binding": "DOCUMENT_STORAGE",
-          "bucket_name": "agsynergy-documents"
-        }
-      ],
       "observability": {
         "enabled": true
       },
@@ -84,6 +78,16 @@
   "workers_dev": true,
   "alias": {
     "@hermes": "../hermes",
-    "@shared": "../shared"
+    "@shared": "../shared",
+    "@hermes/identity/principal.js": "../hermes/identity/principal.ts",
+    "@hermes/audit/audit.js": "../hermes/audit/audit.ts",
+    "@hermes/identity/providers.js": "../hermes/identity/providers.ts",
+    "@hermes/identity/types.js": "../hermes/identity/types.ts",
+    "@hermes/identity/authn.js": "../hermes/identity/authn.ts",
+    "@hermes/permissions/permissions.js": "../hermes/permissions/permissions.ts",
+    "@hermes/services/activation/workforce-activation.js": "../hermes/services/activation/workforce-activation.ts",
+    "@hermes/services/activation/workforce-saga.js": "../hermes/services/activation/workforce-saga.ts",
+    "@hermes/services/activation/workflow-policies.js": "../hermes/services/activation/workflow-policies.ts",
+    "@hermes/services/activation/provider-registry.js": "../hermes/services/activation/provider-registry.ts"
   }
 }
