@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
   "name": "agsynergy-api",
+  "account_id": "d0a58133c1495fa5e42cbca0aebaa36b",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-17",
   "compatibility_flags": ["nodejs_compat"],
@@ -12,6 +13,13 @@
       "binding": "DB",
       "database_name": "agsynergy-db",
       "database_id": "45f52102-74e1-4ba2-86ca-f4d5f88e16c4"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "DOCUMENT_STORAGE",
+      "bucket_name": "agsynergy-documents",
+      "preview_bucket_name": "agsynergy-documents-preview"
     }
   ],
   "vars": {
@@ -34,6 +42,12 @@
           "database_id": "45f52102-74e1-4ba2-86ca-f4d5f88e16c4"
         }
       ],
+      "r2_buckets": [
+        {
+          "binding": "DOCUMENT_STORAGE",
+          "bucket_name": "agsynergy-documents"
+        }
+      ],
       "observability": {
         "enabled": true
       },
@@ -49,6 +63,12 @@
           "binding": "DB",
           "database_name": "agsynergy-db",
           "database_id": "45f52102-74e1-4ba2-86ca-f4d5f88e16c4"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "DOCUMENT_STORAGE",
+          "bucket_name": "agsynergy-documents-preview"
         }
       ],
       "observability": {

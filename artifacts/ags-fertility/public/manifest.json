@@ -1,0 +1,19 @@
+{
+  "name": "AGS Fertility Concierge",
+  "short_name": "AGS Fertility",
+  "description": "Trusted fertility treatment coordination for Canadian families. Connecting you with experienced IVF specialists and partner hospitals in Bangalore, India.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d9488",
+  "orientation": "portrait-primary",
+  "lang": "en-CA",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -11,19 +11,16 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 80);
-      // Always close the menu when the user scrolls
       setMobileMenuOpen(false);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location]);
 
-  // Prevent body scroll while menu is open
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
@@ -39,7 +36,7 @@ export function Header() {
 
   return (
     <>
-      {/* ── Fixed header bar ─────────────────────────────────────── */}
+      {/* ── Fixed header bar ── */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
@@ -68,6 +65,11 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+              <Link href="/patient/login">
+                <Button variant="outline" className="rounded-full px-5 text-sm">
+                  Patient Portal
+                </Button>
+              </Link>
               <Link href="/contact">
                 <Button variant="default" className="rounded-full px-6">
                   Book Consultation
@@ -75,7 +77,7 @@ export function Header() {
               </Link>
             </nav>
 
-            {/* Hamburger — visible on mobile only */}
+            {/* Hamburger */}
             <button
               className="md:hidden text-foreground p-2"
               onClick={() => setMobileMenuOpen((v) => !v)}
@@ -88,9 +90,7 @@ export function Header() {
         </div>
       </header>
 
-      {/* ── Mobile menu overlay — sibling to header, NOT a child ─── */}
-      {/*   Lives outside <header> so CSS transforms on the header   */}
-      {/*   never affect this element's fixed positioning.            */}
+      {/* ── Mobile menu overlay ── */}
       <div
         className={`fixed inset-0 z-40 bg-background flex flex-col pt-24 px-6 transition-transform duration-300 ease-in-out md:hidden ${
           mobileMenuOpen ? 'translate-y-0' : '-translate-y-full'
@@ -109,7 +109,14 @@ export function Header() {
               {link.label}
             </Link>
           ))}
-          <div className="mt-8 w-full">
+          <div className="mt-4 w-full">
+            <Link href="/patient/login">
+              <Button variant="outline" size="lg" className="w-full rounded-full">
+                Patient Portal
+              </Button>
+            </Link>
+          </div>
+          <div className="w-full">
             <Link href="/contact">
               <Button size="lg" className="w-full rounded-full">
                 Book Consultation

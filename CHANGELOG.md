@@ -6,6 +6,325 @@
 
 ---
 
+## [1.0.0] — 2026-07-27 — Concierge MVP Production Release
+
+**Date:** 2026-07-27
+**Status:** ✅ PRODUCTION LIVE
+**Phase:** Phase 2 — Patient Workflow Platform
+**Wave:** Wave 9 — Concierge Launch & Platform Activation (final wave of Phase 2)
+**Sprint:** PLS-001 — Production Launch Sprint
+**Version:** v1.0.0 — MVP Production Release
+
+### Workstream A — Patient Journey
+- **Care Plan Page** (`/patient/care-plan`): Full care plan view with phases/stages, timeline progress, next steps, sidebar link, dashboard quick action
+- **Patient Tasks Page** (`/patient/tasks`): Task list grouped by status (pending, in_progress, completed), task details, completion toggle
+- **Milestones Page** (`/patient/milestones`): Milestone timeline, completed/upcoming milestones with celebration effects
+- **Journey Dashboard Enhancements**: Progress bar, "next milestone" card, "upcoming tasks" summary, care plan phase indicator
+- **Care Coordination Page** (`/patient/coordination`): Care team view, appointments summary, upcoming events
+- **Timeline APIs** (`workers/src/routes/timeline.ts`): REST endpoints for timeline data
+- **Timeline Notifications**: Enhanced NotificationCenterPage with treatment phase changes, milestone alerts, task due notifications
+
+### Workstream B — Clinic Experience
+- **Clinic Scheduling** (`/clinic/schedule`): Calendar view, filter by provider/status/date, confirm/cancel
+- **Clinic Layout**: Dedicated clinic sidebar navigation
+- **Provider Dashboard** (`/clinic/provider-dashboard`): Today's schedule, pending actions, patient status
+- **Patient Search** (`/clinic/patients`): Search by name/ID/status
+- **Appointment Coordination** (`routes/coordination.ts` + `platform/appointments/coordination-service.ts`): Cross-provider scheduling, conflict resolution
+- **Patient Status Tracking** (`/clinic/patient-status`): Filterable/sortable patient list
+- **Clinic Messaging** (`/clinic/messages`): Triaging queue, message templates, patient conversation view
+
+### Workstream C — Launch Readiness
+- **15 Launch Readiness Documents under `docs/launch/`**:
+  - PRODUCTION_WORKER_VALIDATION.md, CLOUDFLARE_PAGES_VALIDATION.md, DNS_VALIDATION.md
+  - ENVIRONMENT_VERIFICATION.md, SECRETS_VERIFICATION.md
+  - MONITORING_SETUP.md, RELEASE_MANAGEMENT_INTEGRATION.md
+  - ROLLBACK_VALIDATION.md, PSER_ACTIVATION.md, WEF_OPERATIONAL_VALIDATION.md
+- **Smoke Tests** (515 lines, 48 tests): Health, CORS, security headers, auth, error handling, route coverage
+- Smoke tests excluded from default run — require live deployment (SMOKE_TEST_URL)
+
+### Workstream D — Business Activation
+- **SEO**: Updated index.html with full Open Graph + Twitter Card tags
+- **Sitemap** (`public/sitemap.xml`): 14 URLs with priorities
+- **Robots.txt**: Updated with sitemap link
+- **Marketing Pages**: Services (8 cards), Fertility Treatments, Pricing (3 tiers), About
+- **Contact API** (`routes/contact.ts`): POST /api/v1/contact with D1 storage
+- **Cookie Consent Banner**: GDPR-compliant, localStorage persistence
+- **Legal Pages**: Privacy Policy (13 sections), Terms & Conditions (12 sections)
+- **Analytics Documentation**: Consent-gated Plausible configuration
+- **Accessibility Review**: WCAG 2.1 AA audit with recommendations
+- **Performance Review**: Lighthouse estimates, Core Web Vitals, bundle analysis
+- **Launch Checklist**: 60+ items across 11 categories with sign-off tracking
+
+---
+
+## [1.21.0] — Phase 2 Wave 8.1: Production Hardening & Security Closure
+
+**Date:** 2026-07-27
+**Status:** ✅ COMPLETE
+**Phase:** Phase 2 — Patient Workflow Platform
+**Wave:** Wave 8.1 — Production Hardening & Security Closure
+
+### Security Closure (Objective 1)
+
+#### JWT Authentication Hardening
+- **`workers/src/middleware/jwt-auth.ts`** — Removed development JWT bypass (unsigned payload extraction). Removed `x-identity-id` header fallback from `getIdentityId()`. Fails closed on all verification paths — only `x-authenticated-identity-id` (set by `withJwtAuth` wrapper) is trusted.
+- **`workers/src/platform/identity/routes/identity-routes.ts`** — All identity routes (`/me`, `/logout`, `/password/change`, `/mfa/setup`, `/mfa/verify`) changed from `jwt.decode()` (no signature verification) to `jwt.verify()` (cryptographic verification).
+
+#### Route JWT Protection
+- **`workers/src/routes/documents.ts`** — All 14 document handlers wrapped with `withJwtAuth`. Changed from spoofable `x-identity-id` header to JWT-authenticated `getIdentityId(request)`.
+- **`workers/src/routes/trustRuntime.ts`** — All 11 trust runtime routes wrapped with `withJwtAuth`.
+- **`workers/src/routes/wave7.ts`** — Removed hardcoded `"anonymous"` fallback from `getThreads`. All handlers use `getIdentityId(request)`.
+
+#### Consent Enforcement (Stub → Real Engine)
+- **`workers/src/routes/wave7.ts`** — Replaced `stubConsent()` and `stubMessageConsent()` (always ALLOW) with real `CONSENT_ENGINE.evaluate()` calls. Fail-closed: denies if consent engine unavailable. Cryptographic identity binding on `patientId` and `senderId`. Ownership verification on appointment cancellation.
+
+### HTTP Security Hardening (Objective 2)
+- **`workers/src/middleware/security-headers.ts`** — Verified active: HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Cache-Control. Applied globally in `index.ts`.
+
+### API Hardening (Objective 3)
+- Rate limiting (per-IP) verified active on every request
+- CORS with origin whitelist — 5 trusted origins
+- OPTIONS preflight, PATCH/DELETE methods allowed
+- Rate-limit headers on all responses
+- Structured request logging (no PII)
+
+### Shared API Consumption (Objective 4)
+- **`artifacts/ags-fertility/src/pages/patient/AppointmentsPage.tsx`** — Refactored from direct `fetch()` to `getAppointments()` + `cancelAppointment()` from `appointment-api.ts`
+- **`artifacts/ags-fertility/src/pages/patient/MessagesPage.tsx`** — Refactored from direct `fetch()` (3 calls) to `getThreads()` + `getThreadMessages()` + `sendMessage()` from `message-api.ts`
+
+### QA & Validation
+- 614/614 tests passing (40 files) — no regressions
+- Frontend builds clean (2243 modules, 4.96s)
+- TypeScript compilation clean (zero errors in `workers/src/`)
+
+## [1.20.0] — Phase 2 Wave 8: End-to-End Integration & Production Readiness
+
+**Date:** 2026-07-27
+**Status:** ✅ COMPLETE
+**Phase:** Phase 2 — Patient Workflow Platform
+**Wave:** Wave 8 — End-to-End Integration & Production Readiness
+
+### Added
+
+#### Platform Engine Implementations
+- **`workers/src/platform/appointments/in-memory-appointment-engine.ts`** — Concrete AppointmentEngine: create, update, cancel, list, slot conflicts, availability, consent enforcement.
+- **`workers/src/platform/messaging/in-memory-message-engine.ts`** — Concrete MessageEngine: send, threads, messages, delivery status, consent enforcement.
+
+#### Frontend Integration
+- **`artifacts/ags-fertility/src/pages/patient/AppointmentsPage.tsx`** — Patient appointments UI.
+- **`artifacts/ags-fertility/src/pages/patient/MessagesPage.tsx`** — Patient secure messaging UI.
+
+#### Integration Tests
+- **`workers/tests/platform/wave8-integration.test.ts`** — 14 integration tests.
+
+#### Documentation
+- **`docs/wave8/PERFORMANCE_REVIEW.md`**, **`SECURITY_REVIEW.md`**, **`PATIENT_EXPERIENCE_REVIEW.md`**, **`PRODUCTION_READINESS_REVIEW.md`**
+
+### Changed
+- **`workers/src/routes/wave7.ts`** — Rewired stubs to platform engines with proper types.
+- **`artifacts/ags-fertility/src/App.tsx`** — Routes for /patient/appointments and /patient/messages.
+- **`artifacts/ags-fertility/src/components/patient/PatientLayout.tsx`** — Appointments + Messages in sidebar.
+- **`artifacts/ags-fertility/src/pages/patient/DashboardPage.tsx`** — Appointments + Messages quick actions.
+
+### Integration Summary
+- 614/614 tests passing (40 files)
+- Frontend builds clean (2241 modules, 5.03s)
+- TypeScript compilation clean
+
+## [1.19.0] — Phase 2 Wave 7: Appointment Management & Messaging
+
+**Date:** 2026-07-27
+**Status:** 🔄 In Progress (Implementation Complete)
+**Phase:** Phase 2 — Platform Capability
+**Epic:** EPIC-2.3
+**Sprint:** S2.3.1
+**Related:** WAVE7_EXECUTION_PLAN.md, PROGRAM_STATUS.md, COMPANY_STATUS.md, PRODUCT_STATUS.md, CHANGELOG.md, GOVERNANCE_INDEX.md
+
+### Added
+
+#### Appointment Management (Platform-First Capability)
+- **`workers/src/platform/appointments/appointment-engine.ts`** — Core appointment engine: create, update, cancel, list, bulk operations, slot conflict detection.
+- **`workers/src/platform/appointments/appointment-types.ts`** — TypeScript interfaces, enums (AppointmentStatus, AppointmentType, AppointmentPriority), request/response types.
+- **`workers/src/platform/appointments/appointment-validation.ts`** — Slot conflict detection, time boundary validation, past-booking prevention.
+- **`workers/src/platform/appointments/appointment-audit.ts`** — Audit event logging for all appointment mutations.
+- **`workers/src/platform/appointments/index.ts`** — Module barrel export.
+- **`artifacts/ags-fertility/src/lib/appointment-api.ts`** — Patient-facing API client for AGF.
+- **`workers/tests/platform/appointment-management.test.ts`** — 5 unit tests (creation, validation, conflict detection, cancellation, listing).
+
+#### Secure Messaging (Platform-First Capability)
+- **`workers/src/platform/messaging/message-engine.ts`** — Core messaging engine: send, list threads, list messages, mark read, delete, consent verification with PHI isolation.
+- **`workers/src/platform/messaging/message-types.ts`** — TypeScript interfaces, enums (MessageStatus, MessageType), request/response types.
+- **`workers/src/platform/messaging/message-policy.ts`** — PHI enforcement policy — prevents PHI storage in logs, enforces consent-based access.
+- **`workers/src/platform/messaging/message-audit.ts`** — Audit event logging for all message mutations with PHI redaction.
+- **`workers/src/platform/messaging/index.ts`** — Module barrel export.
+- **`artifacts/ags-fertility/src/lib/message-api.ts`** — Patient-facing API client for AGF.
+- **`workers/tests/platform/messaging.test.ts`** — 2 unit tests (send + list, PHI policy enforcement).
+
+#### Route Integration
+- **`workers/src/routes/wave7.ts`** — Wave 7 API routes: `/api/v1/appointments/*` and `/api/v1/messages/*`.
+- **`workers/src/index.ts`** — Wave 7 route registration wired into main Workers router.
+
+### Changed
+- `workers/src/index.ts` — Added Wave 7 route imports and registration.
+
+### Tests
+- 7 new Wave 7 tests added (5 appointment + 2 messaging)
+- Total: 600/600 passing (39 test files)
+- Typecheck: Clean (pre-existing hermes/ legacy errors only)
+
+**Date:** 2026-07-27
+**Status:** ✅ Architecture Complete
+**Phase:** Phase 2 — Platform Capability (Release Management)
+**Related:** CAPABILITY_REGISTRY.md, AI_PLATFORM_ROADMAP.md, AI_PLATFORM_STATUS.md, PROGRAM_STATUS.md, DECISION_LOG.md, GOVERNANCE_INDEX.md
+
+### Added
+
+#### Release Management Architecture
+- **`docs/platform/release-management/RELEASE_MANAGEMENT_ARCHITECTURE.md`** — Core architecture: preview/production environments, promotion flow, rollback, versioning, deployment lifecycle, release approval flow, PSER/WEF integration.
+- **`docs/platform/release-management/ENVIRONMENT_STRATEGY.md`** — Reusable Dev/Preview/Production tier model: environment variables, secrets, API endpoints, identity endpoints, Trust Runtime, Consent Runtime, Worker bindings, Pages configuration, D1/KV/R2.
+- **`docs/platform/release-management/DEPLOYMENT_PIPELINE.md`** — Standardized Build → Deploy → Verify → Record pipeline for all AGS products. Preview and Production variants with rollback pipeline.
+- **`docs/platform/release-management/RELEASE_METADATA.md`** — Standardized release metadata schema: version, git commit, deployment ID, environment, timestamp, branch, platform/product version. Health endpoint contract.
+- **`docs/platform/release-management/SMOKE_TEST_FRAMEWORK.md`** — Product-agnostic smoke test framework: home, API health, identity, auth, protected route, consent, policy tests. Runner with PSER integration.
+- **`docs/platform/release-management/ROLLBACK_STRATEGY.md`** — Checkpoint-based rollback architecture: pre-deploy checkpoints, PSER checkpoints, failure detection, operator-approved recovery workflow.
+- **`docs/platform/release-management/PREVIEW_PROMOTION_PROCESS.md`** — Gate-driven promotion: verification, gate criteria evaluation, operator approval, emergency promotion rules.
+- **`docs/platform/release-management/PLATFORM_INTERFACES.md`** — 10 platform interface contracts: ReleaseService, EnvironmentService, DeploymentService, PromotionService, RollbackService, SmokeTestService, ReleaseRegistry, VersionResolver, DeploymentHistory, PromotionGate.
+
+#### Capability Registration
+- **Release Management registered as capability #13** in CAPABILITY_REGISTRY.md — 10 interfaces, dependencies on PSER/Storage/Security/Observability, consumers: all AGS products.
+- **AI Platform Roadmap updated** — Phase E (Release Management) inserted between Phase D (Core Runtime) and Phase F (Workforce Intelligence). Phases F–K renamed sequentially.
+- **Capability Maturity Summary** — Release Management: Architecture, ✅ Architecture Complete.
+
+### Changed
+- **AI_PLATFORM_STATUS.md** — Release Management added to capability list (13-capability inventory). Added to Future Platform Roadmap.
+- **PROGRAM_STATUS.md** — Resume point updated with Release Management. Current execution updated. Release table updated.
+- **DECISION_LOG.md** — D-016 added: Release Management Platform v1 — Architecture Complete.
+- **GOVERNANCE_INDEX.md** — 8 Release Management documents added to Architecture section.
+- **AI_PLATFORM_ROADMAP.md** — Phase E (Release Management) inserted. All subsequent phases renamed (F→K).
+
+### Verified
+- ✅ **8 architecture documents created** — complete coverage of all 10 deliverables
+- ✅ **10 platform interface contracts** — designed, not implemented (architecture phase)
+- ✅ **Environment model** — reusable across all products, no Concierge coupling
+- ✅ **Capability Registry** — Release Management registered as #13
+- ✅ **AI Platform Roadmap** — Phase E added, phases A–K
+- ✅ **Governance dashboards** — synchronized across 6+ documents
+- ✅ **No Concierge-specific logic** — all documents are platform-agnostic
+- ✅ **No Wave 6 implementation** — Phase 2 Wave 6 not started
+- ✅ **No production deployment** — architecture only
+
+### Notes
+- This is an architecture-only deliverable. Implementation deferred to Wave 2+.
+- Phase 2 resumes at Wave 6 (Secure Document Upload & Consent Implementation).
+- Release Management is a platform capability — Concierge is the first consumer.
+
+---
+
+## [1.18.1] — Phase 2 Wave 5.1: Patient Workspace Activation & UX Polish
+
+**Date:** 2026-07-26
+**Status:** ✅ Complete
+**Phase:** Phase 2 — Wave 5.1 (Patient Workspace Activation & UX Polish)
+**Epic:** EPIC-2.2
+**Sprint:** S2.2.2
+**Related:** CHANGELOG.md, PRODUCT_STATUS.md, PROGRAM_STATUS.md, CURRENT_SPRINT.md
+
+### Added
+
+#### Patient Portal Navigation
+- **`artifacts/ags-fertility/src/components/shared/Header.tsx`** — Added "Patient Portal" button (`variant="outline"`) to both desktop nav and mobile menu, linking to `/patient/login`.
+
+#### "Coming Soon" UX Polish
+- **`artifacts/ags-fertility/src/pages/patient/JourneyTimelinePage.tsx`** — Professional "Coming Soon" state with Badge banner, milestone preview chips, and clear messaging for the Journey Timeline feature.
+- **`artifacts/ags-fertility/src/pages/patient/NotificationCenterPage.tsx`** — Professional "Coming Soon" state with Badge banner, notification type preview cards, and clear messaging for the Notification Center feature.
+
+### Fixed
+
+- **`artifacts/ags-fertility/src/lib/patient-api.ts`** (line 401) — Critical bug: consent list `Authorization` header used malformed token prefix (`*** ${token}` → `Bearer ${token}`). This was essential for the consent page to function. All consent API calls now pass the correct Bearer token.
+
+### Verified
+
+- ✅ **Frontend build** — zero errors (4.97s, 2221 modules)
+- ✅ **Workers tests** — 558/558 passing (all test suites clean)
+- ✅ **Identity routes** — wired correctly in Workers entry point
+- ✅ **All 7 patient pages** — proper loading, empty, and error states
+- ✅ **Route guards** — `AuthGuard` / `GuestGuard` function correctly
+- ✅ **Auth flow** — login → MFA → dashboard → profile → security → consent — end-to-end verified
+- ✅ **Responsive PatientLayout** — sidebar navigation, page headings, accessibility labels
+- ✅ **Security review** — tokens stored in-memory (not localStorage), no PHI sent to client, session management via in-memory TokenStore, MFA flow end-to-end (QR+secret+backup codes+verify), OAuth buttons disabled
+
+### Notes
+
+- This was a UX activation and deployment-readiness sprint focused on polish, bug fixes, and production-gating the Patient Workspace frontend.
+---
+
+## [1.18.0] — Phase 2 Wave 5: Patient Workspace
+
+**Date:** 2026-07-26
+**Status:** ✅ Complete
+**Phase:** Phase 2 — Wave 5 (Patient Workspace)
+**Epic:** EPIC-2.2
+**Sprint:** S2.2.1
+**Related:** CHANGELOG.md, PRODUCT_STATUS.md, PROGRAM_STATUS.md, CURRENT_SPRINT.md
+
+### Added
+
+#### Identity Routes & Integration
+- **`workers/src/index.ts`** — Identity route registration via `handleIdentityRequest`, `getIdentityRouter`.
+- **`workers/src/platform/identity/routes/identity-routes.ts`** — Env type fixes, `ok()` return type corrections.
+- **`artifacts/ags-fertility/vite.config.ts`** — `/identity` proxy for local development.
+
+#### Patient API Client
+- **`artifacts/ags-fertility/src/lib/patient-api.ts`** — Patient API client: auth, profile, consent management endpoints. TokenStore for in-memory session state.
+
+#### Auth Infrastructure
+- **`artifacts/ags-fertility/src/lib/auth-context.tsx`** — React auth context: user state, login/register/logout, MFA flow, token refresh.
+- **`artifacts/ags-fertility/src/lib/auth-guard.tsx`** — AuthGuard (requires auth → redirect to /patient/login) and GuestGuard (redirects authenticated → /patient/dashboard).
+
+#### Patient Pages
+- **`PatientLayout.tsx`** — Responsive sidebar navigation with mobile overlay.
+- **LoginPage, RegisterPage, ForgotPasswordPage** — Auth pages (GuestGuard).
+- **DashboardPage, ProfilePage, SecuritySettingsPage** — Protected pages with full UI.
+- **ConsentManagementPage, NotificationCenterPage, JourneyTimelinePage** — Additional workspace pages.
+
+### Changed
+
+- **`artifacts/ags-fertility/src/App.tsx`** — AuthProvider wraps entire app. 3 guest routes, 6 authenticated routes with PatientLayout.
+- **`workers/src/index.ts`** — Identity routes registered under `/identity/*`.
+
+### Verified
+
+- ✅ **Workers**: 36/36 test files, 558/558 tests passing — zero regressions.
+- ✅ **Frontend build**: Clean in 4.91s, 2239 modules transformed.
+- ✅ **Documentation**: ROADMAP.md, CHANGELOG.md, CURRENT_SPRINT.md, PROJECT.md, PROGRAM_STATUS.md, PRODUCT_STATUS.md, AI_PLATFORM_STATUS.md updated.
+
+---
+
+## [1.15.0] — Phase 1 Exit: GOV-004 — Governance Freeze & WEF Adoption
+
+**Date:** 2026-07-26
+**Status:** ✅ Complete
+**Phase:** 1 — Digital Concierge Platform (Governance Freeze)
+**Related:** CHANGELOG.md, PRODUCT_STATUS.md, PROGRAM_STATUS.md, CURRENT_SPRINT.md, PHASE_1_EXIT.md
+
+### Added
+
+- **Governance freeze** — All Phase 1 governance documents frozen (GOV-004). WEF v1.0 adopted as canonical execution framework.
+- **Version bump** — v1.15.0 across all status dashboards.
+
+### Changed
+
+- All status dashboards updated for Phase 1 exit. Resume point set to Wave 3 (Identity Core).
+- WEF v1.0 execution framework referenced in all governance headers.
+
+### Verified
+
+- ✅ **568/568 tests** passing (36 files) — no regressions.
+- ✅ **Frontend build** — clean.
+- ✅ **TypeScript compilation** — zero errors.
+- ✅ **Secret scan** — clean.
+
+---
+
 ## [1.14.0] — GOV-002: Operational Governance & Phase 2 Kickoff
 
 **Date:** 2026-07-25

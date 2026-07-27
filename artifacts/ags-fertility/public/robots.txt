@@ -1,2 +1,8 @@
 User-agent: *
 Allow: /
+
+# Sitemap
+Sitemap: https://agsynergy.ca/sitemap.xml
+
+# Disallow admin/private paths
+Disallow: /patient/

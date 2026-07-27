@@ -2,7 +2,8 @@
 
 > **Tracks reusable platform capabilities independent of Concierge.**
 > The AI Platform is the organizational layer between AGS (company) and individual products like Concierge.
-> **Last Updated:** 2026-07-25
+> **Last Updated:** 2026-07-27
+> **WEF Version:** 1.1.0
 
 ---
 
@@ -10,10 +11,22 @@
 
 ```
 Company:        AGS
+Business Unit:  Engineering
 Platform:       AI Platform
-Product:        Concierge
+Product:        Concierge (consumer) — first adopter
 Public Brand:   AG Synergy
 Repository:     concierge-website
+Portfolio:      Clinical
+Phase:          Phase 2 — Wave 9
+Epic:           EPIC-2.4
+Sprint:         S2.4.0
+Status:         ✅ Phase 2 Complete — All 9 waves delivered
+Workforce Mode: Human Supervised (WEF v1.1)
+WEF Version:    1.1.0
+WEF Workforce:  Developer Agent, QA Agent, Security Agent, Documentation Agent, Monitoring Agent
+Human Authority: principal:human-operator
+Governance:     ACTIVE — Wave 9 — Concierge Launch & Platform Activation
+Framework:      WEF v1.1 (AGS Enterprise Execution Framework)
 ```
 
 ---
@@ -22,13 +35,20 @@ Repository:     concierge-website
 
 | Capability | Status | Components | Consumers |
 |---|---|---|---|
-| Execution Platform | ✅ **Live** | Work Planner, Workforce Dispatcher, Execution Queue, Review Pipeline | Hermes agents, workflows |
-| Authorization Engine | ✅ **Live** | Data-driven RBAC, `src/auth/` engine, deny-wins, OWNER short-circuit | All protected API routes |
-| Provider Framework | ✅ **Live** | Capability Registry, Provider Loader, Provider Discovery, Transport Layer | Security scanners, tool providers |
-| Workforce Orchestration | ✅ **Live** | Coordinator, 8 lifecycle states, human approval gates, notification integration | Agent lifecycle, workflow tasks |
-| Security Automation | ✅ **Live** | Security Agent, Risk Engine, OSS scanner adapters (gitleaks, semgrep, osv-scanner, trivy) | Developer pipeline, admin visibility |
-| Persistence Layer | ✅ **Live** | Agent state store, Execution store, Workflow store, Memory/persistence backends | Stateful operations, audit trails |
-| Platform Hardening | ✅ **Live** | Agent lifecycle management, audit persistence, tenant boundaries, provider seam isolation | Cross-boundary security |
+|| Execution Platform | ✅ **Live** | Work Planner, Workforce Dispatcher, Execution Queue, Review Pipeline | Hermes agents, workflows |
+|| Authorization Engine | ✅ **Live** | Data-driven RBAC, `src/auth/` engine, deny-wins, OWNER short-circuit | All protected API routes |
+|| Provider Framework | ✅ **Live** | Capability Registry, Provider Loader, Provider Discovery, Transport Layer | Security scanners, tool providers |
+|| Workforce Orchestration | ✅ **Live** | Coordinator, 8 lifecycle states, human approval gates, notification integration | Agent lifecycle, workflow tasks |
+|| Security Automation | ✅ **Live** | Security Agent, Risk Engine, OSS scanner adapters (gitleaks, semgrep, osv-scanner, trivy) | Developer pipeline, admin visibility |
+|| Persistence Layer | ✅ **Live** | Agent state store, Execution store, Workflow store, Memory/persistence backends | Stateful operations, audit trails |
+|| Platform Hardening | ✅ **Live** | Agent lifecycle management, audit persistence, tenant boundaries, provider seam isolation | Cross-boundary security |
+||| **Trust & Identity** | ✅ **Live (Wave 3)** | Identity Core v1 (16 modules), Provider Abstractions (Google, OIDC), JWT Key Rotation, Refresh Token Hashing, MFA, Passwordless Auth, Session Management, Credential Rotation, D1 Persistence, Rate Limiting, Zero Trust Hooks, Audit & Identity Events | All products (implemented v1) |
+||| **Policy Engine** | ✅ **Architecture Complete (Wave 2)** | Centralized policy evaluation — RBAC+ABAC+Time+Context+Consent+Trust, policy hierarchy, conflict resolution, fail-closed | All products (designed, not implemented) |
+||| **Consent & Trust** | ✅ **Architecture Complete (Wave 2)** | 10 consent types, immutable consent records, consent lifecycle, trust evaluation, session binding | All products (designed, not implemented) |
+||| **Capability Registry** | ✅ **Complete (Wave 2)** | 13-capability inventory, dependency map, product mapping, risk register, maintenance schedule | Platform-wide registry |
+||| **Engineering Standards** | ✅ **Complete (Wave 2)** | 110 mandatory standards across 19 categories, compliance gates per maturity level, waiver process | All capabilities |
+||| **Release Management** | ✅ **Architecture Complete (Wave 1)** | Standardized preview and production deployment workflows for all AGS products. 8 architecture documents, environment model, 10 platform interfaces, pipeline design, rollback/smoke test/promotion strategies. | Concierge (first adopter), all future products |
+||| **Capability Maturity Model** | ✅ **Complete (Wave 2)** | 8 maturity levels with entry/exit criteria, advancement/demotion/re-promotion rules, waiver process | All capabilities |
 
 ---
 
@@ -135,13 +155,27 @@ The AI Platform currently co-exists with Concierge in a single repository. Capab
 
 ## 11. Future Platform Roadmap
 
-| Capability | Phase | Status |
-|---|---|---|
-| Full D1 persistence backends | Phase 2+ | 📋 Planned |
-| Postgres/KV backends | Phase 3+ | 📋 Future |
-| External provider marketplace | Phase 3+ | 📋 Future |
-| Cross-product service mesh | Phase 4 | 📋 Future |
-| AI Platform as independent deployable | Post-Phase 4 | 📋 Vision |
+|| Capability | Phase | Status |
+||---|---|---|
+||| Trust & Identity — Architecture | Phase 2 | ✅ **Complete (Wave 1)** |
+||| Policy Engine — Architecture | Phase 2 | ✅ **Complete (Wave 2)** |
+||| Consent & Trust — Architecture | Phase 2 | ✅ **Complete (Wave 2)** |
+||| Capability Registry | Phase 2 | ✅ **Complete (Wave 2)** |
+||| Engineering Standards | Phase 2 | ✅ **Complete (Wave 2)** |
+||| Workforce Identity — Expanded | Phase 2 | ✅ **Complete (Wave 2)** |
+||| Capability Maturity Model | Phase 2 | ✅ **Complete (Wave 2)** |
+|||| Release Management — Architecture | Phase 2 | ✅ **Architecture Complete (Wave 1)** |
+||||| Trust & Identity — Implementation | Phase 2 | ✅ **Complete (Wave 3)** — 514 tests, 16 modules |
+||||| Patient Workspace — Frontend | Phase 2 | ✅ **Complete (Wave 5)** — identity routes, auth provider/guards, 10 patient pages |
+||||| Secure Document Upload & Consent | Phase 2 | ✅ **Complete (Wave 6)** — R2 pre-signed URLs, consent trust, policy engine |
+||||| Appointment Management & Messaging | Phase 2 | ✅ **Complete (Wave 7)** — scheduling, messaging, consent enforcement |
+||||| Production Hardening & Security Closure | Phase 2 | ✅ **Complete (Wave 8.1)** — JWT, consent engine, rate limiting |
+||||| Concierge Launch & Platform Activation | Phase 2 | 🚧 **Wave 9 (final wave) — In Progress** |
+||| Full D1 persistence backends | Phase 2+ | 📋 Wave 9 deferred backlog |
+|| Postgres/KV backends | Phase 3+ | 📋 Future |
+|| External provider marketplace | Phase 3+ | 📋 Future |
+|| Cross-product service mesh | Phase 4 | 📋 Future |
+|| AI Platform as independent deployable | Post-Phase 4 | 📋 Vision |
 
 ---
 

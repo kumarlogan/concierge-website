@@ -10,18 +10,57 @@
 
 ```
 Company        AGS
+Business Unit  Engineering
 Platform       AI Platform
 Product        Concierge
 Public Brand   AG Synergy
+Portfolio      Clinical
 
 Roadmap        Concierge Roadmap
   └─ Phase
-       └─ Epic
-            └─ Sprint
-                 └─ Story / Task
+       └─ Wave
+            └─ Epic
+                 └─ Sprint
+                      └─ Story
+                           └─ Task
 ```
 
-## 2. Naming Table
+### Full Enterprise Hierarchy
+
+```
+Company
+  │
+  ├── Business Unit
+  │     ├── Platform
+  │     │     ├── Product
+  │     │     │     ├── Portfolio
+  │     │     │     │     ├── Roadmap
+  │     │     │     │     │     ├── Phase
+  │     │     │     │     │     │     ├── Wave
+  │     │     │     │     │     │     │     ├── Epic
+  │     │     │     │     │     │     │     │     ├── Sprint
+  │     │     │     │     │     │     │     │     │     ├── Story
+  │     │     │     │     │     │     │     │     │     │     ├── Task
+```
+
+See `docs/company/AGS_ENTERPRISE_OPERATING_MODEL.md` for the complete enterprise hierarchy.
+
+## 2. Execution Framework
+
+```
+Workforce:     Enterprise Workforce (who executes work)
+Framework:     WEF v1.1 (how work is executed — enterprise-wide)
+```
+
+- **Enterprise Workforce** = 11 workforce categories across all business units (Engineering, Marketing, Sales, Operations, Finance, Legal, Executive, Customer Success, Analytics, Partnerships, HR)
+- **WEF v1.1** = The AGS Enterprise Execution Framework that governs how work is executed across all business units — a seven-phase, gate-driven process with mandatory human oversight, observability, auditability, fail-closed safety, and platform-first principles
+- **Engineering Workforce** = First adopter (5 agents: Developer, QA, Security, Documentation, Monitoring) plus the Human Operator
+
+The Enterprise Workforce uses WEF to execute work. WEF does not replace any workforce — it structures and governs all work across the enterprise.
+
+See `docs/company/ENTERPRISE_WORKFORCE_MODEL.md` for the complete workforce model.
+
+## 3. Naming Table
 
 | Context | Internal Name | Public/Presentation Name | Rule |
 |---|---|---|---|
@@ -33,7 +72,7 @@ Roadmap        Concierge Roadmap
 | Repository | concierge-website | concierge-website | GitHub repo renamed from hermes-website |
 | Roadmap | Concierge Roadmap | Concierge Roadmap | All roadmap naming |
 
-## 3. When to Use Each Name
+## 4. When to Use Each Name
 
 ### Use "Concierge" (internal product name) when:
 
@@ -68,7 +107,7 @@ Roadmap        Concierge Roadmap
 - Top-level organizational identity
 - Cross-company references
 
-## 4. Prohibited Naming
+## 5. Prohibited Naming
 
 | ❌ Deprecated | ✅ Replacement | Reason |
 |---|---|---|
@@ -77,7 +116,7 @@ Roadmap        Concierge Roadmap
 | AG Synergy Roadmap | Concierge Roadmap | Roadmap naming |
 | Hermes Platform (as org layer) | AI Platform | Organizational hierarchy clarity |
 
-## 5. Explicitly Preserved Names
+## 6. Explicitly Preserved Names
 
 The following retain their original names because they refer to the actual Hermes software platform, not the organizational layer:
 
@@ -88,24 +127,30 @@ The following retain their original names because they refer to the actual Herme
 - Hermes Execution Engine
 - Hermes Platform (as software product name, distinct from org hierarchy)
 
-## 6. Future Products
+## 7. Future Products
 
 All future products shall follow the same hierarchy:
 
 ```
 Company        AGS
-Platform       AI Platform
+Business Unit  <Business Unit>
+Platform       <Platform>
 Product        <New Product Name>
 Public Brand   <Public Brand Name>
+Portfolio      <Portfolio>
 
 Roadmap        <Product Name> Roadmap
   └─ Phase
-       └─ Epic
-            └─ Sprint
-                 └─ Story / Task
+       └─ Wave
+            └─ Epic
+                 └─ Sprint
+                      └─ Story
+                           └─ Task
 ```
 
 Every product gets its own roadmap.
+Every product belongs to exactly one platform.
+Every platform belongs to exactly one business unit.
 Every phase belongs to exactly one product's roadmap.
 Every epic belongs to exactly one phase.
 Every sprint belongs to exactly one epic.

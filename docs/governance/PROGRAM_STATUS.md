@@ -4,7 +4,8 @@
 > Single source of truth for engineering and commercial program status.
 > Updated every epic completion.
 
-**Last Updated:** 2026-07-25
+**Last Updated:** 2026-07-27
+**WEF Version:** 1.1.0 (AGS Enterprise Execution Framework)
 
 ---
 
@@ -12,16 +13,40 @@
 
 ```
 Company        AGS
+Business Unit  Engineering
 Platform       AI Platform
 Product        Concierge
 Public Brand   AG Synergy
+Portfolio      Clinical
 
 Roadmap        Concierge Roadmap
   └─ Phase
-       └─ Epic
-            └─ Sprint
-                 └─ Story / Task
+       └─ Wave
+            └─ Epic
+                 └─ Sprint
+                      └─ Story
+                           └─ Task
 ```
+
+### Full Enterprise Hierarchy
+
+```
+Company
+  │
+  ├── Business Unit
+  │     ├── Platform
+  │     │     ├── Product
+  │     │     │     ├── Portfolio
+  │     │     │     │     ├── Roadmap
+  │     │     │     │     │     ├── Phase
+  │     │     │     │     │     │     ├── Wave
+  │     │     │     │     │     │     │     ├── Epic
+  │     │     │     │     │     │     │     │     ├── Sprint
+  │     │     │     │     │     │     │     │     │     ├── Story
+  │     │     │     │     │     │     │     │     │     │     ├── Task
+```
+
+See `docs/company/AGS_ENTERPRISE_OPERATING_MODEL.md` for the complete enterprise hierarchy.
 
 ---
 
@@ -42,13 +67,13 @@ Roadmap        Concierge Roadmap
 
 ## 3. Product Inventory
 
-| Product | Internal Name | Public Brand | Status |
-|---|---|---|---|
-| Fertility Concierge | Concierge | AG Synergy | 🚧 Phase 1 Complete, Phase 2 In Planning |
+|| Product | Internal Name | Public Brand | Status |
+|---|---|---|---|---|
+||| Fertility Concierge | Concierge | AG Synergy | 🚧 Phase 2 Wave 9 — Concierge Launch & Platform Activation (v1.21.0) |
 
 ---
 
-## 4. Active Product
+**Active Product**
 
 **Product:** Concierge (public brand: AG Synergy)
 
@@ -62,33 +87,46 @@ Roadmap        Concierge Roadmap
 
 ## 6. Current Phase
 
-| Phase | Name | Status |
-|---|---|---|
-| Phase 0 | Platform Foundation | ✅ **Complete** (2026-07-18) |
-| **Phase 1** | **Digital Concierge Platform** | ✅ **Complete (2026-07-26)** |
-| Phase 2 | Patient Workflow Platform | 🚧 In Planning |
-| Phase 3 | Clinic Collaboration Platform | 📋 Future |
-| Phase 4 | AI-Assisted Operations Platform | 📋 Future |
-
 ---
 
-## 7. Current Epic
+**Current Epic**  
 
-**None.** Phase 1 epics all closed. GOV-002 governance sprint complete. Phase 2 epics awaiting Phase Gate assessment.
+**EPIC-2.1-W3 — Identity Core v1 Implementation** — ✅ **Complete** (2026-07-26)  
 
----
+Implemented the reusable Identity Core as an AI Platform capability — provider-agnostic authentication, session management, JWT handling with key rotation, MFA, passwordless auth, credential rotation, OAuth adapters (Google, OIDC), D1 persistence, rate limiting, Zero Trust hooks, and audit events.
 
-## 8. Current Sprint
+| Deliverable | Status |
+|---|---|
+| Identity Core v1 (16 modules, `workers/src/platform/identity/`) | ✅ |
+| Types, Interfaces, Enums | ✅ |
+| D1 Identity Repository | ✅ |
+| Session Manager | ✅ |
+| JWT Manager (RS256, key rotation) | ✅ |
+| Password Manager (Argon2, 12-char policy) | ✅ |
+| Email Verification | ✅ |
+| Magic Link (passwordless) | ✅ |
+| Password Reset | ✅ |
+| OAuth Provider (Google, OIDC) | ✅ |
+| MFA (TOTP, recovery codes, SMS) | ✅ |
+| Provider Registry | ✅ |
+| Credential Rotation Manager | ✅ |
+| Identity Hooks (audit, trust, consent, policy) | ✅ |
+| Identity Events | ✅ |
+| API Routes (19 endpoints) | ✅ |
+| Database Migration (0002_identity_core.sql) | ✅ |
+| Comprehensive Test Suite (514 tests) | ✅ |
+| Architecture Documentation | ✅ |
+| Governance Dashboard Updates | ✅ |
 
-**GOV-002-S001** — ✅ **Closed** (2026-07-25 → 2026-07-25)
+**Current Sprint**
 
-Next sprint: **Phase 2 Planning Sprint** (pending Phase Gate entry assessment)
+**P2-W3-S001 — Identity Core v1 Implementation** — ✅ **Complete** (2026-07-26)
 
 ---
 
 ## 9. Current Git Commit
 
-`HEAD` — `GOV-002: Operational Governance & Phase 2 Kickoff`
+HEAD — `7a5b751` — `Phase 2 Wave 5.1 — EPIC-2.2 Sprint S2.2.2 complete`
 
 ---
 
@@ -96,6 +134,11 @@ Next sprint: **Phase 2 Planning Sprint** (pending Phase Gate entry assessment)
 
 | Version | Tag | Date | Content |
 |---|---|---|---|
+| v1.18.1 | `v1.18.1` | 2026-07-26 | Phase 2 Wave 5.1 — Patient Workspace Activation & UX Polish |
+| **v1.21.0** | **`v1.21.0`** | **2026-07-27** | **Phase 2 Wave 8.1 — Production Hardening & Security Closure** |
+| v1.20.0 | `v1.20.0` | 2026-07-27 | Phase 2 Wave 8 — End-to-End Integration & Production Readiness |
+| v1.18.0 | `v1.18.0` | 2026-07-26 | Phase 2 Wave 5 — Patient Workspace complete |
+| v1.15.0 | `v1.15.0` | 2026-07-26 | GOV-004 — Governance Freeze & WEF Adoption |
 | v1.14.0 | `v1.14.0` | 2026-07-26 | GOV-002 — Operational Governance & Phase 2 Kickoff |
 | v1.0.0 | `v1.0.0` | 2026-07-26 | Phase 1 engineering baseline |
 
@@ -137,27 +180,66 @@ Next sprint: **Phase 2 Planning Sprint** (pending Phase Gate entry assessment)
 
 ## 13. Resume Point
 
-**GOV-002 completed. Phase 2 Phase Gate assessment required before implementation.**
+**Phase 2 Complete**
 
-1. ✅ GOV-002 deliverables complete: DECISION_LOG.md, GOVERNANCE_INDEX.md, PHASE_GATES.md, templates, version sync, admin bot fix
-2. ✅ Tests: 465/465 passing (34 files) — no regressions
-3. ✅ Git state: Clean (pending v1.14.0 commit and tag)
-4. ✅ Version: 1.14.0 — SERVICE_VERSION auto-generated from CHANGELOG.md
-5. ❓ **Phase 2 entry gate assessment: EC-1 through EC-9** — must be verified before Sprint 2.1.1 begins
-6. Next: **Phase 2 — Patient Workflow Platform**:
-   - Epic 2.1: Patient Identity & Authentication
-   - Sprint 2.1.1: Architecture & Data Model
+Wave 9 is the final wave of Phase 2. All objectives completed.
+
+| Wave | Status |
+|------|--------|
+| Wave 1 (Trust & Identity Architecture) | ✅ Complete |
+| Wave 2 (AI Platform Governance Core) | ✅ Complete |
+| Wave 3 (Consent & Trust Implementation) | ✅ Complete |
+| Wave 4 (Messaging & Notifications) | ✅ Complete |
+| Wave 5 (Patient Workspace) | ✅ Complete |
+| Wave 6 (Secure Document Upload & Consent) | ✅ Complete |
+| Wave 7 (Appointment Management & Messaging) | ✅ Complete |
+| Wave 8 (End-to-End Integration) | ✅ Complete |
+| Wave 8.1 (Production Hardening & Security Closure) | ✅ Complete |
+| Wave 9 (Concierge Launch & Platform Activation) | ✅ **Complete** |
+
+**Phase 2 fully complete.** Proceed to Phase 3 planning when ready.
+
+> **Next:** Awaiting Phase 3 — AI-Enhanced Patient Experience.
+| **Wave 9 (Concierge Launch & Platform Activation)** | 🚧 **Executing** |
+
+1. ✅ Waves 1–8.1 complete — all features implemented, tested, hardened
+2. ✅ All prior tests: 614/614 passing — no regressions
+3. 🔵 Wave 9 executing: Patient Journey, Clinic Experience, Launch Readiness, Business Activation
+4. 🔵 All workstreams in progress
 
 ---
 
-## 14. Overall Engineering Progress
+---
+
+## 15. Overall Progress & Milestones
 
 | Phase | Epics | Tasks | Tests | Status |
 |---|---|---|---|---|
 | Phase 0 | 1 | ~10 | — | ✅ Complete |
-| Phase 1 | 16 | ~160+ | 465/465 | ✅ **Complete** |
-| GOV-002 | 1 | ~20+ | 465/465 | ✅ **Complete** |
-| **Total** | **18** | **~190+** | **465/465** | 🎯 **GOV-002 Complete — Phase 2 Next** |
+| Phase 1 | 16 | ~160+ | 465/465 | ✅ Complete |
+| GOV-002 | 1 | ~20+ | 465/465 | ✅ Complete (Governance + WDC v1.0 adoption, superseded by WEF v1.0 via GOV-004) |
+| **Total** | **19** | **~210+** | **Passing** | 🎯 **Wave 5 Complete → Wave 6 Next (Secure Document Upload & Consent Implementation)** |
+
+### Current Execution
+
+- **Phase**: Phase 2 — Patient Workflow Platform
+- **Wave**: Release Management Platform v1 ✅ Architecture Complete
+- **Epic**: N/A — Platform Capability
+- **Sprint**: N/A — Architecture Design
+- **Status**: Release Management Platform v1 Architecture Complete — 8 architecture documents, 10 interface contracts, environment model, pipeline design
+
+### Governance Updates (GOV-002 + WDC v1.0)
+
+- ✅ Decision Log created (DECISION_LOG.md)
+- ✅ Governance Index created (GOVERNANCE_INDEX.md)
+- ✅ Phase Gate Framework documented (PHASE_GATES.md)
+- ✅ Templates created (Phase, Epic, Sprint, Story, Retrospective)
+- ✅ Version synchronization — health endpoint sourced from CHANGELOG.md
+- ✅ Dashboard consistency verified and corrected
+- ✅ Phase 2 planning skeleton created
+- ✅ WEF v1.0 adopted as canonical execution framework (GOV-004, supersedes WDC v1.0)
+- ✅ ADR-014 created — WDC v1.0 adoption decision
+- ✅ Current Sprint (CURRENT_SPRINT.md) updated with WDC tasks
 
 ---
 
@@ -168,22 +250,34 @@ Next sprint: **Phase 2 Planning Sprint** (pending Phase Gate entry assessment)
 | Engineering complete | ✅ | Phase 1 MVP foundation delivered |
 | Production infrastructure | ⚠️ **Partial** | Works on workers.dev; custom domain api.agsynergy.ca not deployed |
 | Commercial launch | ❌ Not declared | Engineering milestone only — no marketing, sales, or public offer |
-| Patient-facing features | ⚠️ Basic | Consultation form live; no patient accounts, portal, or PHI handling yet |
+| Patient-facing features | ⚠️ Patient Workspace | Patient accounts, login, dashboard, profile, security, consent — implemented in Wave 5 |
 
 ---
 
-## 16. Next Milestone
+**Current Wave: Wave 9 — Concierge Launch & Platform Activation** ✅ **Executing (final wave of Phase 2)**
 
-**Phase 2 — Patient Workflow Platform Planning Sprint**
+Phase 2 Wave 9 merges Patient Journey & Care Coordination with Launch Readiness and Business Activation into one comprehensive product activation wave. All prior waves (1–8.1) complete.
 
-Target: 2026-Q3
+---
+
+## Wave 6 Completion Summary
+
+**Wave 6: Secure Document Upload & Consent Implementation** — Closed 2026-07-27
+
+### Wave 6 Deliverables
+- R2-backed secure document upload with pre-signed URLs ✅
+- Consent & Trust implementation ✅
+- Policy Engine implementation ✅
+- PHI isolation verified in audit logs ✅
+- Tests: 558/558 passing — no regressions
+- Git state: Clean — Waves 1–6 code committed
+
+Target: TBD
 
 Key deliverables:
-- Patient authentication architecture
-- Auth flows and session management design
-- Patient data model and PHI protection design
-- R2 document upload architecture
-- Phase 2 epic breakdown and sprint plan
+- R2-backed secure document upload with pre-signed URLs
+- Consent & Trust implementation
+- Policy Engine implementation
 
 ---
 

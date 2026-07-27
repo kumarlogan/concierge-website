@@ -49,6 +49,11 @@ export class Router {
     this.register("PATCH", path, handler);
   }
 
+  /** Register a DELETE route */
+  delete(path: string, handler: RouteHandler): void {
+    this.register("DELETE", path, handler);
+  }
+
   /** Generic registration used by all method helpers. */
   private register(method: string, path: string, handler: RouteHandler): void {
     this.routes.push({

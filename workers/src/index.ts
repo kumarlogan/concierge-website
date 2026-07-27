@@ -20,9 +20,13 @@
 import { Router } from "./router/index.js";
 import { health } from "./routes/health.js";
 import { createConsultation } from "./routes/consultations.js";
+import { handleContact } from "./routes/contact.js";
 import type { Env } from "./types/env.js";
 import { rateLimit, rateLimitHeaders, clientKey } from "./middleware/rateLimit.js";
 import { info, warn } from "./middleware/logger.js";
+
+// ── Security Headers (Wave 8.1) ──────────────────────────
+import { applySecurityHeaders } from "./middleware/security-headers.js";
 
 // ── Operations API (EPIC-002-003A) ──────────────────────────
 import { requirePermission } from "@hermes/permissions/middleware.js";
@@ -44,6 +48,7 @@ const router = new Router();
 // ── API v1 routes ───────────────────────────────────────────
 router.get("/api/v1/health", health);
 router.post("/api/v1/consultations", createConsultation);
+router.post("/api/v1/contact", handleContact);
 
 // ── Operations API route registration ──────────────────────
 // Each route is wrapped with requirePermission (data-driven RBAC from the auth
@@ -91,9 +96,101 @@ router.post("/telegram/webhook", (request, env, _params) =>
 
 // ── Hermes Admin Bot (EPIC-002-005) ──────────────────────────
 import { adminWebhook } from "./routes/adminBot.js";
+import { registerTrustRuntimeRoutes } from "./routes/trustRuntime.js";
 router.post("/admin/webhook", (request, env, _params) =>
   adminWebhook(request, env, _params),
 );
+
+registerTrustRuntimeRoutes(router);
+
+// ── Document Upload API routes (Wave 6 — Secure Document Upload) ────────
+import { registerDocumentRoutes } from "./routes/documents.js";
+registerDocumentRoutes(router);
+
+// ── Wave 7: Appointment Management & Messaging ────────
+import { registerAppointmentRoutes, registerMessageRoutes } from "./routes/wave7.js";
+registerAppointmentRoutes(router);
+registerMessageRoutes(router);
+
+// ── Workstream A: Timeline Routes ─────────────────────
+import { registerTimelineRoutes } from "./routes/timeline.js";
+registerTimelineRoutes(router);
+
+// ── Workstream B: Clinic Routes ──────────────────────────────
+import { registerClinicRoutes } from "./routes/clinic.js";
+import { registerCoordinationRoutes } from "./routes/coordination.js";
+import { registerClinicMessageRoutes } from "./routes/clinic-messages.js";
+registerClinicRoutes(router);
+registerCoordinationRoutes(router);
+registerClinicMessageRoutes(router);
+
+// ── Identity API routes (Wave 3 — Identity Core) ────────────────
+// Bridge between the Worker's RouteHandler signature and
+// the IdentityRouter.route() interface.
+// Each /identity/* path is handled by the IdentityRouter class.
+import { IdentityRouter, IdentityService, IdentityRepository, SessionManager, PasswordManager, JwtManager, IdentityProviderRegistry, RefreshTokenManager, EmailVerificationManager, PasswordResetManager, MagicLinkManager, OAuthService, MFAManager } from "./platform/identity/index.js";
+
+// Identity router instance — lazily initialised
+let _identityRouter: IdentityRouter | null = null;
+
+function getIdentityRouter(env: Env): IdentityRouter {
+  if (_identityRouter) return _identityRouter;
+
+  // Build the full dependency chain
+  const db = env.DB;
+  const repo = new IdentityRepository(db);
+  const sessions = new SessionManager(repo);
+  const passwords = new PasswordManager();
+  const jwt = new JwtManager();
+  const providers = new IdentityProviderRegistry(repo);
+  const refreshTokens = new RefreshTokenManager(repo);
+  const identityService = new IdentityService(repo, sessions, passwords, jwt, providers, refreshTokens);
+  const emailVerification = new EmailVerificationManager(repo);
+  const passwordReset = new PasswordResetManager(repo, passwords);
+  const magicLink = new MagicLinkManager(repo, sessions, jwt, refreshTokens);
+  const oauth = new OAuthService(repo, sessions, jwt, refreshTokens, providers);
+  const mfa = new MFAManager(repo);
+
+  _identityRouter = new IdentityRouter(
+    identityService,
+    emailVerification,
+    passwordReset,
+    magicLink,
+    oauth,
+    mfa,
+    jwt,
+    providers,
+  );
+
+  return _identityRouter;
+}
+
+async function handleIdentityRequest(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const path = url.pathname;
+  const method = request.method;
+
+  let body: Record<string, unknown> = {};
+  const contentType = request.headers.get("content-type") || "";
+  if (contentType.includes("application/json") && (method === "POST" || method === "PATCH" || method === "PUT")) {
+    try { body = await request.json(); } catch { /* empty body */ }
+  }
+
+  const headers: Record<string, string> = {};
+  request.headers.forEach((v, k) => { headers[k] = v; });
+
+  const router = getIdentityRouter(env);
+  const result = await router.route(method, path, body, headers, env as any);
+
+  return new Response(JSON.stringify(result.body), {
+    status: result.status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// Register a single catch-all for identity routes
+router.post("/identity/*", handleIdentityRequest);
+router.get("/identity/*", handleIdentityRequest);
 
 // ── Catch-all for non-API requests ──────────────────────────
 // Handles any request that doesn't match an /api/v1/ route.
@@ -166,7 +263,7 @@ export default {
         status: 204,
         headers: {
           "Access-Control-Allow-Origin": isAllowed ? origin : "",
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type, Authorization",
           "Access-Control-Max-Age": "86400",
         },
@@ -175,16 +272,29 @@ export default {
 
     const response = await router.fetch(request, env);
 
-    // Add CORS headers to the actual response
-    const headers = new Headers(response.headers);
+    // Add CORS + security headers to the actual response
+    let headers = new Headers(response.headers);
     if (isAllowed) {
       headers.set("Access-Control-Allow-Origin", origin);
       headers.set("Vary", "Origin");
     }
+    // Propagate CORS methods on non-preflight responses
+    headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+    headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
     // Propagate rate-limit headers on every response.
     for (const [k, v] of Object.entries(rateLimitHeaders(rl))) {
       headers.set(k, v);
     }
+
+    let finalResponse = new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+
+    // Apply security headers (HSTS, CSP, X-Frame-Options, etc.)
+    finalResponse = applySecurityHeaders(finalResponse);
 
     const latencyMs = Date.now() - started;
     info(
@@ -198,10 +308,6 @@ export default {
       environment,
     );
 
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    });
+    return finalResponse;
   },
 };

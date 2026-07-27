@@ -8,4 +8,4 @@
 // └─────────────────────────────────────────────────────────────┘
 
 /** Service version — sourced from CHANGELOG.md at build time. */
-export const SERVICE_VERSION = "1.14.0";
+export const SERVICE_VERSION = "1.0.0";

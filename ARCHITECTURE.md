@@ -1,6 +1,6 @@
 # Concierge — System Architecture
 
-> Version 2.1 | 2026-07-26
+> Version 2.2 | 2026-07-26
 >
 > Defines the technical architecture for Concierge Phase 1: Digital Concierge
 > Platform Foundation. This document describes how platform components interact and
@@ -10,15 +10,19 @@
 
 ```
 Company:        AGS
+Business Unit:  Engineering
 Platform:       AI Platform
 Product:        Concierge
 Public Brand:   AG Synergy
 Repository:     concierge-website
+Portfolio:      Clinical
 Phase:          Phase 1 — Digital Concierge Platform (Complete)
+Framework:      WEF v1.1
 ```
 
-> **Related Documents:**
-> - [`PROJECT.md`](./PROJECT.md) — Project constitution (highest authority)
+> Related Documents in GOVERNANCE_INDEX.md.
+> For the complete governance index, see [`docs/governance/GOVERNANCE_INDEX.md`](./docs/governance/GOVERNANCE_INDEX.md).
+> For the workforce execution framework (WEF v1.1), see [`docs/governance/WORKFORCE_DEVELOPMENT_CYCLE.md`](./docs/governance/WORKFORCE_DEVELOPMENT_CYCLE.md). WEF v1.1 supersedes WDC v1.0 (Workforce Development Cycle). See [`docs/governance/GOVERNANCE_FREEZE.md`](./docs/governance/GOVERNANCE_FREEZE.md) for the governance freeze scope.
 > - [`PRODUCT_BOUNDARIES.md`](./PRODUCT_BOUNDARIES.md) — Product scope and phase boundaries
 > - [`AI_OPERATING_MODEL.md`](./AI_OPERATING_MODEL.md) — AI agent roles and authority
 > - [`DECISIONS.md`](./DECISIONS.md) — ADR index
@@ -286,6 +290,42 @@ The Hermes **Admin Bot** is a control-plane Telegram bot for platform administra
 - **Tests** — 23 integration tests in `workers/tests/admin/bot.integration.test.ts`. Full suite: **462 tests passing** (441 prior + 23 admin bot).
 
 ### API Design Principles
+
+#### Trust & Identity Capability (Phase 2 — Architecture Complete)
+
+The Trust & Identity capability is a new AI Platform capability designed to provide provider-agnostic authentication, authorization, session management, consent, and workforce identity services to all AGS products.
+
+**Relationship to existing auth engine:**
+- The existing `workers/src/auth/` RBAC engine continues to operate unchanged
+- Trust & Identity adds an **authentication layer** above the existing authorization engine
+- Pipeline: `Trust & Identity Authentication → Principal → Existing RBAC Engine → Access Decision`
+- The `IdentityResolver` registry in the existing engine (`TelegramIdentityResolver`) remains; new resolvers (patient, staff, agent) are registered through the Trust & Identity capability
+
+**Key architectural decisions (see ADR-010):**
+- Built on Cloudflare Workers (no embedded open-source IdP)
+- 12 platform interfaces: `IdentityProvider`, `IdentityResolver`, `AuthenticationService`, `AuthorizationService`, `SessionManager`, `ConsentService`, `TrustEvaluator`, `RiskEngine`, `IdentityRegistry`, `AgentIdentity`, `AuditService`, `FederationGateway`
+- Identity-PHI separation: separate stores, separate encryption keys
+- Workforce identity model: first-class AI agent lifecycle, trust scoring, credential management
+- Zero trust: every request evaluates identity, authentication, authorization, device, session, organization, role, product, consent, and risk
+
+See `docs/platform/trust-identity/` for detailed architecture.
+
+### AI Platform Governance Core (Phase 2 Wave 2 — Architecture Complete)
+
+Three new governance capabilities sit alongside Trust & Identity as independent AI Platform capabilities:
+
+**Policy Engine** (`docs/platform/policy-engine/`) — Centralized, deterministic policy evaluation combining RBAC (existing engine wrapped), ABAC, time-based, context-aware, consent-based, and trust-based evaluation. Fail-closed default. Policy hierarchy: Global → Product → Resource → Context. Existing RBAC engine continues to operate unchanged; new products use the Policy Engine exclusively.
+
+**Consent & Trust** (`docs/platform/consent-trust/`) — Reusable consent management (10 consent types, immutable records, revocation, re-consent, session snapshots) and trust evaluation (6 dimensions, weighted scoring). PIPEDA/PHIPA/CASL compliance built in. Provider-agnostic, independent from Identity and Policy.
+
+**Capability Registry** (`docs/platform/capability-registry/`) — 11-capability canonical registry with dependency maps, product mapping, risk register, and maintenance schedule. Single source of truth for all platform capabilities.
+
+**Enabling governance documents:**
+- **Engineering Standards** (`docs/platform/engineering-standards/`) — 110 mandatory standards across 19 categories, verified at each maturity gate
+- **Capability Maturity Model** (`docs/platform/maturity-model/`) — 8-level maturity model with entry/exit criteria, advancement/demotion rules, and waiver process
+- **Workforce Identity (Expanded)** (`docs/platform/workforce-identity/`) — Expanded to 14 agent types, 5 delegation types, 9 trust factors, credential rotation, session management
+
+See ADR-011 (`docs/decisions/ADR-011-ai-platform-governance-core.md`) for full decision record.
 
 - **RESTful** — resource-oriented endpoints with standard HTTP methods and status codes
 - **JSON-only** — request and response bodies are JSON; no form-encoded, XML, or GraphQL in Phase 1
@@ -943,6 +983,7 @@ the architecture does not preclude their future addition.
 | CI/CD | GitHub Actions (via wrangler) | ✅ **Active** | 2,000 min/month |
 | Admin Interface | Telegram + Hermes Agent | ✅ **Active** | — |
 | Package Manager | pnpm 11.13.1 | ✅ **Active** | — |
+| **Trust & Identity (Architecture)** | `docs/platform/trust-identity/` | ✅ **Architecture Complete** | 12 interfaces, zero trust, PHI boundary |
 
 ## Appendix B: Document History
 

@@ -327,18 +327,32 @@ Hardcoded project names, repository URLs, or directory paths are prohibited.
 | Stage | Criteria | Backward Compatibility |
 |-------|----------|----------------------|
 | **Experimental** | Single-project prototype; may be outside `services/platform/` | None guaranteed |
-| **Stable** | Adopted by ≥2 projects; inside `services/platform/` | Full (§1.11) |
-| **Deprecated** | Superseded; replacement announced | Read-only; no new adopters |
-| **Retired** | Removed; consumers migrated | Removed from registry |
+## 4. Lifecycle Governance
 
-### 4.2 — Adoption Gate
+### 4.1 — Service Maturity Model
 
-A service reaches **Stable** status only when:
+### 4.2 — Workforce Development Cycle (WDC v1.0)
 
-1. It has been adopted by at least two independent projects.
-2. Its interface contract is documented.
-3. It emits the mandatory observability fields.
-4. It has passed a platform governance review.
+The **Workforce Development Cycle (WDC) v1.0** (`docs/governance/WORKFORCE_DEVELOPMENT_CYCLE.md`) is the mandatory operational execution framework for all AI Platform and product implementation work. It supersedes ad-hoc execution patterns and defines:
+
+- A **seven-phase gate-driven process** (Preparation → Roadmap Validation → Engineering Execution Plan → Implementation → Quality Gates → Architecture Review → Organizational Learning → Workforce Review)
+- **Human Supervised Workforce Execution** — the Human Operator is always the final authority
+- **Five collaborative workforce agents** (Developer, QA, Security, Documentation, Monitoring) that execute in observable, auditable fashion
+- **Platform First** classification gate — work must be classified as Platform capability, Product capability, Shared Infrastructure, or Future Product before implementation begins
+- **Mandatory WDC compliance** for all engineering execution as part of the Definition of Done
+
+**Enforcement.** No implementation work shall begin without WDC phase identification and operator approval at each gate. All implementation work must produce a WDC workforce report (Phase 7) before the next Wave begins.
+
+### 4.3 — Adoption Gate
+
+A platform-wide governance standard reaches **Active** status only when:
+
+1. The standard document is published in `docs/governance/`
+2. The standard is referenced in GOVERNANCE_INDEX.md, PROJECT.md, ROADMAP.md, and ARCHITECTURE.md
+3. An ADR documenting the adoption decision is published in `docs/decisions/`
+4. The Decision Log records the adoption
+5. Engineering Standards are updated to include the standard in the Definition of Done
+6. All governance dashboards display the standard's key compliance metrics
 
 ---
 

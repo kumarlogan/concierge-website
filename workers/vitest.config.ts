@@ -36,6 +36,9 @@ export default defineConfig({
       "tests/workforce-activation.test.ts",
       // Custom-runner (non-vitest) files
       "tests-epic0059/p1-smoke.test.ts",
+      // Launch smoke tests require a live deployment — run with
+      // SMOKE_TEST_URL against a deployed or local dev server.
+      "tests/launch/smoke-tests.test.ts",
     ],
   },
 });
