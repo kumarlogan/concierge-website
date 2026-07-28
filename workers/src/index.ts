@@ -100,6 +100,29 @@ router.post("/telegram/webhook", (request, env, _params) =>
 // ── Hermes Admin Bot (EPIC-002-005) ──────────────────────────
 import { adminWebhook } from "./routes/adminBot.js";
 import { registerTrustRuntimeRoutes } from "./routes/trustRuntime.js";
+
+// ── Platform Engine Instantiation (P0 fix) ───────────────────
+// These bindings are declared on `Env` but were never constructed, so any
+// route touching env.CONSENT_ENGINE / env.TRUST_ENGINE / env.DOCUMENT_SERVICE
+// (and the other Trust engines) threw "Cannot read properties of undefined".
+// The Identity router self-wires its own services; every other platform engine
+// must be instantiated here ONCE per Worker instance and injected into env.
+// Trust engines are exported as module-level singletons by their own modules.
+// We wire those SAME instances into env (single source of truth) rather than
+// constructing duplicates. DocumentService has no singleton, so we construct one.
+import { consentEngine } from "./platform/trust/consent-engine.js";
+import { trustEngine } from "./platform/trust/trust-engine.js";
+import { policyEngine } from "./platform/trust/policy-engine.js";
+import { riskEngine } from "./platform/trust/risk-engine.js";
+import { delegationEngine } from "./platform/trust/delegation-engine.js";
+import { decisionEngine } from "./platform/trust/decision-engine.js";
+import { eventBus } from "./platform/trust/event-bus.js";
+import { DocumentStorage } from "./platform/documents/document-storage.js";
+import { DocumentEncryption } from "./platform/documents/document-encryption.js";
+import { DocumentAudit } from "./platform/documents/document-audit.js";
+import { DocumentConsentIntegration } from "./platform/documents/document-consent-integration.js";
+import { DocumentPolicyIntegration } from "./platform/documents/document-policy-integration.js";
+import { DocumentService } from "./platform/documents/document-service.js";
 router.post("/admin/webhook", (request, env, _params) =>
   adminWebhook(request, env, _params),
 );
@@ -182,6 +205,64 @@ function getIdentityRouter(env: Env): IdentityRouter {
   return _identityRouter;
 }
 
+// ════════════════════════════════════════════════════════════
+// Platform Engine Instantiation (P0 fix)
+// ════════════════════════════════════════════════════════════
+// The bindings CONSENT_ENGINE, TRUST_ENGINE, DOCUMENT_SERVICE, etc. are
+// The bindings CONSENT_ENGINE, TRUST_ENGINE, DOCUMENT_SERVICE, etc. are
+// declared on Env but were never constructed/assigned. Routes read them off
+// env.*, so they threw "Cannot read properties of undefined (reading 'grant' /
+// 'createDocument' / 'evaluate')". Unlike the Identity router (self-wired),
+// the Trust engines are exported as module-level singletons and DocumentService
+// must be constructed once. We bind those existing instances into env lazily
+// and mutate the Env object in place so every downstream route sees a live
+// instance.
+//
+// NOTE: AUTHORIZATION_ENGINE is intentionally NOT wired here. The
+// /api/v1/check-authorization route calls env.AUTHORIZATION_ENGINE.check(),
+// but no such engine class exists in the codebase (only AuthorizationMiddleware,
+// a request-oriented middleware). That is a SEPARATE pre-existing defect and is
+// flagged as a known gap rather than faked.
+let _enginesWired = false;
+
+function wirePlatformEngines(env: Env): void {
+  if (_enginesWired) return;
+  _enginesWired = true;
+
+  // ── Document service (D1-backed; not a singleton, so construct once) ──
+  const documentStorage = new DocumentStorage({
+    phiBucket: "phi-documents",
+    nonPhiBucket: "non-phi-documents",
+    db: env.DB,
+  });
+  const documentEncryption = new DocumentEncryption();
+  const documentAudit = new DocumentAudit();
+  const documentConsentIntegration = new DocumentConsentIntegration({
+    consentEngine,
+    delegationEngine,
+  });
+  const documentPolicyIntegration = new DocumentPolicyIntegration(policyEngine);
+  const documentService = new DocumentService({
+    storage: documentStorage,
+    encryption: documentEncryption,
+    audit: documentAudit,
+    consentIntegration: documentConsentIntegration,
+    policyIntegration: documentPolicyIntegration,
+    storageProvider: "d1",
+  });
+
+  // Inject into env (mutates the Env object consumed by all routes).
+  const target = env as unknown as Record<string, unknown>;
+  target.CONSENT_ENGINE = consentEngine;
+  target.TRUST_ENGINE = trustEngine;
+  target.POLICY_ENGINE = policyEngine;
+  target.RISK_ENGINE = riskEngine;
+  target.DELEGATION_ENGINE = delegationEngine;
+  target.DECISION_ENGINE = decisionEngine;
+  target.EVENT_BUS = eventBus;
+  target.DOCUMENT_SERVICE = documentService;
+}
+
 async function handleIdentityRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -233,6 +314,9 @@ export default {
     // P0 fix (Wave 8.1 hardening): wrap DB so no `undefined` bind reaches
     // real D1. The router + all services/handlers receive the wrapped env.
     const safeEnv: Env = { ...env, DB: createSafeD1(env.DB) };
+    // P0 fix: instantiate the platform engines (Consent/Trust/Document/...)
+    // into env so routes no longer hit `undefined` bindings.
+    wirePlatformEngines(safeEnv);
     const environment = safeEnv.ENVIRONMENT || "development";
     const started = Date.now();
 
