@@ -23,10 +23,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
-      - name: Build site
+      - name: Build frontend
         run: pnpm --filter @workspace/ags-fertility run build
 
-      - name: Deploy to Cloudflare Workers
+      # ── API Worker ──────────────────────────────────────────────
+      # FIX (Phase 2 Stabilization): the previous pipeline only
+      # deployed the frontend worker (hermes-website) from the repo
+      # root and never deployed the API worker. The API lives in
+      # /workers and its production route (api.agsynergy.ca) is
+      # defined under env.production, so it REQUIRES --env production.
+      - name: Deploy API (agsynergy-api → api.agsynergy.ca)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: workers
+          command: deploy --env production
+
+      # ── Frontend Worker ─────────────────────────────────────────
+      # Root wrangler.jsonc is hermes-website (agsynergy.ca /
+      # www.agsynergy.ca). Deployed from repo root, no env needed.
+      - name: Deploy Frontend (hermes-website → agsynergy.ca)
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
