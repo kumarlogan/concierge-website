@@ -6,7 +6,7 @@
 
 import { IdentityRepository } from "./identity-repository.js";
 import type { EmailVerificationRecord } from "./types.js";
-import { NotFoundError, ConflictError } from "./types.js";
+import { IdentityStatus, NotFoundError, ConflictError } from "./types.js";
 
 export class EmailVerificationManager {
   private readonly repo: IdentityRepository;
@@ -74,9 +74,13 @@ export class EmailVerificationManager {
     // Mark as verified
     await this.repo.verifyEmail(record.id);
 
-    // Update identity record
+    // Update identity record: mark email verified AND transition status so the
+    // identity becomes eligible to authenticate (login requires ACTIVE|VERIFIED).
+    // Without this transition a registered identity could never reach VERIFIED,
+    // leaving the intended self-serve verify→login flow permanently blocked.
     await this.repo.updateIdentity(record.identity_id, {
       email_verified: true,
+      status: IdentityStatus.VERIFIED,
     });
 
     return { identityId: record.identity_id, email: record.email };
