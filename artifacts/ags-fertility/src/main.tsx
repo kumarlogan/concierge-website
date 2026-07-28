@@ -9,7 +9,7 @@ import './index.css';
 // In development the Worker runs locally or via tunnel — set VITE_API_BASE
 // and Vite's import.meta.env picks it up.
 setBaseUrl(
-  import.meta.env.VITE_API_BASE || 'https://agsynergy-api.kumarlogan.workers.dev',
+  import.meta.env.VITE_API_BASE || 'https://api.agsynergy.ca',
 );
 
 createRoot(document.getElementById('root')!).render(<App />);

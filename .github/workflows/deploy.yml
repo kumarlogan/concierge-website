@@ -24,6 +24,11 @@ jobs:
         run: pnpm install --frozen-lockfile=false
 
       - name: Build frontend
+        # VITE_API_BASE is injected from a GitHub secret so the production
+        # bundle calls the live API (api.agsynergy.ca), not the hardcoded
+        # dev fallback. Never commit the value to the repo.
+        env:
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
         run: pnpm --filter @workspace/ags-fertility run build
 
       # ── API Worker ──────────────────────────────────────────────
