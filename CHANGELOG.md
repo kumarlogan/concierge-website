@@ -6,6 +6,37 @@
 
 ---
 
+## [1.0.1] — 2026-07-28 — WEF Phase 0: Golden-Path Stabilization (P0)
+
+**Date:** 2026-07-28
+**Status:** ✅ PRODUCTION LIVE (deploy `188ef61` → `d22f918`)
+**Phase:** WEF Phase 0 — Concierge MVP Operational Readiness
+**Wave:** Wave 8.1 follow-up
+**Sprint:** Register→Login golden-path repair
+
+> Four layered, production-blocking defects were found and fixed in the live
+> Patient Identity API (`api.agsynergy.ca`). Each was a *different* root cause;
+> the golden path now returns 200 end-to-end (register → email verify →
+> login → token round-trip → appointments → consent → clinic messaging →
+> logout/re-login).
+
+### Fixed (P0)
+- **PBKDF2 Web Crypto limit** (`password-manager.ts`): `600_000` → `100_000` iterations (hotfix `59dd51c`, previously committed but never deployed — pipeline only shipped the frontend worker).
+- **D1 `undefined` bindings** (`platform/d1.ts`): added `safeBind()` coercion (`undefined` → `null`) wrapped at the request boundary in `index.ts`. Resolves `D1_TYPE_ERROR` on all DB writes (register, sessions, refresh tokens, audit). Commit `516f61f`.
+- **Email verification status transition** (`platform/identity/email-verification.ts`): `email/verify/complete` now flips `status` `REGISTERED → VERIFIED` (previously only set `email_verified`, leaving login's `ACTIVE||VERIFIED` guard permanently unmet). Commit `ec82f91`.
+- **JWT signing key not registered** (`index.ts` + `.github/workflows/deploy.yml`): `JwtManager` was created with no keypair, so `login` threw `No active signing key registered`. Signing keypair is now provisioned via GitHub secrets (`JWT_PRIVATE_KEY`/`JWT_PUBLIC_KEY`/`JWT_KID`) injected into `wrangler.jsonc` `vars.production` at deploy time (private key **never committed**). Commits `188ef61`, `d22f918`.
+
+### Deployment
+- CI hardened: pipeline now deploys **both** workers (`agsynergy-api` → `api.agsynergy.ca` with `--env production`, and `hermes-website` → `agsynergy.ca`).
+- JWT private key stored as encrypted GitHub secret (gitleaks CI guard active).
+
+### Known gaps (out of P0 scope, tracked)
+- `PATCH /identity/profile` route not yet registered (profile update unavailable via API).
+- Document Service stubbed (`env.DOCUMENT_SERVICE` undefined) — documents endpoints return 400 from stub.
+- Clinic messaging endpoints are clinician-scoped (patient calling them appropriately 403s).
+
+---
+
 ## [1.0.0] — 2026-07-27 — Concierge MVP Production Release
 
 **Date:** 2026-07-27
@@ -13,6 +44,16 @@
 **Phase:** Phase 2 — Patient Workflow Platform
 **Wave:** Wave 9 — Concierge Launch & Platform Activation (final wave of Phase 2)
 **Sprint:** PLS-001 — Production Launch Sprint
+
+### Production Hotfix
+
+- **`workers/src/platform/identity/password-manager.ts`** (line 67)
+  - Reduced PBKDF2 iterations from `600_000` to `100_000`
+  - Added named constant `PBKDF2_ITERATIONS` set to `100_000` to match Cloudflare Workers Web Crypto API limit
+  - Root cause: iteration count above 100k caused `Pbkdf2 failed` 500 on all identity operations (register, login, password verification)
+  - Fix restores identity registration and login functionality
+
+### Verified
 **Version:** v1.0.0 — MVP Production Release
 
 ### Workstream A — Patient Journey
