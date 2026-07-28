@@ -236,7 +236,6 @@ function buildDocumentService(db: Env["DB"]): DocumentService {
   const documentStorage = new DocumentStorage({
     phiBucket: "phi-documents",
     nonPhiBucket: "non-phi-documents",
-    db,
   });
   const documentEncryption = new DocumentEncryption();
   const documentAudit = new DocumentAudit();
@@ -252,6 +251,7 @@ function buildDocumentService(db: Env["DB"]): DocumentService {
     consentIntegration: documentConsentIntegration,
     policyIntegration: documentPolicyIntegration,
     storageProvider: "d1",
+    db,
   });
   return _documentService;
 }
