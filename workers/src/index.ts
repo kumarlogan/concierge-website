@@ -224,19 +224,19 @@ function getIdentityRouter(env: Env): IdentityRouter {
 // a request-oriented middleware). That is a SEPARATE pre-existing defect and is
 // flagged as a known gap rather than faked.
 //
-// IMPORTANT: wiring runs on EVERY request. `env` is a fresh object per
-// invocation (the worker builds `safeEnv = { ...env }` each request), so a
-// module-level "already wired" flag would skip wiring on warm isolates and
-// leave the current request's env without DOCUMENT_SERVICE -> intermittent
-// 500s. The engines are module-level singletons, so (re)constructing the
-// per-request DocumentService wrapper is cheap and idempotent.
-function wirePlatformEngines(env: Env): void {
-  // ── Document service (D1-backed; constructed per request and bound to this
-  //     request's env) ──
+// DocumentService maintains an in-memory registry of document metadata
+// (this.documents). To make documents visible across requests it MUST be a
+// module-level singleton (constructed once per Worker instance), exactly like
+// the Trust engines above. Constructing it per-request would rebuild that Map
+// empty on every request, making documents created in one request invisible to
+// the next (404 on get/list). We therefore build it ONCE at module load.
+let _documentService: DocumentService | null = null;
+function buildDocumentService(db: Env["DB"]): DocumentService {
+  if (_documentService) return _documentService;
   const documentStorage = new DocumentStorage({
     phiBucket: "phi-documents",
     nonPhiBucket: "non-phi-documents",
-    db: env.DB,
+    db,
   });
   const documentEncryption = new DocumentEncryption();
   const documentAudit = new DocumentAudit();
@@ -245,7 +245,7 @@ function wirePlatformEngines(env: Env): void {
     delegationEngine,
   });
   const documentPolicyIntegration = new DocumentPolicyIntegration(policyEngine);
-  const documentService = new DocumentService({
+  _documentService = new DocumentService({
     storage: documentStorage,
     encryption: documentEncryption,
     audit: documentAudit,
@@ -253,8 +253,15 @@ function wirePlatformEngines(env: Env): void {
     policyIntegration: documentPolicyIntegration,
     storageProvider: "d1",
   });
+  return _documentService;
+}
 
-  // Inject into env (mutates the Env object consumed by all routes).
+function wirePlatformEngines(env: Env): void {
+  const documentService = buildDocumentService(env.DB);
+
+  // Inject into env (mutates the Env object consumed by all routes). Runs on
+  // every request because `env` is rebuilt per invocation, but the singleton
+  // DocumentService instance is shared, preserving cross-request document state.
   const target = env as unknown as Record<string, unknown>;
   target.CONSENT_ENGINE = consentEngine;
   target.TRUST_ENGINE = trustEngine;
