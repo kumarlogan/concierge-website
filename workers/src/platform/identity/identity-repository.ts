@@ -37,14 +37,18 @@ export class IdentityRepository {
           created_at, updated_at, last_login_at, metadata
         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)`,
       )
+      // D1 rejects `undefined` bindings (D1_TYPE_ERROR). Coerce optional
+      // fields to null before binding. Real D1 enforces this; the local
+      // in-memory stub used by unit tests does not, which is why the bug
+      // only surfaced in production.
       .bind(
         record.id, record.identity_type, record.status,
         record.email, record.email_verified ? 1 : 0,
-        record.phone, record.phone_verified ? 1 : 0,
-        record.display_name, record.password_hash,
-        record.mfa_enabled ? 1 : 0, record.mfa_method,
+        record.phone ?? null, record.phone_verified ? 1 : 0,
+        record.display_name ?? null, record.password_hash,
+        record.mfa_enabled ? 1 : 0, record.mfa_method ?? null,
         record.trust_score,
-        record.created_at, record.updated_at, record.last_login_at,
+        record.created_at, record.updated_at, record.last_login_at ?? null,
         JSON.stringify(record.metadata ?? {}),
       )
       .run();

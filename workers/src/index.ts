@@ -24,6 +24,9 @@ import { handleContact } from "./routes/contact.js";
 import type { Env } from "./types/env.js";
 import { rateLimit, rateLimitHeaders, clientKey } from "./middleware/rateLimit.js";
 import { info, warn } from "./middleware/logger.js";
+// P0 fix: coerce `undefined` bind values → null before they reach D1
+// (real D1 rejects undefined; the local test stub does not). See platform/d1.ts.
+import { createSafeD1 } from "./platform/d1.js";
 
 // ── Security Headers (Wave 8.1) ──────────────────────────
 import { applySecurityHeaders } from "./middleware/security-headers.js";
@@ -213,7 +216,10 @@ router.get("*", (_request, _env, _params) => {
 // ── Export ──────────────────────────────────────────────────
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const environment = env.ENVIRONMENT || "development";
+    // P0 fix (Wave 8.1 hardening): wrap DB so no `undefined` bind reaches
+    // real D1. The router + all services/handlers receive the wrapped env.
+    const safeEnv: Env = { ...env, DB: createSafeD1(env.DB) };
+    const environment = safeEnv.ENVIRONMENT || "development";
     const started = Date.now();
 
     // ── Structured request logging (no bodies, no PII) ─────────
@@ -225,7 +231,7 @@ export default {
     );
 
     // ── Lightweight rate limiting (per-IP, retry-tolerant) ─────
-    const rl = rateLimit(clientKey(request, env), env);
+    const rl = rateLimit(clientKey(request, safeEnv), safeEnv);
     if (!rl.allowed) {
       warn(
         "rate_limit.exceeded",
@@ -270,7 +276,7 @@ export default {
       });
     }
 
-    const response = await router.fetch(request, env);
+    const response = await router.fetch(request, safeEnv);
 
     // Add CORS + security headers to the actual response
     let headers = new Headers(response.headers);
