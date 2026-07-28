@@ -31,6 +31,36 @@ jobs:
           VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
         run: pnpm --filter @workspace/ags-fertility run build
 
+      - name: Guard — production bundle must not call dev/staging endpoints
+        # Fail-closed regression gate: the 2026-07-28 incident shipped a bundle
+        # that POSTed to the dead dev worker (agsynergy-api.kumarlogan.workers.dev)
+        # because .env is gitignored and VITE_API_BASE was never injected. This
+        # step blocks any build that references a dev/staging host and requires
+        # the configured production host to actually be present in the bundle.
+        env:
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+        run: |
+          shopt -s globstar nullglob
+          FILES=(artifacts/ags-fertility/dist/public/assets/*.js)
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "::error::No built JS bundles found under artifacts/ags-fertility/dist/public/assets/"
+            exit 1
+          fi
+          # Negative check: no dev/staging endpoints allowed.
+          BAD=$(grep -rEl 'kumarlogan\.workers\.dev|localhost:[0-9]+' "${FILES[@]}" 2>/dev/null || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Production bundle references a dev/staging endpoint:"
+            grep -oE 'https?://[a-zA-Z0-9_.:/-]+' $BAD | sort -u | sed 's/^/  found: /'
+            exit 1
+          fi
+          # Positive check: the configured production host must be present.
+          PROD_HOST="${VITE_API_BASE%/}"
+          if ! grep -rqF "$PROD_HOST" "${FILES[@]}" 2>/dev/null; then
+            echo "::error::VITE_API_BASE ($PROD_HOST) not found in production bundle."
+            exit 1
+          fi
+          echo "OK: bundle points at $PROD_HOST and contains no dev/staging endpoints."
+
       # ── API Worker ──────────────────────────────────────────────
       # FIX (Phase 2 Stabilization): the previous pipeline only
       # deployed the frontend worker (hermes-website) from the repo
