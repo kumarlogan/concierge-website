@@ -8,7 +8,10 @@
 // PHI Boundary: This client sends NO personal health information.
 // All calls use opaque identity IDs. PHI never enters the client.
 
-const API_BASE = ""; // proxied by Vite
+// Production: VITE_API_BASE is injected at build time (GitHub secret, value
+// https://api.agsynergy.ca). Falls back to the live API host so a missing
+// var can never silently POST to the SPA origin (the 2026-07-28 incident).
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.agsynergy.ca";
 
 // ── Response Types ──────────────────────────────────────────
 
