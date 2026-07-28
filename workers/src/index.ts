@@ -223,13 +223,16 @@ function getIdentityRouter(env: Env): IdentityRouter {
 // but no such engine class exists in the codebase (only AuthorizationMiddleware,
 // a request-oriented middleware). That is a SEPARATE pre-existing defect and is
 // flagged as a known gap rather than faked.
-let _enginesWired = false;
-
+//
+// IMPORTANT: wiring runs on EVERY request. `env` is a fresh object per
+// invocation (the worker builds `safeEnv = { ...env }` each request), so a
+// module-level "already wired" flag would skip wiring on warm isolates and
+// leave the current request's env without DOCUMENT_SERVICE -> intermittent
+// 500s. The engines are module-level singletons, so (re)constructing the
+// per-request DocumentService wrapper is cheap and idempotent.
 function wirePlatformEngines(env: Env): void {
-  if (_enginesWired) return;
-  _enginesWired = true;
-
-  // ── Document service (D1-backed; not a singleton, so construct once) ──
+  // ── Document service (D1-backed; constructed per request and bound to this
+  //     request's env) ──
   const documentStorage = new DocumentStorage({
     phiBucket: "phi-documents",
     nonPhiBucket: "non-phi-documents",
