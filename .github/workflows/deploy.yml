@@ -32,6 +32,31 @@ jobs:
       # root and never deployed the API worker. The API lives in
       # /workers and its production route (api.agsynergy.ca) is
       # defined under env.production, so it REQUIRES --env production.
+      # Inject JWT signing secrets into the API worker config at deploy time.
+      # Private key stays in GitHub Secrets — NEVER committed to the repo.
+      - name: Inject JWT config (API worker)
+        working-directory: workers
+        run: |
+          node -e '
+            const fs = require("fs");
+            const f = "wrangler.jsonc";
+            let s = fs.readFileSync(f, "utf8");
+            // strip // comments (wrangler.jsonc allows them) for safe JSON parse
+            const json = JSON.parse(s.replace(/\/\/.*$/gm, ""));
+            const v = (json.env.production.vars = json.env.production.vars || {});
+            v.JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY;
+            v.JWT_PUBLIC_KEY  = process.env.JWT_PUBLIC_KEY;
+            v.JWT_KID         = process.env.JWT_KID;
+            v.PLATFORM_JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY;
+            v.PLATFORM_JWT_KID        = process.env.JWT_KID;
+            fs.writeFileSync(f, JSON.stringify(json, null, 2) + "\n");
+            console.log("Injected JWT vars (private key length=" + process.env.JWT_PRIVATE_KEY.length + ")");
+          '
+        env:
+          JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
+          JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
+          JWT_KID: ${{ secrets.JWT_KID }}
+
       - name: Deploy API (agsynergy-api → api.agsynergy.ca)
         uses: cloudflare/wrangler-action@v4
         with:

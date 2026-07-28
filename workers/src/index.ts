@@ -145,6 +145,20 @@ function getIdentityRouter(env: Env): IdentityRouter {
   const sessions = new SessionManager(repo);
   const passwords = new PasswordManager();
   const jwt = new JwtManager();
+
+  // ── Register the platform JWT signing key (provisioned as a secret) ──
+  // The API can only issue tokens once a signing keypair is registered.
+  // Private key comes from JWT_PRIVATE_KEY (GH secret → wrangler var);
+  // public key + kid are shared with the verification middleware via
+  // PLATFORM_JWT_PUBLIC_KEY / PLATFORM_JWT_KID so tokens verify round-trip.
+  if (env.JWT_PRIVATE_KEY) {
+    jwt.registerKeyPair({
+      kid: env.JWT_KID || "default",
+      privateKey: env.JWT_PRIVATE_KEY,
+      publicKey: env.JWT_PUBLIC_KEY || env.PLATFORM_JWT_PUBLIC_KEY || "",
+      algorithm: "RS256",
+    });
+  }
   const providers = new IdentityProviderRegistry(repo);
   const refreshTokens = new RefreshTokenManager(repo);
   const identityService = new IdentityService(repo, sessions, passwords, jwt, providers, refreshTokens);
