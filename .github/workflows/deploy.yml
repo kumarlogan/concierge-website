@@ -41,8 +41,12 @@ jobs:
             const fs = require("fs");
             const f = "wrangler.jsonc";
             let s = fs.readFileSync(f, "utf8");
-            // strip // comments (wrangler.jsonc allows them) for safe JSON parse
-            const json = JSON.parse(s.replace(/\/\/.*$/gm, ""));
+            // Strip JSONC // comments WITHOUT breaking URLs (https://, etc.).
+            // Only strip a // that is preceded by whitespace or start-of-line
+            // and not part of a :// scheme.
+            const json = JSON.parse(
+              s.replace(/((?:^|\s)\/\/.*$)/gm, "")
+            );
             const v = (json.env.production.vars = json.env.production.vars || {});
             v.JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY;
             v.JWT_PUBLIC_KEY  = process.env.JWT_PUBLIC_KEY;
