@@ -30,6 +30,11 @@ const DEFAULT_POLICY: PasswordPolicy = {
   commonPasswordCheck: true,
 };
 
+/// Cloudflare Workers Web Crypto API caps PBKDF2 iterations at 100,000.
+/// Reference: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/deriveBits#constraints
+/// OWASP 2023 recommends 600,000 but Workers runtime rejects > 100,000.
+const PBKDF2_ITERATIONS = 100_000;
+
 /**
  * Result of password validation.
  */
@@ -64,7 +69,7 @@ export class PasswordManager {
       ["deriveBits"],
     );
 
-    const iterations = 600_000; // OWASP 2023 recommended
+    const iterations = PBKDF2_ITERATIONS;
     const hash = await crypto.subtle.deriveBits(
       {
         name: "PBKDF2",
