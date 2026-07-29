@@ -293,19 +293,7 @@ async function handleIdentityRequest(request: Request, env: Env): Promise<Respon
   request.headers.forEach((v, k) => { headers[k] = v; });
 
   const router = getIdentityRouter(env);
-  let result: { status: number; body: Record<string, unknown> };
-  try {
-    result = await router.route(method, path, body, headers, env as any);
-  } catch (err) {
-    const e = err as Record<string, unknown>;
-    if (e !== null && typeof e === "object" && typeof e.status === "number" && typeof e.code === "string") {
-      result = { status: e.status as number, body: { success: false, error: { code: e.code as string, message: e.message as string } } };
-    } else if (err instanceof Error) {
-      result = { status: 500, body: { success: false, error: { code: "INTERNAL_ERROR", message: err.message } } };
-    } else {
-      result = { status: 500, body: { success: false, error: { code: "INTERNAL_ERROR", message: "Unknown error" } } };
-    }
-  }
+  const result = await router.route(method, path, body, headers, env as any);
 
   return new Response(JSON.stringify(result.body), {
     status: result.status,
