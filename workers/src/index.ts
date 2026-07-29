@@ -259,6 +259,11 @@ function buildDocumentService(db: Env["DB"]): DocumentService {
 function wirePlatformEngines(env: Env): void {
   const documentService = buildDocumentService(env.DB);
 
+  // Initialize ConsentEngine with D1 binding for persistent storage.
+  // The engine gracefully degrades to in-memory only when DB is unavailable
+  // (e.g. in unit tests or local dev without D1).
+  consentEngine.initialize(env.DB);
+
   // Inject into env (mutates the Env object consumed by all routes). Runs on
   // every request because `env` is rebuilt per invocation, but the singleton
   // DocumentService instance is shared, preserving cross-request document state.
@@ -288,7 +293,19 @@ async function handleIdentityRequest(request: Request, env: Env): Promise<Respon
   request.headers.forEach((v, k) => { headers[k] = v; });
 
   const router = getIdentityRouter(env);
-  const result = await router.route(method, path, body, headers, env as any);
+  let result: { status: number; body: Record<string, unknown> };
+  try {
+    result = await router.route(method, path, body, headers, env as any);
+  } catch (err) {
+    const e = err as Record<string, unknown>;
+    if (e !== null && typeof e === "object" && typeof e.status === "number" && typeof e.code === "string") {
+      result = { status: e.status as number, body: { success: false, error: { code: e.code as string, message: e.message as string } } };
+    } else if (err instanceof Error) {
+      result = { status: 500, body: { success: false, error: { code: "INTERNAL_ERROR", message: err.message } } };
+    } else {
+      result = { status: 500, body: { success: false, error: { code: "INTERNAL_ERROR", message: "Unknown error" } } };
+    }
+  }
 
   return new Response(JSON.stringify(result.body), {
     status: result.status,
