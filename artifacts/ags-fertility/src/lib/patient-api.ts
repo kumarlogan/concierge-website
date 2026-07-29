@@ -83,6 +83,20 @@ export interface OAuthInitiateResponse {
   state: string;
 }
 
+// ── API Error ───────────────────────────────────────────────
+
+export class ApiError extends Error {
+  code: string;
+  status: number;
+
+  constructor(message: string, code: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
 // ── Core API Client ─────────────────────────────────────────
 
 interface RequestOptions {
@@ -114,8 +128,10 @@ async function apiRequest<T = Record<string, unknown>>(
 
   if (!res.ok) {
     const err = data as ApiErrorResponse;
-    throw new Error(
+    throw new ApiError(
       err.error?.message || `API error: ${res.status}`,
+      err.error?.code || "UNKNOWN",
+      res.status,
     );
   }
 
