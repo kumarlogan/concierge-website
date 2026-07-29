@@ -259,11 +259,6 @@ function buildDocumentService(db: Env["DB"]): DocumentService {
 function wirePlatformEngines(env: Env): void {
   const documentService = buildDocumentService(env.DB);
 
-  // Initialize ConsentEngine with D1 binding for persistent storage.
-  // The engine gracefully degrades to in-memory only when DB is unavailable
-  // (e.g. in unit tests or local dev without D1).
-  consentEngine.initialize(env.DB);
-
   // Inject into env (mutates the Env object consumed by all routes). Runs on
   // every request because `env` is rebuilt per invocation, but the singleton
   // DocumentService instance is shared, preserving cross-request document state.
