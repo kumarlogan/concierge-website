@@ -40,62 +40,46 @@ export function CookieConsentBanner() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6"
+      // pointer-events-none on container so clicks pass through to the page
+      // pointer-events-auto on the inner card so buttons are interactive
+      // p-1 min padding so the card still shows a gap from screen edge
+      className="fixed bottom-0 left-0 right-0 z-50 p-2 pointer-events-none"
       role="dialog"
       aria-label="Cookie consent"
       aria-describedby="cookie-consent-description"
     >
-      <div className="max-w-4xl mx-auto bg-background border border-border rounded-2xl shadow-2xl p-6 md:p-8">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-              <Cookie className="w-5 h-5 text-primary" strokeWidth={1.5} />
-            </div>
-            <div>
-              <h3 className="text-lg font-display font-semibold text-foreground mb-2">
-                Cookie Preferences
-              </h3>
-              <p id="cookie-consent-description" className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                We use essential cookies to ensure our website functions properly.
-                With your consent, we also use analytics cookies to understand how
-                visitors interact with our site, helping us improve your experience.
-                You can choose to accept all cookies or only essential ones.
-                <a
-                  href="/privacy"
-                  className="text-primary underline ml-1 hover:text-primary/80"
-                >
-                  Learn more in our Privacy Policy
-                </a>
-                .
-              </p>
-            </div>
+      <div className="mx-auto max-w-2xl bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg px-3 py-2 pointer-events-auto">
+        <div className="flex items-center gap-2">
+          <Cookie className="w-4 h-4 text-primary shrink-0 hidden sm:block" strokeWidth={1.5} />
+          <p id="cookie-consent-description" className="text-xs text-muted-foreground leading-snug flex-1">
+            This site uses cookies to function. Analytics are optional.
+            <a href="/privacy" className="text-primary underline ml-1 hover:text-primary/80 whitespace-nowrap">Learn more</a>.
+          </p>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2.5 text-xs rounded-full"
+              onClick={handleEssentialOnly}
+            >
+              Essential Only
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              className="h-7 px-3 text-xs rounded-full"
+              onClick={handleAcceptAll}
+            >
+              Accept All
+            </Button>
+            <button
+              onClick={handleDismiss}
+              className="text-muted-foreground hover:text-foreground p-0.5 -mr-0.5 shrink-0"
+              aria-label="Dismiss"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <button
-            onClick={handleDismiss}
-            className="text-muted-foreground hover:text-foreground transition-colors p-1"
-            aria-label="Dismiss cookie banner"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 mt-6 justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            onClick={handleEssentialOnly}
-          >
-            Essential Only
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="rounded-full"
-            onClick={handleAcceptAll}
-          >
-            Accept All
-          </Button>
         </div>
       </div>
     </div>

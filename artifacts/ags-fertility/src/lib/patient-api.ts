@@ -185,8 +185,8 @@ export const patientAuth = {
       },
     });
 
-    // Auto-login after registration
-    const loginResult = await this.login(email, password);
+    // No auto-login: new identities start as REGISTERED and need email
+    // verification before they can authenticate. The caller handles this.
     return result;
   },
 
@@ -268,10 +268,9 @@ export const patientAuth = {
   },
 
   /** Request email verification */
-  async requestEmailVerification(identityId: string): Promise<void> {
-    await apiRequest("/identity/email/verify", {
-      body: { identityId },
-      token: tokenStore.getAccessToken(),
+  async requestEmailVerification(identityId: string, email: string): Promise<{ token: string }> {
+    return apiRequest<{ token: string }>("/identity/email/verify", {
+      body: { identityId, email },
     });
   },
 

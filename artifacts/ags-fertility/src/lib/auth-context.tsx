@@ -132,20 +132,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     displayName?: string,
   ): Promise<AuthUser> => {
-    await patientAuth.register(email, password, displayName);
-    // Auto-login is handled by register calling login internally
-    const loginResult = await patientAuth.login(email, password);
+    const result = await patientAuth.register(email, password, displayName);
 
+    // Return user info from registration — no auto-login since new
+    // identities start as REGISTERED and need email verification first.
     const userObj: AuthUser = {
-      id: loginResult.identity.id,
-      email: loginResult.identity.email,
-      displayName: loginResult.identity.displayName,
-      identityType: loginResult.identity.identityType,
-      status: loginResult.identity.status,
-      mfaEnabled: loginResult.identity.mfaEnabled,
-      emailVerified: loginResult.identity.emailVerified,
+      id: result.identity.id,
+      email: result.identity.email,
+      displayName: result.identity.displayName,
+      identityType: result.identity.identityType,
+      status: result.identity.status,
+      mfaEnabled: result.identity.mfaEnabled,
+      emailVerified: result.identity.emailVerified,
     };
-    setUser(userObj);
     return userObj;
   }, []);
 

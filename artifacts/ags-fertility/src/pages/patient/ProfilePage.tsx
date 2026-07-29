@@ -51,7 +51,7 @@ export default function ProfilePage() {
   const handleEmailVerification = async () => {
     if (!user) return;
     try {
-      await patientAuth.requestEmailVerification(user.id);
+      await patientAuth.requestEmailVerification(user.id, user.email);
       toast.success("Verification email sent");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send verification");
