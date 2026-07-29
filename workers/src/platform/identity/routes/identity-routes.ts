@@ -13,6 +13,7 @@ import { OAuthService } from "../oauth-provider.js";
 import { MFAManager } from "../mfa.js";
 import { JwtManager } from "../jwt-manager.js";
 import { IdentityProviderRegistry } from "../identity-provider-registry.js";
+import { IdentityError } from "../types.js";
 
 // ── Worker environment type (keeps this file self-contained) ──
 interface Env {
@@ -120,6 +121,9 @@ export class IdentityRouter {
           return error("Not found", 404, "NOT_FOUND");
       }
     } catch (err) {
+      if (err instanceof IdentityError) {
+        return error(err.message, err.status, err.code);
+      }
       if (err instanceof Error) {
         return error(err.message, 500, "INTERNAL_ERROR");
       }
