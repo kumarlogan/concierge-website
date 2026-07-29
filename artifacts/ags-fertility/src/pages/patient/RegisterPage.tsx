@@ -145,7 +145,6 @@ export default function RegisterPage() {
                 onFocus={() => setShowRules(true)}
                 onBlur={() => { if (!password) setShowRules(false); }}
                 required
-                minLength={12}
                 autoComplete="new-password"
               />
               {showRules && (
