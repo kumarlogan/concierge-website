@@ -464,7 +464,7 @@ export interface Consent {
 }
 
 export interface ConsentHistoryResponse {
-  consents: Consent[];
+  entries: Consent[];
   total: number;
 }
 

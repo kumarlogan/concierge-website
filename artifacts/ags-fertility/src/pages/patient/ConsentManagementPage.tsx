@@ -46,7 +46,7 @@ export default function ConsentManagementPage() {
     setLoading(true);
     try {
       const result = await patientConsent.list();
-      setConsents(result.consents);
+      setConsents(result.entries);
     } catch {
       // Consents may not be available without auth
       setConsents([]);
