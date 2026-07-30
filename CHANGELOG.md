@@ -6,6 +6,73 @@
 
 ---
 
+## [1.1.0] — 2026-07-30 — Patient Zero Experience (AGS-PZE-001)
+
+**Date:** 2026-07-30
+**Status:** ✅ PRODUCTION LIVE
+**Phase:** WEF Phase 0 — Concierge MVP Operational Readiness
+**Sprint:** AGS-PZE-001 — Patient Zero Experience Remediation
+
+> Production mock data removed from the Patient Portal. New patients now
+> see a clean onboarding state — no fake milestones, no Dr. Sharma, no
+> fabricated consent dates. All timeline storage is per-identity isolated
+> and JWT-protected.
+
+### Added
+- **Patient Zero state** (`workers/src/routes/timeline.ts`): `createPatientZeroData()`
+  returns empty timeline with single "Account Created" registration event.
+  Progress = 0, journeyStatus = `NOT_STARTED`.
+- **Per-identity timeline isolation**: Singleton store replaced with
+  `Map<string, TimelineData>` — each JWT identity gets an independent store.
+- **JWT auth on all timeline routes**: All 7 timeline endpoints wrapped with
+  `withJwtAuth()` middleware.
+- **Frontend integration**: `DashboardPage.tsx` handles empty timeline state,
+  `timeline-api.ts` adapted for JWT-authenticated calls.
+
+### Removed
+- **`mockTimelineData`** (52 lines, 40% progress, 5 phases, 6 tasks, 7 milestones,
+  "Dr. Sharma", fake consent/appointment dates). Replaced entirely with
+  `createPatientZeroData()`.
+- **Singleton `globalThis.__timelineStore`** — replaced with per-identity Map.
+
+### Fixed
+- **Identity-based store isolation**: Two patients no longer share timeline state.
+- **Empty state rendering**: Dashboard displays "Getting Started" progress and
+  empty timeline when no events exist.
+- **9 interface areas verified clean**: Registration, Login, Dashboard, Timeline,
+  Progress, Appointments, Documents, Messages, Consent — zero fake data.
+
+### Changed
+- **`workers/src/index.ts`**: Added `identity-service` route registration.
+- **`workers/src/types/env.ts`**: Added `IDENTITY_SERVICE_URL` binding.
+- **`workers/src/platform/identity/identity-service.ts`**: Identity service
+  implementation for JWT verification.
+- **`workers/src/platform/identity/routes/identity-routes.ts`**: Identity API routes.
+- **`artifacts/ags-fertility/src/lib/patient-api.ts`**: Enhanced patient API client.
+- **`artifacts/ags-fertility/src/lib/message-api.ts`**: Message API updates.
+- **`artifacts/ags-fertility/src/lib/appointment-api.ts`**: Appointment API updates.
+- **`artifacts/ags-fertility/src/pages/patient/AppointmentsPage.tsx`**: Enhanced
+  appointment state handling.
+- **`artifacts/ags-fertility/src/pages/patient/MessagesPage.tsx`**: Message UI updates.
+- **`artifacts/ags-fertility/src/pages/patient/SecuritySettingsPage.tsx`**: Security
+  settings UI updates.
+- **`artifacts/ags-fertility/src/pages/patient/CareCoordinationPage.tsx`**: Care
+  coordination UI updates.
+- **`docs/governance/PROGRAM_STATUS.md`**: Program status updated.
+
+### Documentation
+- `docs/releases/concierge/patient-portal/phase-1/rc1/`:
+  - `PATIENT_ZERO_IMPLEMENTATION.md` — Full remediation record
+  - `PATIENT_ZERO_VALIDATION.md` — 2-account test procedures
+  - `UPDATED_NEW_PATIENT_STATE_REPORT.md` — Post-fix state snapshot
+  - `RC1_REGRESSION_CLOSURE.md` — Closure certification
+
+### Deployment
+- API worker (`agsynergy-api`) deployed to `api.agsynergy.ca` via `--env production`
+- Frontend worker (`hermes-website`) deployed to `agsynergy.ca`
+
+---
+
 ## [1.0.1] — 2026-07-28 — WEF Phase 0: Golden-Path Stabilization (P0)
 
 **Date:** 2026-07-28

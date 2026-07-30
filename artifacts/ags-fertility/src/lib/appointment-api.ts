@@ -3,7 +3,22 @@
 // │ Patient-facing API client for Appointment Management.        │
 // ═══════════════════════════════════════════════════════════
 
+import { tokenStore } from "./patient-api";
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
+// ── Authenticated fetch helper ────────────────────────────
+
+async function authFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
+  const token = tokenStore.getAccessToken();
+  const headers: Record<string, string> = {
+    ...(init?.headers as Record<string, string>),
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return fetch(input, { ...init, headers });
+}
 
 export interface Appointment {
   id: string;
@@ -20,14 +35,14 @@ export interface Appointment {
 }
 
 export async function getAppointments(): Promise<Appointment[]> {
-  const res = await fetch(`${API_BASE}/api/v1/appointments`);
+  const res = await authFetch(`${API_BASE}/api/v1/appointments`);
   if (!res.ok) throw new Error(`Failed to fetch appointments: ${res.status}`);
   const data: { appointments: Appointment[] } = await res.json();
   return data.appointments ?? [];
 }
 
 export async function getAppointment(id: string): Promise<Appointment> {
-  const res = await fetch(`${API_BASE}/api/v1/appointments/${id}`);
+  const res = await authFetch(`${API_BASE}/api/v1/appointments/${id}`);
   if (!res.ok) throw new Error(`Failed to fetch appointment: ${res.status}`);
   const data: { appointment: Appointment } = await res.json();
   return data.appointment;
@@ -43,7 +58,7 @@ export async function createAppointment(data: {
   notes?: string;
   location?: string;
 }): Promise<Appointment> {
-  const res = await fetch(`${API_BASE}/api/v1/appointments`, {
+  const res = await authFetch(`${API_BASE}/api/v1/appointments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -57,7 +72,7 @@ export async function updateAppointment(
   id: string,
   data: Partial<{ status: string; startAt: string; durationMinutes: number; title: string; notes: string; location: string }>,
 ): Promise<Appointment> {
-  const res = await fetch(`${API_BASE}/api/v1/appointments/${id}`, {
+  const res = await authFetch(`${API_BASE}/api/v1/appointments/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -68,7 +83,7 @@ export async function updateAppointment(
 }
 
 export async function cancelAppointment(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/v1/appointments/${id}`, {
+  const res = await authFetch(`${API_BASE}/api/v1/appointments/${id}`, {
     method: "DELETE",
   });
   if (!res.ok) throw new Error(`Failed to cancel appointment: ${res.status}`);
@@ -76,7 +91,7 @@ export async function cancelAppointment(id: string): Promise<void> {
 
 export async function checkAvailability(startAt: string, endAt: string): Promise<boolean> {
   const params = new URLSearchParams({ startAt, endAt });
-  const res = await fetch(`${API_BASE}/api/v1/appointments/slots/available?${params}`);
+  const res = await authFetch(`${API_BASE}/api/v1/appointments/slots/available?${params}`);
   if (!res.ok) throw new Error(`Failed to check availability: ${res.status}`);
   const data: { available: boolean } = await res.json();
   return data.available;

@@ -78,6 +78,15 @@ export interface ProviderResponse {
   methods: string[];
 }
 
+export interface SessionResponse {
+  sessionId: string;
+  deviceName: string;
+  ipAddress: string;
+  createdAt: string;
+  lastActivity: string;
+  isCurrent: boolean;
+}
+
 export interface OAuthInitiateResponse {
   authorizeUrl: string;
   state: string;
@@ -140,10 +149,27 @@ async function apiRequest<T = Record<string, unknown>>(
 
 // ── Client Storage for Auth Tokens ─────────────────────────
 
+const STORAGE_KEY_ACCESS = "ags_patient_access_token";
+const STORAGE_KEY_REFRESH = "ags_patient_refresh_token";
+
 class TokenStore {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
   private listeners: Array<() => void> = [];
+
+  constructor() {
+    // Restore tokens from localStorage on instantiation
+    try {
+      const storedAccess = localStorage.getItem(STORAGE_KEY_ACCESS);
+      const storedRefresh = localStorage.getItem(STORAGE_KEY_REFRESH);
+      if (storedAccess && storedRefresh) {
+        this.accessToken = storedAccess;
+        this.refreshToken = storedRefresh;
+      }
+    } catch {
+      // localStorage may be unavailable (private browsing, etc.)
+    }
+  }
 
   getAccessToken(): string | null {
     return this.accessToken;
@@ -156,12 +182,14 @@ class TokenStore {
   setTokens(access: string, refresh: string): void {
     this.accessToken = access;
     this.refreshToken = refresh;
+    this.persist();
     this.notify();
   }
 
   clear(): void {
     this.accessToken = null;
     this.refreshToken = null;
+    this.clearPersisted();
     this.notify();
   }
 
@@ -174,6 +202,24 @@ class TokenStore {
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
     };
+  }
+
+  private persist(): void {
+    try {
+      if (this.accessToken) localStorage.setItem(STORAGE_KEY_ACCESS, this.accessToken);
+      if (this.refreshToken) localStorage.setItem(STORAGE_KEY_REFRESH, this.refreshToken);
+    } catch {
+      // Silently fail if storage unavailable
+    }
+  }
+
+  private clearPersisted(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEY_ACCESS);
+      localStorage.removeItem(STORAGE_KEY_REFRESH);
+    } catch {
+      // Silently fail if storage unavailable
+    }
   }
 
   private notify(): void {
@@ -371,6 +417,21 @@ export const patientAuth = {
       token: tokenStore.getAccessToken(),
     });
   },
+
+  /** List active login sessions */
+  async listSessions(): Promise<{ sessions: SessionResponse[] }> {
+    return apiRequest<{ sessions: SessionResponse[] }>(
+      "/identity/sessions",
+      { method: "GET" },
+    );
+  },
+
+  /** Revoke a specific session */
+  async revokeSession(sessionId: string): Promise<void> {
+    await apiRequest(`/identity/sessions/${sessionId}`, {
+      method: "DELETE",
+    });
+  },
 };
 
 // ── Profile API ────────────────────────────────────────────
@@ -416,10 +477,18 @@ export const patientConsent = {
       `${API_BASE}/api/v1/consent/history?identityId=${identityId}&limit=50`,
       {
         headers: {
-                  Authorization: `Bearer ${token}`,
-                },
+          "Authorization": `Bearer ${token}`,
+        },
       },
     );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new ApiError(
+        err.error?.message || `Consent API error: ${res.status}`,
+        err.error?.code || "CONSENT_ERROR",
+        res.status,
+      );
+    }
     return res.json();
   },
 

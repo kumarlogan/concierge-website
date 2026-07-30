@@ -156,24 +156,24 @@ registerClinicMessageRoutes(router);
 // Each /identity/* path is handled by the IdentityRouter class.
 import { IdentityRouter, IdentityService, IdentityRepository, SessionManager, PasswordManager, JwtManager, IdentityProviderRegistry, RefreshTokenManager, EmailVerificationManager, PasswordResetManager, MagicLinkManager, OAuthService, MFAManager } from "./platform/identity/index.js";
 
-// Identity router instance — lazily initialised
+// Identity router instance — constructed once at module init
 let _identityRouter: IdentityRouter | null = null;
 
 function getIdentityRouter(env: Env): IdentityRouter {
   if (_identityRouter) return _identityRouter;
 
-  // Build the full dependency chain
   const db = env.DB;
   const repo = new IdentityRepository(db);
   const sessions = new SessionManager(repo);
   const passwords = new PasswordManager();
   const jwt = new JwtManager();
 
-  // ── Register the platform JWT signing key (provisioned as a secret) ──
+  // ── Register JWT signing key at module init (not per-request) ──
   // The API can only issue tokens once a signing keypair is registered.
   // Private key comes from JWT_PRIVATE_KEY (GH secret → wrangler var);
   // public key + kid are shared with the verification middleware via
   // PLATFORM_JWT_PUBLIC_KEY / PLATFORM_JWT_KID so tokens verify round-trip.
+  // Keys are registered ONCE at first init, not on every request (P1 #12).
   if (env.JWT_PRIVATE_KEY) {
     jwt.registerKeyPair({
       kid: env.JWT_KID || "default",

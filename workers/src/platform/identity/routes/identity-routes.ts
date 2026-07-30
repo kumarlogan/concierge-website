@@ -175,9 +175,10 @@ export class IdentityRouter {
   }
 
   private async handlePasswordResetRequest(body: Record<string, unknown>): Promise<ApiResponse> {
-    const token = await this.passwordReset.requestReset(body.email as string);
-    // In production, token is emailed — here we return it for development
-    return ok({ token, message: "If the email exists, a reset link has been sent" });
+    await this.passwordReset.requestReset(body.email as string);
+    // Token is not returned to the client — in production it would be emailed.
+    // Returning tokens in API responses is a security finding (HIGH #10).
+    return ok({ message: "If the email exists, a reset link has been sent" });
   }
 
   private async handlePasswordResetComplete(body: Record<string, unknown>): Promise<ApiResponse> {
@@ -195,20 +196,26 @@ export class IdentityRouter {
     } catch {
       return error("Invalid authorization", 401, "AUTH_ERROR");
     }
-    const identity = await this.identityService.getIdentity(identityId);
-    if (!identity) return error("Identity not found", 404, "NOT_FOUND");
 
-    // Change password logic
-    await this.passwordReset.completeReset("", body.newPassword as string);
+    // Validate required fields
+    const currentPassword = body.currentPassword as string | undefined;
+    const newPassword = body.newPassword as string | undefined;
+    if (!currentPassword || !newPassword) {
+      return error("currentPassword and newPassword are required", 400, "VALIDATION_ERROR");
+    }
+
+    // changePassword throws typed IdentityErrors caught by the outer handler
+    await this.identityService.changePassword(identityId, currentPassword, newPassword);
     return ok({ message: "Password changed successfully" });
   }
 
   private async handleEmailVerification(body: Record<string, unknown>): Promise<ApiResponse> {
-    const token = await this.emailVerification.createVerification(
+    await this.emailVerification.createVerification(
       body.identityId as string,
       body.email as string,
     );
-    return ok({ token, message: "Verification email sent (development: token returned)" });
+    // Token is not returned to the client — would be emailed in production.
+    return ok({ message: "Verification email sent" });
   }
 
   private async handleEmailVerificationComplete(body: Record<string, unknown>): Promise<ApiResponse> {
@@ -217,8 +224,9 @@ export class IdentityRouter {
   }
 
   private async handleMagicLinkRequest(body: Record<string, unknown>): Promise<ApiResponse> {
-    const result = await this.magicLink.requestMagicLink(body.email as string);
-    return ok({ token: result, message: "If email exists, magic link sent" });
+    await this.magicLink.requestMagicLink(body.email as string);
+    // Token is not returned to the client — would be sent via email in production.
+    return ok({ message: "If email exists, magic link sent" });
   }
 
   private async handleMagicLinkVerify(body: Record<string, unknown>, headers: Record<string, string>): Promise<ApiResponse> {

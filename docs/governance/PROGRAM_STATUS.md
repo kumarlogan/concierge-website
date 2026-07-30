@@ -175,6 +175,7 @@ HEAD — `7a5b751` — `Phase 2 Wave 5.1 — EPIC-2.2 Sprint S2.2.2 complete`
 | Operations Bot token missing | ⚠️ Blocking | Bot cannot respond in Telegram | Register bot with BotFather, set `TELEGRAM_BOT_TOKEN` secret |
 | Admin Bot token missing | ✅ **Resolved** | Token set, webhook active, user-restricted |
 | D1 API token scope | ⚠️ Risk | Current wrl wrapper worked for production deploy | Verify with `wrangler secret put` test |
+| CI/CD pipeline deploy broken (wrangler-action v3 pnpm monorepo + stale CLOUDFLARE_API_TOKEN secret) | 🔴 **Blocking** | Hotfix deployed via `git push` but CI pipeline cannot publish to Cloudflare | (1) Upgrade wrangler-action to v4 in `.github/workflows/deploy.yml`, (2) Update `CLOUDFLARE_API_TOKEN` secret with fresh ~100-char Workers token (rotated 2026-07-22, cfat_Qxh6...) |
 
 ---
 

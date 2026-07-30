@@ -39,6 +39,23 @@ interface Thread {
   threadId: string;
   lastMessage: Message;
   unreadCount: number;
+  participants: Array<{ id: string; role: string; displayName?: string }>;
+}
+
+function getRecipientId(threads: Thread[], threadId: string, currentUserId: string): string {
+  const thread = threads.find(t => t.threadId === threadId);
+  if (!thread) return "";
+  // Prefer explicit participants list if available
+  if (thread.participants?.length) {
+    const other = thread.participants.find(p => p.id !== currentUserId);
+    if (other) return other.id;
+  }
+  // Fallback: derive recipient from lastMessage
+  if (thread.lastMessage) {
+    const { senderId, recipientId } = thread.lastMessage;
+    return senderId === currentUserId ? recipientId : senderId;
+  }
+  return "";
 }
 
 function statusDot(status: string) {
@@ -69,7 +86,7 @@ export default function MessagesPage() {
     try {
       setLoading(true);
       const data = await getThreads();
-      setThreads(data as Thread[]);
+      setThreads(data.map((t) => ({ ...t, participants: [] as Array<{ id: string; role: string; displayName?: string }> })) as Thread[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
@@ -101,9 +118,9 @@ export default function MessagesPage() {
     try {
       await sendMessage({
         threadId: selectedThread,
-        recipientId: "provider-001",
+        recipientId: getRecipientId(threads, selectedThread, user?.id ?? ""),
         type: "text",
-        subject: null as unknown as string,
+        subject: "",
         content: newMessage.trim(),
       });
       setNewMessage("");
@@ -127,6 +144,7 @@ export default function MessagesPage() {
         {loading && (
           <div className="flex items-center justify-center py-12">
             <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-muted-foreground">Loading messages...</span>
           </div>
         )}
 
@@ -134,6 +152,10 @@ export default function MessagesPage() {
           <Card className="border-red-200 bg-red-50">
             <CardContent className="pt-6">
               <p className="text-red-800">{error}</p>
+              <Button variant="outline" size="sm" className="mt-2" onClick={fetchThreads}>
+                <RefreshCw className="mr-1 h-3 w-3" />
+                Retry
+              </Button>
             </CardContent>
           </Card>
         )}

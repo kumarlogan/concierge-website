@@ -28,8 +28,9 @@ import {
   Sparkles,
   Clock,
   Star,
-  CheckCircle2,
-  Circle,
+  Loader2,
+  RefreshCw,
+  Compass,
 } from "lucide-react";
 import { Link } from "wouter";
 import { getTimeline } from "@/lib/timeline-api";
@@ -41,6 +42,7 @@ export default function DashboardPage() {
   const [nextMilestone, setNextMilestone] = useState<{ title: string; description: string; date: string } | null>(null);
   const [upcomingTasksCount, setUpcomingTasksCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [timelineError, setTimelineError] = useState<string | null>(null);
 
   const fetchTimelineData = async () => {
     try {
@@ -67,8 +69,8 @@ export default function DashboardPage() {
         (t) => t.status === "pending" || t.status === "in_progress"
       );
       setUpcomingTasksCount(pendingTasks.length);
-    } catch {
-      // Silently fail — dashboard should still render without timeline data
+    } catch (err) {
+      setTimelineError(err instanceof Error ? err.message : "Failed to load timeline");
     } finally {
       setLoading(false);
     }
@@ -163,6 +165,26 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* ── Timeline Error Banner ── */}
+      {!loading && timelineError && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="flex items-center gap-3 p-3">
+            <RefreshCw className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <p className="text-sm text-amber-700">
+              Some dashboard data could not be loaded.
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-8 text-xs"
+              onClick={fetchTimelineData}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ── Journey Progress Section ── */}
       <Card className="relative overflow-hidden">
         <CardHeader>
@@ -204,7 +226,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading...
+              </div>
             ) : currentPhaseName ? (
               <div>
                 <p className="font-medium text-base">{currentPhaseName}</p>
@@ -231,7 +256,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading...
+              </div>
             ) : nextMilestone ? (
               <div>
                 <p className="font-medium text-sm">{nextMilestone.title}</p>
@@ -264,7 +292,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading...
+              </div>
             ) : (
               <div>
                 <p className="text-2xl font-bold">{upcomingTasksCount}</p>
@@ -322,6 +353,65 @@ export default function DashboardPage() {
           </dl>
         </CardContent>
       </Card>
+
+      {/* ── Getting Started for New Users ── */}
+      {!loading && !currentPhaseName && !timelineError && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Compass className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Getting Started</CardTitle>
+                <CardDescription>
+                  Your fertility journey is about to begin. Here's how to get started.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ol className="space-y-3">
+              <li className="flex items-start gap-3 text-sm">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  1
+                </span>
+                <div>
+                  <p className="font-medium">Complete your profile</p>
+                  <p className="text-muted-foreground">Add your personal details to get personalized care.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  2
+                </span>
+                <div>
+                  <p className="font-medium">Book your first appointment</p>
+                  <p className="text-muted-foreground">Schedule an initial consultation with a specialist.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  3
+                </span>
+                <div>
+                  <p className="font-medium">Review your consents</p>
+                  <p className="text-muted-foreground">Set your data sharing preferences in the Trust Runtime.</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 text-sm">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  4
+                </span>
+                <div>
+                  <p className="font-medium">Explore your care plan</p>
+                  <p className="text-muted-foreground">View your personalized treatment journey and milestones.</p>
+                </div>
+              </li>
+            </ol>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Quick Actions ── */}
       <div>

@@ -32,6 +32,16 @@ export interface Env {
   RATE_LIMIT_WINDOW_MS?: string;
   RATE_LIMIT_LIMIT?: string;
 
+  // Cloudflare Turnstile secret key — bot protection for public endpoints
+  TURNSTILE_SECRET_KEY?: string;
+
+  // JWT signing keypair — provisioned as GH secrets → wrangler vars
+  JWT_PRIVATE_KEY?: string;
+  JWT_PUBLIC_KEY?: string;
+  JWT_KID?: string;
+  PLATFORM_JWT_PUBLIC_KEY?: string;
+  PLATFORM_JWT_KID?: string;
+
   // Trust Runtime bindings — Phase 2, Wave 4
   POLICY_ENGINE: any;
   CONSENT_ENGINE: any;

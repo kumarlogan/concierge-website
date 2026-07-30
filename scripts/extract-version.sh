@@ -11,10 +11,9 @@ set -euo pipefail
 CHANGELOG="${1:-CHANGELOG.md}"
 OUTPUT="${2:-workers/src/version.ts}"
 
-# Extract the highest semver from CHANGELOG headers like "## [1.13.0]"
-# Uses grep to find all version headers, sorts by semver, takes the latest.
+# Extract the LATEST (topmost) semver from CHANGELOG headers like "## [1.13.0]"
+# Uses grep to find all version headers, takes the first match (top of file).
 VERSION=$(grep -oP '^## \[\K[0-9]+\.[0-9]+\.[0-9]+' "$CHANGELOG" \
-  | sort -t. -k1,1nr -k2,2nr -k3,3nr \
   | head -1)
 
 if [ -z "$VERSION" ]; then

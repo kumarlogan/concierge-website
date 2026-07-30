@@ -3,7 +3,22 @@
 // │ Patient-facing API client for Secure Messaging.               │
 // ═══════════════════════════════════════════════════════════
 
+import { tokenStore } from "./patient-api";
+
 const API_BASE = import.meta.env.VITE_API_BASE ?? "";
+
+// ── Authenticated fetch helper ────────────────────────────
+
+async function authFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
+  const token = tokenStore.getAccessToken();
+  const headers: Record<string, string> = {
+    ...(init?.headers as Record<string, string>),
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return fetch(input, { ...init, headers });
+}
 
 export interface Message {
   id: string;
@@ -28,14 +43,14 @@ export interface MessageThread {
 }
 
 export async function getThreads(): Promise<MessageThread[]> {
-  const res = await fetch(`${API_BASE}/api/v1/messages/threads`);
+  const res = await authFetch(`${API_BASE}/api/v1/messages/threads`);
   if (!res.ok) throw new Error(`Failed to fetch threads: ${res.status}`);
   const data: { threads: MessageThread[] } = await res.json();
   return data.threads ?? [];
 }
 
 export async function getThreadMessages(threadId: string): Promise<Message[]> {
-  const res = await fetch(`${API_BASE}/api/v1/messages/threads/${threadId}`);
+  const res = await authFetch(`${API_BASE}/api/v1/messages/threads/${threadId}`);
   if (!res.ok) throw new Error(`Failed to fetch messages: ${res.status}`);
   const data: { messages: Message[] } = await res.json();
   return data.messages ?? [];
@@ -49,7 +64,7 @@ export async function sendMessage(data: {
   content: string;
   contentType?: string;
 }): Promise<Message> {
-  const res = await fetch(`${API_BASE}/api/v1/messages`, {
+  const res = await authFetch(`${API_BASE}/api/v1/messages`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

@@ -322,6 +322,83 @@ export class IdentityService {
     });
   }
 
+  // ── Password Change (authenticated) ──────────────────────
+
+  /**
+   * Change password for an authenticated identity.
+   * Verifies current password, validates new password policy,
+   * hashes new password, and invalidates all existing sessions.
+   *
+   * Throws IdentityError on validation failure, AuthenticationError
+   * on wrong current password, NotFoundError if identity not found.
+   */
+  async changePassword(
+    identityId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    // Get the full record (needs password_hash)
+    const record = await this.repo.getIdentity(identityId);
+    if (!record) {
+      throw new NotFoundError("Identity not found");
+    }
+
+    if (!record.password_hash) {
+      throw new IdentityError(
+        "Password login not configured for this identity",
+        "NO_PASSWORD",
+        400,
+      );
+    }
+
+    // Verify current password
+    const valid = await this.passwords.verify(currentPassword, record.password_hash);
+    if (!valid) {
+      throw new AuthenticationError("Invalid credentials");
+    }
+
+    // Validate new password policy
+    const validation = this.passwords.validate(newPassword);
+    if (!validation.valid) {
+      throw new IdentityError(
+        `Password validation failed: ${validation.errors.join("; ")}`,
+        "INVALID_PASSWORD",
+        400,
+        { errors: validation.errors },
+      );
+    }
+
+    // Hash new password
+    const newHash = await this.passwords.hash(newPassword);
+
+    // Update identity password
+    await this.repo.updateIdentity(identityId, {
+      password_hash: newHash,
+    });
+
+    // Force re-login: invalidate all sessions + refresh tokens
+    await this.sessions.revokeIdentitySessions(identityId);
+    await this.refreshTokens.revokeAllForIdentity(identityId);
+
+    // Record audit event
+    await this.recordAudit({
+      identity_id: identityId,
+      action: "identity.password.change",
+      resource_type: "identity",
+      resource_id: identityId,
+      outcome: "SUCCESS",
+    });
+
+    // Publish event
+    await this.publishEvent({
+      identity_id: identityId,
+      event_type: "identity.password.change",
+      severity: "INFO",
+      details: {},
+      created_at: new Date().toISOString(),
+    });
+  }
+
   async suspendIdentity(identityId: string, reason?: string): Promise<void> {
     await this.repo.updateIdentityStatus(
       identityId,

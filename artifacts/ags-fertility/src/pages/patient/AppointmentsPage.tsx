@@ -11,15 +11,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Calendar,
   Clock,
   MapPin,
-  Plus,
   Video,
   RefreshCw,
   Trash2,
 } from "lucide-react";
 import { getAppointments, cancelAppointment } from "@/lib/appointment-api";
+import BookingDialog from "@/components/patient/booking-dialog";
 
 interface Appointment {
   id: string;
@@ -63,6 +74,7 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const fetchAppointments = async () => {
     try {
@@ -82,11 +94,14 @@ export default function AppointmentsPage() {
 
   const handleCancel = async (id: string) => {
     try {
+      setCancellingId(id);
       await cancelAppointment(id);
       // Refresh the list after cancellation
       fetchAppointments();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to cancel");
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -100,10 +115,7 @@ export default function AppointmentsPage() {
             Manage your upcoming and past appointments
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Book Appointment
-        </Button>
+        <BookingDialog onSuccess={fetchAppointments} />
       </div>
 
       {/* Loading State */}
@@ -138,10 +150,7 @@ export default function AppointmentsPage() {
             <p className="text-muted-foreground text-center mt-1">
               Book your first appointment to get started with your fertility journey.
             </p>
-            <Button className="mt-4">
-              <Plus className="mr-2 h-4 w-4" />
-              Book Appointment
-            </Button>
+            <BookingDialog onSuccess={fetchAppointments} />
           </CardContent>
         </Card>
       )}
@@ -200,15 +209,36 @@ export default function AppointmentsPage() {
                   <p className="mt-3 text-sm text-muted-foreground">{appt.notes}</p>
                 )}
                 <div className="mt-4 flex gap-2">
-                  {appt.status === "scheduled" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCancel(appt.id)}
-                    >
-                      <Trash2 className="mr-1 h-3 w-3" />
-                      Cancel
-                    </Button>
+                  {(appt.status === "scheduled" || appt.status === "confirmed") && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={cancellingId === appt.id}
+                        >
+                          <Trash2 className="mr-1 h-3 w-3" />
+                          {cancellingId === appt.id ? "Cancelling..." : "Cancel"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel Appointment</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to cancel this appointment? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Keep Appointment</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => handleCancel(appt.id)}
+                          >
+                            Yes, Cancel Appointment
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   )}
                 </div>
               </CardContent>

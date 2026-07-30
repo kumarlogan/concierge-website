@@ -815,7 +815,7 @@ cannot inadvertently expose or corrupt sensitive information.
 | **Secure API design** | All API endpoints require HTTPS. Input validation occurs at the Worker boundary. Rate limiting protects against abuse. Error responses never leak stack traces, internal paths, or database details. |
 | **Data minimization** | Only necessary data is collected. Every form field, database column, and log entry must be justified. Regular audits identify and purge unnecessary data. See PRODUCT_BOUNDARIES.md §5. |
 | **Encryption** | TLS for all data in transit. Server-side encryption for all data at rest (D1, R2). Secrets managed through Cloudflare's secrets storage — never in code, config files, or environment variables. |
-| **Access controls** | API-level authentication and authorization (prepared now, activated in Phase 2). Role-based access: patients, concierge staff, clinic staff, administrators. Access is revocable and auditable. |
+| **Access controls** | API-level authentication and authorization (JWT-based via `withJwtAuth` on 39+ routes). Role-based access: patients, concierge staff, clinic staff, administrators via `requirePermission` RBAC. Access is revocable and auditable. |
 | **Auditability** | All security-relevant events are logged: access to patient data, schema changes, deployments, configuration modifications. Logs answer: who did what, when, and from where. |
 
 ### Security Boundaries
@@ -843,19 +843,19 @@ graph TD
     style TrustBoundary fill:#e8f5e9,stroke:#2e7d32
 ```
 
-### Phase 1 Security Posture
+### Current Security Posture (Phase 2 Certified)
 
 | Area | Phase 1 Implementation | Future Enhancement |
 |---|---|---|
 | Transport security | ✅ TLS enforced at Cloudflare edge | — |
-| API authentication | None (public informational API) | **Live RBAC** — `src/auth/` engine enforces authorization on protected routes via `requirePermission()` guards (EPIC-002-002); public endpoints remain open |
+| **API authentication** | ✅ **Live JWT auth** — `withJwtAuth` middleware on 39+ routes across documents, appointments, messaging, and trust runtime. `requirePermission` RBAC on ops routes. Public endpoints: health check + consultation intake (Turnstile-protected). | Full OAuth2/OIDC federation (Phase 3) |
 | Secrets management | ✅ Cloudflare Worker secrets | — |
 | Rate limiting | Per-endpoint rate limits in Workers | Advanced bot detection (Phase 3) |
 | Input validation | ✅ Worker middleware (type + content checks) | Schema-based validation |
 | Database access | ✅ Workers only; no external D1 access | — |
 | Object storage | Pre-signed URLs; no public buckets | — |
 | Audit logging | ✅ Structured logs in Workers | Centralized log retention (Phase 3) |
-| PHI protection | ✅ No PHI collected in Phase 1 | Full PHI controls (Phase 2) |
+| **PHI protection** | ✅ **Active** — PHI boundary markers in all engine modules. Consultation intake (Turnstile + honeypot). Document encryption (AES-256-GCM). JWT claims exclude health data. Consent engine evaluates real consent for appointments/messaging. | Full PHI lifecycle management, ML PHI redaction (Phase 3) |
 
 ---
 

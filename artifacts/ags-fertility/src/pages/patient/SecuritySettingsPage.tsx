@@ -5,17 +5,28 @@
 // │ Wave 5 — Patient Workspace                                  │
 // └─────────────────────────────────────────────────────────────┘
 
-import { useState } from "react";
-import { patientAuth } from "@/lib/patient-api";
+import { useState, useEffect } from "react";
+import { patientAuth, SessionResponse } from "@/lib/patient-api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Shield, Key, Smartphone, AlertTriangle } from "lucide-react";
+import { Shield, Key, Smartphone, AlertTriangle, RefreshCw } from "lucide-react";
 
 export default function SecuritySettingsPage() {
   const { user } = useAuth();
@@ -25,6 +36,42 @@ export default function SecuritySettingsPage() {
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [mfaCode, setMfaCode] = useState("");
   const [isSettingUpMFA, setIsSettingUpMFA] = useState(false);
+  const [sessions, setSessions] = useState<SessionResponse[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
+
+  const fetchSessions = async () => {
+    setSessionsLoading(true);
+    setSessionsError(null);
+    try {
+      const result = await patientAuth.listSessions();
+      setSessions(result.sessions);
+    } catch (err) {
+      setSessionsError(err instanceof Error ? err.message : "Failed to load sessions");
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  const handleRevokeSession = async (sessionId: string) => {
+    setRevokingId(sessionId);
+    try {
+      await patientAuth.revokeSession(sessionId);
+      toast.success("Session revoked");
+      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to revoke session");
+    } finally {
+      setRevokingId(null);
+      setRevokeTarget(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
 
   const handleSetupMFA = async () => {
     setIsSettingUpMFA(true);
@@ -164,19 +211,104 @@ export default function SecuritySettingsPage() {
         </CardContent>
       </Card>
 
-      {/* ── Session Management (placeholder) ── */}
+      {/* ── Active Sessions ── */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Smartphone className="h-5 w-5 text-muted-foreground" />
             Active Sessions
           </CardTitle>
-          <CardDescription>Manage your active login sessions.</CardDescription>
+          <CardDescription>Manage your active login sessions across devices.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Session management will be available in a future update.
-          </p>
+          {sessionsLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Loading sessions...
+            </div>
+          ) : sessionsError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-800">{sessionsError}</p>
+              <Button variant="outline" size="sm" className="mt-2" onClick={fetchSessions}>
+                <RefreshCw className="mr-1 h-3 w-3" />
+                Retry
+              </Button>
+            </div>
+          ) : sessions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No active sessions found.</p>
+          ) : (
+            <div className="space-y-3">
+              {sessions.map((session) => (
+                <div
+                  key={session.sessionId}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {session.deviceName || "Unknown device"}
+                      </span>
+                      {session.isCurrent && (
+                        <Badge variant="outline" className="text-xs text-green-500">
+                          Current
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {session.ipAddress && <span>IP: {session.ipAddress}</span>}
+                      <span>
+                        Last activity: {new Date(session.lastActivity).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                  {!session.isCurrent && (
+                    <AlertDialog
+                      open={revokeTarget === session.sessionId}
+                      onOpenChange={(open) => {
+                        if (open) setRevokeTarget(session.sessionId);
+                        else setRevokeTarget(null);
+                      }}
+                    >
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700"
+                          disabled={revokingId === session.sessionId}
+                        >
+                          {revokingId === session.sessionId ? "Revoking..." : "Revoke"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Revoke Session</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to revoke this session? The device will be signed out immediately.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={() => setRevokeTarget(null)}>
+                            Keep Session
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-600 hover:bg-red-700"
+                            onClick={() => handleRevokeSession(session.sessionId)}
+                          >
+                            Yes, Revoke
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
