@@ -5,13 +5,12 @@
 | Field | Value |
 |-------|-------|
 | **Release Name** | AG Synergy Concierge Patient Portal |
-| **Release** | v1.0.0-rc1 |
-| **Phase** | Phase 1 |
-| **Status** | READY FOR LIMITED PILOT |
-| **Git Tag** | v1.0.0-rc1 |
-| **Commit SHA** | `864f2135133562b3f052d4eb041b518db2a33c13` |
-| **Branch** | `main` |
-| **Release Date** | 2026-07-29 |
+| **Release** | v1.1.0 |
+| **Phase** | Phase 1 — Patient Zero Remediation |
+| **Status** | ✅ DEPLOYED TO PRODUCTION |
+| **Git Tag** | v1.1.0 |
+| **Commit SHA** | `fd03575dbbad7a26d22e9c39ae587ab6c4459e43` |
+| **Release Date** | 2026-07-30 |
 | **Repository** | kumarlogan/concierge-website |
 
 ---
@@ -67,6 +66,27 @@ This release package contains the following documents:
 |----------|----------|-------------|
 | Platform Phase 1 Exit | `docs/releases/PHASE_1_EXIT.md` | Broader Digital Concierge Platform Phase 1 closeout |
 | v1.0.0 Production Certification | `docs/releases/v1.0.0_CERTIFICATION.md` | Platform-level production certification report |
+
+---
+
+## Deployment Documentation
+
+The following documents were created for the v1.1.0 production deployment:
+
+| Document | Description |
+|----------|-------------|
+| `DEPLOYMENT_REPORT.md` | Summary of deployment execution, verification, and rollback |
+| `CONCIERGE_ENVIRONMENT_STRATEGY.md` | Concrete environment configuration instantiation |
+| `CONCIERGE_ENGINEERING_DEPLOYMENT_STANDARD.md` | Reusable engineering deployment conventions |
+| `CONCIERGE_PREVIEW_VALIDATION_CHECKLIST.md` | 30+ item validation checklist for preview |
+| `CONCIERGE_PRODUCTION_SMOKE_TEST.md` | 15-item smoke test executed after deployment |
+
+### Deployment History
+
+| Deployment | Worker | Commit | Date | Status |
+|-----------|--------|--------|------|--------|
+| v1.1.0 | agsynergy-api (api.agsynergy.ca) | `fd03575` | 2026-07-30 | ✅ LIVE |
+| v1.1.0 | hermes-website (agsynergy.ca) | `fd03575` | 2026-07-30 | ✅ LIVE |
 
 ---
 
