@@ -9,8 +9,8 @@
 // PHI Boundary: Middleware only handles metadata.
 // PHI references are opaque IDs only.
 
-import type { Env } from "../types/env.js";
-import type { AuthorizationRequest, AuthorizationResponse, EvaluationContext } from "../platform/trust/types.js";
+import type { Env } from "../../types/env.js";
+import type { AuthorizationRequest, AuthorizationResponse, EvaluationContext } from "./types.js";
 
 // ══════════════════════════════════════════
 // Identity Hook Interface (from Identity Core)

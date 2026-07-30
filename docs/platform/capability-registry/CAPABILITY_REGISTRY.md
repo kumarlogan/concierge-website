@@ -5,8 +5,8 @@
 > Products discover and consume platform capabilities through this registry.
 >
 > **Status:** Phase 2 — Wave 2 (Architecture)
-> **Version:** 1.0.0
-> **Last Updated:** 2026-07-26
+> **Version:** 1.1.0
+> **Last Updated:** 2026-07-30
 
 ---
 
@@ -288,6 +288,23 @@ graph TD
 | **Tests** | N/A (architecture phase) |
 | **Metrics** | Deployment frequency, promotion gate pass rate, rollback frequency, mean time to recovery (MTTR), smoke test pass rate |
 | **Roadmap** | Wave 1: Architecture (current), Wave 2: Implementation (D1 schema, service layer, interfaces), Wave 3: CI/CD integration, Wave 4: Multi-product adoption |
+
+### 3.17 WAS — Workforce Activation Service
+
+| Field | Value |
+|-------|-------|
+| **Name** | WAS — Workforce Activation Service |
+| **Purpose** | Activation boundary between EPCL (strategic planning) and WEF (autonomous execution). Validates, gates, and orchestrates the transition from approved plans to autonomous batch execution. Fail-closed by default. |
+| **Owner** | AI Platform |
+| **Interfaces** | `WorkforceActivationService`, `PlanConsumer`, `ConstitutionalValidator`, `ExecutionStateManager`, `WEFDelegator`, `VerificationRouter`, `KnowledgeCaptureTrigger`, `ExecutiveStatusUpdater`, `WASObservability` (9 interfaces) |
+| **Dependencies** | EPCL (ExecutionPlan, flags), WEF (batch delegation), Observability (events, metrics), Feature Flag System (7 WAS flags + EPCL sync) |
+| **Consumers** | Hermes Agent, autonomous execution pipeline, human operators |
+| **Status** | ✅ Implementation Complete |
+| **Maturity** | Implementation |
+| **Risks** | No persistent state (in-memory only — lost on restart); auto-resume experimental; serial batch delegation default |
+| **Tests** | 68/68 integration tests |
+| **Metrics** | Activation success rate, batch completion rate, delegation latency, verification pass rate, recovery success rate |
+| **Roadmap** | Phase 2: Documentation (current), Milestones 5-8: Production hardening, parallel delegation, persistent state, dashboard integration |
 
 ---
 

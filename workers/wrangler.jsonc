@@ -4,7 +4,9 @@
   "account_id": "d0a58133c1495fa5e42cbca0aebaa36b",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-17",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "observability": {
     "enabled": true
   },
