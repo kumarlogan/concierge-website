@@ -18,6 +18,7 @@ import {
   type ValidationGateResult,
   type WASConfig,
 } from "./types.js";
+export { WASFeatureFlag };
 
 // ── Singleton State ──────────────────────────────────────────
 

@@ -135,10 +135,11 @@ export class WorkforceActivationService {
    *   7. REPORT — Generate activation status report
    *
    * @param plan — The approved EPCL execution plan
+   * @param epclConfig — Optional EPCL config for validation (resource constraints, budget)
    * @returns The activation lifecycle
    * @throws {WorkforceActivationError} if activation fails at any stage
    */
-  async activate(plan: ExecutionPlan): Promise<ActivationLifecycle> {
+  async activate(plan: ExecutionPlan, epclConfig?: Partial<EPCLConfig>): Promise<ActivationLifecycle> {
     const startTime = Date.now();
 
     // ── Stage 1: Consume plan ──────────────────────────────────
@@ -164,7 +165,7 @@ export class WorkforceActivationService {
       throw new WorkforceActivationError(message);
     }
 
-    const validation: ValidationResult = this.constitutionalValidator.validate(plan);
+    const validation: ValidationResult = this.constitutionalValidator.validate(plan, epclConfig);
 
     this.stateManager.setValidation(lifecycle.id, validation);
     this.observability.activationValidated(

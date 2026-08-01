@@ -36,15 +36,16 @@ included.
 | **Impact** | No real-time notification delivery. Patients see UI structure but no actual notifications. |
 | **Mitigation** | Acceptable for limited pilot. Backend notification service planned for Phase 2. |
 
-### TD-003: Timeline API Integration
+### TD-003: Timeline API Integration — RESOLVED (Wave 3)
 | Property | Value |
 |----------|-------|
 | **ID** | CP-103 |
-| **Classification** | Technical Debt |
-| **Target Phase** | Phase 2 |
-| **Description** | JourneyTimelinePage is a static placeholder. Backend timeline API exists but client integration pending. |
+| **Classification** | Technical Debt — RESOLVED |
+| **Target Phase** | Phase 2 (Wave 3 — COMPLETE) |
+| **Description** | JourneyTimelinePage was a static placeholder. Backend timeline API existed but client integration was pending. |
 | **Impact** | Patients cannot view their treatment timeline through the portal. |
-| **Mitigation** | timeline-api.ts client exists; full page integration in Phase 2. |
+| **Mitigation** | Full Timeline Engine implemented: backend route (`workers/src/routes/timeline.ts`), in-memory engine (`workers/src/platform/timeline/in-memory-timeline-engine.ts`), frontend API client (`artifacts/ags-fertility/src/lib/timeline-api.ts`), and production page (`artifacts/ags-fertility/src/pages/patient/JourneyTimelinePage.tsx`). All 8 IVF stages, milestones, events, and progress tracking are live. |
+| **Resolution** | Wave 3 complete — Timeline Engine is production-ready. |
 
 ### TD-004: Document Storage & Upload
 | Property | Value |

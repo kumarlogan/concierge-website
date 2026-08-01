@@ -86,7 +86,7 @@ No async orchestration edge cases found.
 | Messages | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Documents | ✅ | — | ✅ | ✅ | ✅ |
 | Notifications | ✅ | ⚠️ | ✅ | ✅ | ✅ |
-| Timeline | ✅ | — | ✅ | ✅ | ✅ |
+| Timeline | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Security Settings | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Consent Management | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Forgot Password | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -98,7 +98,7 @@ No async orchestration edge cases found.
   before the API call resolves; error state not implemented for fetch failures.
 - **Notifications** — Page is static (hardcoded categories rather than fetched data).
   Acceptable for Phase 1 limited pilot.
-- **Timeline** — Static placeholder; backend timeline service not yet connected.
+- **Timeline** — Production-ready. Full Timeline Engine with 8 IVF stages, milestone tracking, event history, progress monitoring, and responsive UI. Connected to backend API at `/api/v1/timeline`.
 - **Documents** — Placeholder page; document storage not yet implemented in Phase 1.
 
 ### Section 4 — Navigation Validation
@@ -128,7 +128,7 @@ equivalent discoverability for the limited pilot.
 | No seeded appointments | ✅ | All appointment data from API |
 | No fake clinics | ✅ | No hardcoded clinic records |
 | No placeholder documents | ✅ | Documents page is placeholder (served via API) |
-| No mock timelines | ✅ | Timeline page is placeholder (served via API) |
+| No mock timelines | ✅ | Timeline page is production-ready with real Timeline Engine |
 | No developer content | ✅ | Only `console.log` references are in error handlers |
 | No Lorem Ipsum | ✅ | All text content is production-quality copy |
 | No hardcoded healthcare data | ✅ | Form placeholders are standard (`you@example.com`) |
@@ -203,7 +203,7 @@ equivalent discoverability for the limited pilot.
 | Risk | Impact | Likelihood | Mitigation |
 |------|--------|------------|------------|
 | Consent API not available for pilot | Medium — patients can't grant/revoke real consent | Low (backend planned) | Document as known limitation; consent management is informational |
-| Timeline API not connected | Medium — no journey visualization | Low (backend planned) | Feature gated; not exposed as primary flow |
+| Timeline API not connected | ✅ Resolved (Wave 3) | Timeline Engine connected and live |
 | No test suite | Low — manual QA covers pilot features | Low | Add in Phase 2 |
 | NotificationCenterPage static | Low — no real-time alerts | Medium | Acceptable for limited pilot; notification preferences still visible |
 
@@ -249,6 +249,6 @@ guarded, and navigable. No demo or hardcoded production data exists.
 **Deferments (documented, not blocking):**
 1. Consent API integration (Phase 2)
 2. Notification backend (Phase 2)
-3. Timeline API integration (Phase 2)
+3. Timeline API integration (Wave 3 — COMPLETE)
 4. Automated tests (Phase 2)
 5. ESLint configuration (Phase 2)

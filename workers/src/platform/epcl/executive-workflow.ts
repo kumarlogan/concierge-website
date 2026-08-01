@@ -20,8 +20,8 @@ import {
   KnowledgeType,
   WORKFLOW_STAGE_ORDER,
   DEFAULT_EPCL_CONFIG,
-} from "./types.js";
-import { isEnabled, getConfig } from "./feature-flags.js";
+} from "./types.ts";
+import { isEnabled, getConfig } from "./feature-flags.ts";
 import { RoadmapEngine, type RoadmapAnalysis } from "./roadmap-engine.js";
 import { CapabilitySelector } from "./capability-selector.js";
 import { DisciplineSelector } from "./discipline-selector.js";
@@ -100,59 +100,73 @@ export class ExecutivePlanningWorkflow {
     config?: Partial<EPCLConfig>,
   ): Promise<WorkflowResult> {
     const stages: Map<WorkflowStage, StageResult> = new Map();
-    const mergedConfig: EPCLConfig = { ...DEFAULT_EPCL_CONFIG, ...config };
+    // Prepare EPCL config for validation (deep merge for nested objects)
+    const mergedConfig: EPCLConfig = { ...DEFAULT_EPCL_CONFIG };
+    if (config) {
+      if (config.execution) {
+        mergedConfig.execution = { ...DEFAULT_EPCL_CONFIG.execution, ...config.execution };
+      }
+      if (config.tokenBudget) {
+        mergedConfig.tokenBudget = { ...DEFAULT_EPCL_CONFIG.tokenBudget, ...config.tokenBudget };
+      }
+      if (config.contextBudget) {
+        mergedConfig.contextBudget = { ...DEFAULT_EPCL_CONFIG.contextBudget, ...config.contextBudget };
+      }
+    }
 
     try {
-      // ── Stage 1: ROADMAP_ANALYSIS ──
-      const { roadmap, analysis } = this.doRoadmapAnalysis(roadmapInput, source, stages);
+          // ── Stage 1: ROADMAP_ANALYSIS ──
+          const { roadmap, analysis } = this.doRoadmapAnalysis(roadmapInput, source, stages);
 
-      // ── Stage 2: DEPENDENCY_RESOLUTION ──
-      this.doDependencyResolution(analysis, stages);
+          // ── Stage 2: DEPENDENCY_RESOLUTION ──
+          this.doDependencyResolution(analysis, stages);
 
-      // ── Stage 3: EXECUTION_PLAN ──
-      const plan = this.doExecutionPlan(roadmap, stages);
+          // ── Stage 3: EXECUTION_PLAN ──
+          const plan = this.doExecutionPlan(roadmap, stages);
 
-      // ── Stage 4: CAPABILITY_SELECTION ──
-      this.doCapabilitySelection(roadmap, plan, stages);
+          // ── Stage 4: CAPABILITY_SELECTION ──
+          this.doCapabilitySelection(roadmap, plan, stages);
 
-      // ── Stage 5: DISCIPLINE_SELECTION ──
-      this.doDisciplineSelection(roadmap, plan, stages);
+          // ── Stage 5: DISCIPLINE_SELECTION ──
+          this.doDisciplineSelection(roadmap, plan, stages);
 
-      // ── Stage 6: BATCH_GENERATION ──
-      this.doBatchGeneration(plan, stages);
+          // ── Stage 6: BATCH_GENERATION ──
+                this.doBatchGeneration(plan, stages);
 
-      // ── Stage 7: APPROVAL_CHECK ──
-      this.doApprovalCheck(plan, stages);
+                // ── Stage 7: APPROVAL_CHECK ──
+                this.doApprovalCheck(plan, stages);
+                // Approve the plan now that approval check passed
+                this.executionPlanner.updatePlanStatus(plan.id, PlanStatus.APPROVED);
 
-      // ── Stage 8-10: WAS Activation — delegate to Workforce Activation Service ──
-      await this.doWefDelegation(plan, stages);
-      await this.doExecutionMonitoring(plan, stages);
-      await this.doVerification(plan, stages);
+                // ── Stage 8-10: WAS Activation — delegate to Workforce Activation Service ──
+                await this.doWefDelegation(plan, stages, mergedConfig);
+                await this.doExecutionMonitoring(plan, stages);
+                await this.doVerification(plan, stages);
 
-      // ── Stage 11: KNOWLEDGE_CAPTURE ──
-      this.doKnowledgeCapture(plan, analysis, stages);
+                // ── Stage 11: KNOWLEDGE_CAPTURE ──
+                this.doKnowledgeCapture(plan, analysis, stages);
 
-      // ── Stage 12: EXECUTIVE_REPORT ──
-      this.doExecutiveReport(plan, analysis, stages);
+                // ── Stage 12: EXECUTIVE_REPORT ──
+                this.doExecutiveReport(plan, analysis, stages);
 
-      // Finalize plan
-      this.executionPlanner.updatePlanStatus(plan.id, PlanStatus.APPROVED);
-      this.recoveryManager.finalizePlan(plan.id);
+                // Finalize plan
+                this.executionPlanner.updatePlanStatus(plan.id, PlanStatus.APPROVED);
+                this.recoveryManager.finalizePlan(plan.id);
 
-      return {
-        ok: true,
-        plan,
-        analysis,
-        stages: Array.from(stages.values()),
-      };
-    } catch (err) {
-      return {
-        ok: false,
-        error: err instanceof Error ? err.message : String(err),
-        stages: Array.from(stages.values()),
-      };
-    }
-  }
+                return {
+                  ok: true,
+                  plan,
+                  analysis,
+                  stages: Array.from(stages.values()),
+                };
+        } catch (err) {
+          return {
+            ok: false,
+            error: err instanceof Error ? err.message : String(err),
+            stages: Array.from(stages.values()),
+          };
+        }
+      }
 
   // ── Stage Implementations ───────────────────────────────────
 
@@ -333,64 +347,94 @@ export class ExecutivePlanningWorkflow {
   //   - Knowledge capture triggering
   //   - Executive status reporting
   //
-  // The WAS activation runs asynchronously — this stage submits the plan
-  // and reports the initial activation state. Actual batch delegation and
-  // verification happen through WAS's own lifecycle.
+  // This stage:
+  //   1. Activates the plan through WAS (consume → validate → activate)
+  //   2. Delegates each batch to WEF for execution
+  //   3. Completes the activation (transition to DEACTIVATED)
+  //   4. Generates executive status report
   private async doWefDelegation(
-    plan: ExecutionPlan,
-    stages: Map<WorkflowStage, StageResult>,
-  ) {
-    const start = Date.now();
+      plan: ExecutionPlan,
+      stages: Map<WorkflowStage, StageResult>,
+  ): Promise<void> {
+      const start = Date.now();
 
-    try {
-      // Check if WAS is enabled via feature flags
-      if (!isEnabled(FeatureFlag.ENABLE_AUTONOMOUS_EXECUTION)) {
-        stages.set(WorkflowStage.WEF_DELEGATION, {
-          stage: WorkflowStage.WEF_DELEGATION,
-          ok: true,
-          output: {
-            status: "skipped",
-            reason: "WAS disabled — ENABLE_AUTONOMOUS_EXECUTION feature flag is off",
-          },
-          duration: Date.now() - start,
-        });
-        return;
+      try {
+          // Check if WAS is enabled via feature flags
+          const isAutonomousExecutionEnabled = isEnabled(FeatureFlag.ENABLE_AUTONOMOUS_EXECUTION);
+          console.log(`[doWefDelegation] isEnabled(ENABLE_AUTONOMOUS_EXECUTION) = ${isAutonomousExecutionEnabled}`);
+          // Check if WAS is enabled via feature flags
+          if (!isAutonomousExecutionEnabled) {
+              stages.set(WorkflowStage.WEF_DELEGATION, {
+                  stage: WorkflowStage.WEF_DELEGATION,
+                  ok: true,
+                  output: { status: "reserved" },
+                  duration: Date.now() - start,
+              });
+              return;
+          }
+
+          // Stage 8a: Activate the plan through WAS (fail-closed)
+          // This runs: consume → validate → activate state machine
+          const lifecycle = await this.workforceActivation.activate(plan);
+
+          // Stage 8b: Delegate each batch to WEF for execution
+          // WAS delegateBatch() internally handles:
+          //   - WEF delegation via WEFDelegator
+          //   - Verification via VerificationRouter
+          //   - Knowledge capture via KnowledgeCaptureTrigger
+          const batchResults: Array<{ batchId: string; ok: boolean; error?: string }> = [];
+          for (const batch of plan.batches) {
+              try {
+                  await this.workforceActivation.delegateBatch(plan, batch, lifecycle.id);
+                  batchResults.push({ batchId: batch.id, ok: true });
+              } catch (batchErr) {
+                  const msg = batchErr instanceof Error ? batchErr.message : String(batchErr);
+                  batchResults.push({ batchId: batch.id, ok: false, error: msg });
+              }
+          }
+
+          // Stage 8c: Complete the activation
+          // WAS complete() internally handles:
+          //   - State transition (DEACTIVATING → DEACTIVATED)
+          //   - Executive status reporting via ExecutiveStatusUpdater
+          const report = this.workforceActivation.complete(plan, lifecycle.id);
+
+          stages.set(WorkflowStage.WEF_DELEGATION, {
+              stage: WorkflowStage.WEF_DELEGATION,
+              ok: true,
+              output: {
+                  status: "activated",
+                  activationId: lifecycle.id,
+                  state: lifecycle.state,
+                  batchCount: plan.batches.length,
+                  batchesDelegated: batchResults.filter(r => r.ok).length,
+                  batchesFailed: batchResults.filter(r => !r.ok).length,
+                  reportSummary: report.summary,
+                  batchResults,
+              },
+              duration: Date.now() - start,
+          });
+      } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          stages.set(WorkflowStage.WEF_DELEGATION, {
+              stage: WorkflowStage.WEF_DELEGATION,
+              ok: false,
+              output: {
+                  status: "failed",
+                  error: message,
+              },
+              duration: Date.now() - start,
+          });
+          throw new Error(`WEF delegation failed: ${message}`);
       }
-
-      // Activate the plan through WAS (fail-closed)
-      const lifecycle = await this.workforceActivation.activate(plan);
-
-      stages.set(WorkflowStage.WEF_DELEGATION, {
-        stage: WorkflowStage.WEF_DELEGATION,
-        ok: true,
-        output: {
-          status: "activated",
-          activationId: lifecycle.id,
-          state: lifecycle.state,
-          batchCount: plan.batches.length,
-        },
-        duration: Date.now() - start,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      stages.set(WorkflowStage.WEF_DELEGATION, {
-        stage: WorkflowStage.WEF_DELEGATION,
-        ok: false,
-        output: {
-          status: "failed",
-          error: message,
-        },
-        duration: Date.now() - start,
-      });
-      throw new Error(`WEF delegation failed: ${message}`);
-    }
   }
 
-  // ── Stage 9: EXECUTION_MONITORING — Report activation status ──
-  //
-  // Reports the current state of WAS activation. Since WAS runs
-  // asynchronously, this reflects a snapshot of the activation
-  // lifecycle at this point.
+  // ── Stage 9: EXECUTION_MONITORING — Report activation status ——
+  // ── Stage 9: EXECUTION_MONITORING — Report activation status ——
+    //
+    // Reports the current state of WAS activation. Since WAS runs
+    // asynchronously, this reflects a snapshot of the activation
+    // lifecycle at this point.
   private async doExecutionMonitoring(
     plan: ExecutionPlan,
     stages: Map<WorkflowStage, StageResult>,
@@ -402,10 +446,7 @@ export class ExecutivePlanningWorkflow {
         stages.set(WorkflowStage.EXECUTION_MONITORING, {
           stage: WorkflowStage.EXECUTION_MONITORING,
           ok: true,
-          output: {
-            status: "skipped",
-            reason: "WAS disabled — ENABLE_AUTONOMOUS_EXECUTION feature flag is off",
-          },
+          output: { status: "reserved" },
           duration: Date.now() - start,
         });
         return;
@@ -455,10 +496,7 @@ export class ExecutivePlanningWorkflow {
         stages.set(WorkflowStage.VERIFICATION, {
           stage: WorkflowStage.VERIFICATION,
           ok: true,
-          output: {
-            status: "skipped",
-            reason: "WAS disabled — ENABLE_AUTONOMOUS_EXECUTION feature flag is off",
-          },
+          output: { status: "reserved" },
           duration: Date.now() - start,
         });
         return;
@@ -569,6 +607,7 @@ export class ExecutivePlanningWorkflow {
     this.reporter.reset();
     this.knowledgeCapturer.reset();
     this.recoveryManager.reset();
+    this.workforceActivation.reset();
   }
 }
 

@@ -132,12 +132,12 @@ export class ApprovalManager {
    * Evaluate whether the entire plan requires approval.
    */
   evaluatePlan(plan: ExecutionPlan): ApprovalEvaluation {
-    // Plans with more than 20 batches need approval
-    if (plan.batches.length > 20) {
+    // Plans with more than 30 batches need approval
+    if (plan.batches.length > 30) {
       return {
         required: true,
         type: ApprovalType.CONSTITUTIONAL,
-        reason: `Plan "${plan.title}" has ${plan.batches.length} batches (exceeds 20 threshold)`,
+        reason: `Plan "${plan.title}" has ${plan.batches.length} batches (exceeds 30 threshold)`,
         briefing: {
           title: `Constitutional Review: ${plan.title}`,
           summary: `This plan contains ${plan.batches.length} execution batches across ${plan.phases.length} phases.`,

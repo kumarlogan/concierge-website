@@ -138,7 +138,7 @@ import { registerAppointmentRoutes, registerMessageRoutes } from "./routes/wave7
 registerAppointmentRoutes(router);
 registerMessageRoutes(router);
 
-// ── Workstream A: Timeline Routes ─────────────────────
+// ── Wave 3: Timeline Engine ──────────────────────────
 import { registerTimelineRoutes } from "./routes/timeline.js";
 registerTimelineRoutes(router);
 

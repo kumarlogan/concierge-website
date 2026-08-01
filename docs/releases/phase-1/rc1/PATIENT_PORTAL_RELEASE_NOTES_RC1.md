@@ -127,7 +127,7 @@ dynamic `import()` recommended for Phase 2.
 |------------|--------|------------|
 | Consent API not integrated | Consent page shows placeholder data | Backend planned for Phase 2 |
 | No real-time notifications | Notification preferences are static | Acceptable for limited pilot |
-| Timeline API not connected | Journey timeline is placeholder | Backend planned for Phase 2 |
+| Timeline API connected | Journey timeline is production-ready with full Timeline Engine | ✅ Wave 3 Complete |
 | No document storage | Documents page is placeholder | Backend planned for Phase 2 |
 | No automated tests | Manual QA only | Test framework to be added in Phase 2 |
 | Profile loading state missing | Password change section has no initial loading indicator | Low impact for limited pilot |

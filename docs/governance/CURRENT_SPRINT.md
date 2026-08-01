@@ -42,7 +42,7 @@ Activate the Patient Workspace — add public navigation entry point, ensure all
 | Item | Location | Status |
 |------|----------|--------|
 | "Patient Portal" header nav button | `Header.tsx` | ✅ |
-| Journey Timeline → Coming Soon state | `JourneyTimelinePage.tsx` | ✅ |
+| Journey Timeline → Production state | `JourneyTimelinePage.tsx` | ✅ |
 | Notification Center → Coming Soon state | `NotificationCenterPage.tsx` | ✅ |
 
 ### Bug Fixes

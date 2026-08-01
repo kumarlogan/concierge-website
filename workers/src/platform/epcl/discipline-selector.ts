@@ -114,8 +114,14 @@ export class DisciplineSelector {
     if (selections.length === 0) {
       const defaultDiscipline = this.guessDiscipline(epic);
       if (defaultDiscipline) {
+        matchedDisciplines.add(defaultDiscipline);
         selections.push(this.buildSelection(defaultDiscipline, epic, "default assignment based on epic content analysis"));
       }
+    }
+
+    // Track utilization for each matched discipline
+    for (const discipline of matchedDisciplines) {
+      this.updateUtilization(discipline);
     }
 
     return selections;
@@ -318,8 +324,23 @@ export class DisciplineSelector {
   }
 
   private updateUtilization(discipline: Discipline): void {
-    const activation = this.activations.get(discipline);
-    if (!activation) return;
+    let activation = this.activations.get(discipline);
+    if (!activation) {
+      // Create initial activation if none exists
+      activation = {
+        discipline,
+        active: true,
+        activatedAt: new Date().toISOString(),
+        scope: "epic",
+        capabilities: [],
+        batches: [],
+        completedTasks: 1,
+        failedTasks: 0,
+        utilization: 1.0, // 100% utilization for new activation
+      };
+      this.activations.set(discipline, activation);
+      return;
+    }
     const total = activation.completedTasks + activation.failedTasks;
     if (total === 0) {
       activation.utilization = 0;

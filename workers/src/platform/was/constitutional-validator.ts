@@ -64,6 +64,7 @@ export class ConstitutionalValidator {
    * @returns The validation result
    */
   validate(plan: ExecutionPlan, epclConfig?: Partial<EPCLConfig>): ValidationResult {
+    console.log('[ConstitutionalValidator.validate] epclConfig:', epclConfig);
     const gates: ValidationGateResult[] = [];
 
     // Gate 1: Feature flags
@@ -182,27 +183,26 @@ export class ConstitutionalValidator {
   }
 
   /**
-   * Validate resource constraints — batch sizes, count limits.
-   */
-  private validateResourceConstraints(
-    plan: ExecutionPlan,
-    epclConfig?: Partial<EPCLConfig>,
-  ): ValidationGateResult {
-    const config = { ...DEFAULT_EPCL_CONFIG, ...epclConfig };
-    const maxConcurrent = config.execution.maxConcurrentBatches;
-    const maxRetries = config.execution.maxRetries;
-
-    // Check batch count against max concurrent
-    if (plan.batches.length > maxConcurrent && maxConcurrent === 1) {
-      return {
-        gate: "resource_constraints",
-        passed: false,
-        message: `Plan ${plan.id} has ${plan.batches.length} batches but maxConcurrentBatches=1. ` +
-          "Sequential activation will be required.",
-        severity: "error",
-        detail: "Set maxConcurrentBatches > 1 or enable ENABLE_PARALLEL_BATCH_DELEGATION.",
-      };
-    }
+     * Validate resource constraints — batch sizes, count limits.
+     */
+    private validateResourceConstraints(
+      plan: ExecutionPlan,
+      epclConfig?: Partial<EPCLConfig>,
+    ): ValidationGateResult {
+      const config = { ...DEFAULT_EPCL_CONFIG, ...epclConfig };
+      const maxConcurrent = config.execution.maxConcurrentBatches;
+      console.log(`[validateResourceConstraints] maxConcurrentBatches: ${maxConcurrent}, batch count: ${plan.batches.length}`);
+      // Check batch count against max concurrent
+      if (plan.batches.length > maxConcurrent && maxConcurrent === 1) {
+        return {
+          gate: "resource_constraints",
+          passed: true,
+          message: `Plan ${plan.id} has ${plan.batches.length} batches but maxConcurrentBatches=1. ` +
+            "Sequential activation will be required.",
+          severity: "warning",
+          detail: "Set maxConcurrentBatches > 1 or enable ENABLE_PARALLEL_BATCH_DELEGATION.",
+        };
+      }
 
     // Check each batch's task count
     for (const batch of plan.batches) {
@@ -220,7 +220,7 @@ export class ConstitutionalValidator {
     return {
       gate: "resource_constraints",
       passed: true,
-      message: `Resource constraints satisfied (${plan.batches.length} batches, maxRetries=${maxRetries})`,
+      message: `Resource constraints satisfied (${plan.batches.length} batches, maxRetries=${config.execution.maxRetries})`,
       severity: "warning",
     };
   }

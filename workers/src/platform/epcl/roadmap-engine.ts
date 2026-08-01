@@ -175,6 +175,12 @@ export class RoadmapEngine {
       // Epic: ### Epic: Name
       const epicMatch = line.match(/^###\s+Epic:\s+(.+)$/i);
       if (epicMatch && currentPhase) {
+        // Push previous epic to phase before creating a new one
+        if (currentEpic) {
+          currentPhase.epics = currentPhase.epics || [];
+          currentPhase.epics.push(currentEpic as RoadmapEpic);
+        }
+
         if (currentMilestone) {
           this.finalizeMilestone(currentMilestone, milestoneOrder);
           currentEpic = currentEpic || {};

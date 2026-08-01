@@ -25,9 +25,7 @@
 | **Total** | **75** | **65** | **0** | **10** |
 
 *Test framework and ESLint not configured in Phase 1 scope.  
-†Documents/Timeline/Notifications are static placeholders; Coordination has incomplete loading state.  
-‡Breadcrumbs not implemented in Phase 1.  
-§Consent API and timeline API clients not yet built (backend dependencies).
+†Documents/Notifications are static placeholders; Coordination has incomplete loading state. Timeline is production-ready (Wave 3).
 
 ---
 
@@ -88,7 +86,7 @@
 - `/src/lib/patient-api.ts` — 290 lines (login, register, logout, me, token store)
 - `/src/lib/appointment-api.ts` — 80 lines
 - `/src/lib/message-api.ts` — 91 lines
-- `/src/lib/timeline-api.ts` — 75 lines
+- `/src/lib/timeline-api.ts` — 196 lines (FullTimeline consumer with legacy CarePlan compat)
 
 ---
 

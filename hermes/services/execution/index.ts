@@ -14,3 +14,11 @@ export * from "./policy-evaluator.js";
 export * from "./idempotency.js";
 export * from "./lease.js";
 export * from "./metrics.js";
+// EPIC-007 — Executive Execution Entry Point
+export * from "./context.js";
+export * from "./entry-point.js";
+export * from "./discipline-router-integration.js";
+export * from "./research-intelligence.js";
+export * from "./executive-trace.js";
+export * from "./execution-flag-lifecycle.js";
+export * from "./operator-experience.js";

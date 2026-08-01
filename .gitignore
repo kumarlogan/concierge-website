@@ -73,6 +73,8 @@ run_deploy.py
 wrangler.toml.bak
 
 # ── Generated / temporary files ──
+__pycache__/
+*.pyc
 *.log
 .tmp/
 tmp/

@@ -46,6 +46,7 @@ const navItems: NavItem[] = [
   { href: "/patient/consents", label: "Consents", icon: <ClipboardCheck className="h-4 w-4" /> },
   { href: "/patient/notifications", label: "Notifications", icon: <Bell className="h-4 w-4" /> },
   { href: "/patient/timeline", label: "Journey Timeline", icon: <Clock className="h-4 w-4" /> },
+  { href: "/patient/hub", label: "Journey Hub", icon: <Sparkles className="h-4 w-4" /> },
 ];
 
 export function PatientLayout({ children }: { children: ReactNode }) {

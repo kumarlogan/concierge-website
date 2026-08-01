@@ -16,18 +16,26 @@ import {
   Star,
   Sparkles,
   ArrowRight,
-  Gift,
+  Activity,
+  Heart,
+  Baby,
+  ClipboardCheck,
 } from "lucide-react";
-import { getMilestones, type Milestone } from "@/lib/timeline-api";
+import { getMilestones, type Milestone, type MilestoneType } from "@/lib/timeline-api";
+import { LucideIcon } from "lucide-react";
 import { Link } from "wouter";
 
-const milestoneTypeConfig = {
+const milestoneTypeConfig: Record<MilestoneType, { label: string; color: string; icon: LucideIcon }> = {
   registration: { label: "Registration", color: "bg-purple-100 text-purple-700", icon: Star },
   consultation: { label: "Consultation", color: "bg-blue-100 text-blue-700", icon: CheckCircle2 },
   treatment_plan: { label: "Treatment Plan", color: "bg-indigo-100 text-indigo-700", icon: Sparkles },
-  procedure: { label: "Procedure", color: "bg-amber-100 text-amber-700", icon: Gift },
+  ivf_cycle_start: { label: "IVF Cycle Start", color: "bg-cyan-100 text-cyan-700", icon: Activity },
+  retrieval: { label: "Egg Retrieval", color: "bg-rose-100 text-rose-700", icon: Heart },
+  transfer: { label: "Embryo Transfer", color: "bg-emerald-100 text-emerald-700", icon: Baby },
+  pregnancy_test: { label: "Pregnancy Test", color: "bg-pink-100 text-pink-700", icon: ClipboardCheck },
   follow_up: { label: "Follow-up", color: "bg-teal-100 text-teal-700", icon: ArrowRight },
   success: { label: "Success", color: "bg-green-100 text-green-700", icon: Trophy },
+  custom: { label: "Custom", color: "bg-gray-100 text-gray-700", icon: Star },
 } as const;
 
 function getConfetti(): { id: number; x: number; delay: number; color: string; shape: string }[] {

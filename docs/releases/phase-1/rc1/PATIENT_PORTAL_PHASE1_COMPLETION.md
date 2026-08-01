@@ -30,7 +30,7 @@ fertility journey through AG Synergy.
 | Security settings | ✅ Complete | Password change, session management, MFA toggle |
 | Consent management | ✅ Complete | UI present; backend API integration in Phase 2 |
 | Notification preferences | ✅ Complete | Static category display; backend in Phase 2 |
-| Journey timeline | ✅ Complete | Static placeholder; backend in Phase 2 |
+| Journey timeline | ✅ Complete | Production Timeline Engine (Wave 3) |
 
 ---
 
@@ -141,7 +141,7 @@ fertility journey through AG Synergy.
 |------|---------------|--------------|-----------|
 | Consent API integration | Technical Debt | Phase 2 | CP-101 |
 | Notification backend | Future Enhancement | Phase 2 | CP-102 |
-| Timeline API integration | Technical Debt | Phase 2 | CP-103 |
+| Timeline API integration | ✅ Resolved (Wave 3) | Timeline Engine connected and live |
 | Document storage & upload | Future Enhancement | Phase 2 | CP-104 |
 | Automated test suite | Technical Debt | Phase 2 | CP-105 |
 | ESLint configuration | Technical Debt | Phase 2 | CP-106 |

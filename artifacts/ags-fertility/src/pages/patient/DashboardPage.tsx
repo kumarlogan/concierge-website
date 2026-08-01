@@ -47,12 +47,12 @@ export default function DashboardPage() {
   const fetchTimelineData = async () => {
     try {
       const data = await getTimeline();
-      setProgressPercent(data.carePlan.progressPercent);
+      setProgressPercent(data.progress.overallPercent);
 
-      const currentPhase = data.carePlan.phases.find(
-        (p) => p.id === data.carePlan.currentPhase
+      const inProgressStage = data.stages.find(
+        (s) => s.status === "active"
       );
-      setCurrentPhaseName(currentPhase?.name ?? null);
+      setCurrentPhaseName(inProgressStage?.label ?? null);
 
       const next = data.milestones.find((m) => !m.achieved);
       setNextMilestone(
@@ -65,10 +65,9 @@ export default function DashboardPage() {
           : null
       );
 
-      const pendingTasks = data.tasks.filter(
-        (t) => t.status === "pending" || t.status === "in_progress"
+      setUpcomingTasksCount(
+        data.milestones.filter((m) => !m.achieved).length
       );
-      setUpcomingTasksCount(pendingTasks.length);
     } catch (err) {
       setTimelineError(err instanceof Error ? err.message : "Failed to load timeline");
     } finally {

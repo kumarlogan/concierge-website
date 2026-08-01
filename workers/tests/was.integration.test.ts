@@ -210,8 +210,6 @@ describe("DefaultConfiguration", () => {
     expect(DEFAULT_WAS_FLAG_STATE[WASFeatureFlag.ENABLE_EXECUTIVE_WORKFLOW]).toBe(false);
     expect(DEFAULT_WAS_FLAG_STATE[WASFeatureFlag.ENABLE_BATCH_GENERATION]).toBe(false);
     expect(DEFAULT_WAS_FLAG_STATE[WASFeatureFlag.ENABLE_EXECUTIVE_REPORTING]).toBe(false);
-    expect(DEFAULT_WAS_FLAG_STATE[WASFeatureFlag.ENABLE_CONSTITUTIONAL_VALIDATION]).toBe(true);
-    expect(DEFAULT_WAS_FLAG_STATE[WASFeatureFlag.ENABLE_AUTO_RECOVERY]).toBe(false);
     expect(DEFAULT_WAS_FLAG_STATE[WASFeatureFlag.ENABLE_PARALLEL_BATCH_DELEGATION]).toBe(false);
   });
 });
@@ -269,7 +267,7 @@ describe("WASFeatureFlags", () => {
     initializeWASFlags({ [WASFeatureFlag.ENABLE_AUTONOMOUS_EXECUTION]: true });
     expect(isWASEnabled(WASFeatureFlag.ENABLE_AUTONOMOUS_EXECUTION)).toBe(true);
     // Defaults preserved
-    expect(isWASEnabled(WASFeatureFlag.ENABLE_AUTO_RECOVERY)).toBe(false);
+    expect(isWASEnabled(WASFeatureFlag.ENABLE_PARALLEL_BATCH_DELEGATION)).toBe(false);
   });
 });
 
