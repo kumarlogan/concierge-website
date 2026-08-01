@@ -1,0 +1,34 @@
+{
+  "wave": 5,
+  "product": "AG Synergy",
+  "capability": "Document Centre",
+  "version": "AGS v1.5.0",
+  "commit": "d203e3f66cd4692676aeaf0335c11e1cc46aba51",
+  "tag": "v1.5.0-preview",
+  "timestamp": "2026-08-01T06:58:19Z",
+  "deployment": {
+    "environment": "preview",
+    "status": "Awaiting CI Execution",
+    "url": null,
+    "deployment_id": null,
+    "reason": "CLOUDFLARE_API_TOKEN not set (stale 53-char token returns 401)",
+    "workaround": "CI/CD pipeline (workflow_dispatch) handles auth via GitHub Secrets CLOUDFLARE_API_TOKEN",
+    "ci_command": "gh workflow run deploy.yml --ref main -f environment=preview -R",
+    "required_secrets": [
+      "CLOUDFLARE_API_TOKEN",
+      "CLOUDFLARE_ACCOUNT_ID",
+      "CLOUDFLARE_D1_DATABASE_ID"
+    ],
+    "classification": "Awaiting CI Execution"
+  },
+  "quality_gates": {
+    "typecheck": "PASS",
+    "build": "PASS",
+    "import_integrity": "PASS",
+    "unit_tests": "PASS",
+    "required_files": "PASS",
+    "no_placeholders": "PASS"
+  },
+  "foundation_changes": "NONE",
+  "governance_bypasses": 0
+}
