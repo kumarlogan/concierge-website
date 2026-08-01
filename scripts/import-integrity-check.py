@@ -128,7 +128,9 @@ def resolve_tsconfig_paths(
     # First try Wrangler aliases (more specific, no wildcard)
     # Wrangler alias targets are relative to the wrangler.jsonc directory
     wrangler_base = os.path.join(project_root, wrangler_config_dir) if wrangler_config_dir else project_root
-    for alias_pattern, alias_target in wrangler_aliases.items():
+    # Sort by pattern length (longest first) so exact matches like
+    # @hermes/identity/types.js are tried before wildcards like @hermes
+    for alias_pattern, alias_target in sorted(wrangler_aliases.items(), key=lambda x: -len(x[0])):
         # Replace .js with .ts or .tsx for resolution
         ts_variants = [alias_target]
         if alias_target.endswith(".js"):
