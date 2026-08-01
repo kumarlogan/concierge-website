@@ -61,12 +61,6 @@
           "database_id": "45f52102-74e1-4ba2-86ca-f4d5f88e16c4"
         }
       ],
-      "r2_buckets": [
-        {
-          "binding": "DOCUMENT_STORAGE",
-          "bucket_name": "agsynergy-documents-preview"
-        }
-      ],
       "observability": {
         "enabled": true
       },
