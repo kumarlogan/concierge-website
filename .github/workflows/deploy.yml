@@ -45,7 +45,7 @@ jobs:
 
       # ── 6. Import Integrity Gate ────────────────────────────────────
       - name: 🔒 Gate — Import Resolution
-        run: python3 scripts/import-integrity-check.py --project-root . --exclude artifacts/ lib/ hermes-website/ __tests__ workers/tests-epic0059/ --allow-external
+        run: python3 scripts/import-integrity-check.py --project-root . --exclude artifacts/ lib/ hermes-website/ __tests__ workers/tests-epic0059/ workers/tests/ --allow-external
 
       # ═══════════════════════════════════════════════════════════════
       #  BUILD

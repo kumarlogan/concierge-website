@@ -6,7 +6,7 @@
 // │ keywords and work descriptions.                                 │
 // └─────────────────────────────────────────────────────────────┘
 
-import { DisciplineRouter } from "../../planning/discipline-router.js";
+import { DisciplineRouter } from "../planning/discipline-router";
 import type { Discipline, DisciplineAssignment } from "../../contracts/planning.js";
 import type { ExecutionContext } from "./context.js";
 
