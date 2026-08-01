@@ -39,6 +39,7 @@ import ConsentManagementPage from '@/pages/patient/ConsentManagementPage';
 import NotificationCenterPage from '@/pages/patient/NotificationCenterPage';
 import JourneyTimelinePage from '@/pages/patient/JourneyTimelinePage';
 import HubPage from '@/pages/patient/HubPage';
+import DocumentsPage from '@/pages/patient/DocumentsPage';
 
 // Patient Workspace (Workstream A)
 import CarePlanPage from '@/pages/patient/CarePlanPage';
@@ -173,6 +174,16 @@ function Router() {
           <AuthGuard>
             <PatientLayout>
               <HubPage />
+            </PatientLayout>
+          </AuthGuard>
+        )}
+      </Route>
+
+      <Route path="/patient/documents">
+        {() => (
+          <AuthGuard>
+            <PatientLayout>
+              <DocumentsPage />
             </PatientLayout>
           </AuthGuard>
         )}
