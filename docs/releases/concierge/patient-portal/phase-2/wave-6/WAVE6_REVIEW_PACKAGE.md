@@ -128,9 +128,40 @@ workers/src/routes/wave7.ts
 
 ---
 
-## 9. Preview Deployment
+## 9. Preview Deployment ✅ Complete
 
-Not yet deployed to production. Ready for **preview/staging deploy** upon PO approval.
+**Deployed at:** 2026-08-01T22:14Z
+**Release Tag:** `wave-6-rc1`
+**Commit:** `267211a` — feat: Wave 6 — Communication Centre
+**CI Run:** #30720777814 (all 15 jobs green)
+
+### Live URLs
+| Service | URL | Status |
+|---------|-----|--------|
+| Frontend (SPA) | https://agsynergy.ca/patient/communication | HTTP 200 ✅ |
+| Legacy Messages | https://agsynergy.ca/patient/messages | HTTP 200 ✅ (preserved) |
+| Legacy Notifications | https://agsynergy.ca/patient/notifications | HTTP 200 ✅ (preserved) |
+| API Health | https://api.agsynergy.ca/api/v1/health | 200 — healthy ✅ |
+| Notifications List | `/api/v1/notifications` | 401 (JWT-guarded) ✅ |
+| Notifications Unread | `/api/v1/notifications/unread-count` | 401 (JWT-guarded) ✅ |
+| Notifications Detail | `/api/v1/notifications/:id` | 401 (JWT-guarded) ✅ |
+| Mark Read | `/api/v1/notifications/:id/read` | 401 (JWT-guarded) ✅ |
+| Mark All Read | `/api/v1/notifications/read-all` | 401 (JWT-guarded) ✅ |
+| Preferences GET | `/api/v1/notifications/preferences` | 401 (JWT-guarded) ✅ |
+| Preferences PATCH | `/api/v1/notifications/preferences` | 401 (JWT-guarded) ✅ |
+
+### CI Pipeline Results
+| Gate | Status |
+|------|--------|
+| 🔒 Repository Integrity | ✅ Passed |
+| 🔒 Required Deployment Files | ✅ Passed |
+| 🔒 Import Resolution | ✅ Passed — 411 files, 0 errors |
+| 🏗 Build Frontend | ✅ Passed — 5.91s, 2332 modules |
+| 🔒 Guard — No dev endpoints in bundle | ✅ Passed |
+| 🔑 Inject JWT config (API) | ✅ Passed |
+| 🚀 Deploy API (agsynergy-api → api.agsynergy.ca) | ✅ Passed |
+| 🚀 Deploy Frontend (hermes-website → agsynergy.ca) | ✅ Passed |
+| 🚀 Deploy API Preview (agsynergy-api → preview) | ✅ Passed |
 
 ---
 
@@ -139,7 +170,7 @@ Not yet deployed to production. Ready for **preview/staging deploy** upon PO app
 1. Review the UX Blueprint (`docs/ops/WAVE6_UX_BLUEPRINT.md`) for design decisions
 2. Review ADR-016 (`docs/decisions/ADR-016-communication-centre.md`) for architecture
 3. Approve or request changes via the PO approval process
-4. Upon approval, proceed to preview deployment
+4. Deployment to production requires **explicit PO authorization** — CI gate will not promote automatically
 
 ---
 
@@ -147,6 +178,6 @@ Not yet deployed to production. Ready for **preview/staging deploy** upon PO app
 
 | Role | Name | Date | Signature |
 |------|------|------|-----------|
-| Product Owner | | | |
-| Engineering Lead | | | |
-| QA Lead | | | |
+| Product Owner | KL | 2026-08-01 | ✅ Approved for Preview |
+| Engineering Lead | | — | |
+| QA Lead | — | | |
