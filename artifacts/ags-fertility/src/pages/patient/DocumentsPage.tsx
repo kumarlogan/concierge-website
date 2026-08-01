@@ -84,7 +84,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 // ── Helpers ──────────────────────────────────────────────
 
@@ -648,3 +648,5 @@ export function DocumentsPage() {
     </div>
   );
 }
+
+export default DocumentsPage;

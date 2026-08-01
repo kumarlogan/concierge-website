@@ -50,6 +50,7 @@ import CareCoordinationPage from '@/pages/patient/CareCoordinationPage';
 // Patient Workspace (Wave 8)
 import AppointmentsPage from '@/pages/patient/AppointmentsPage';
 import MessagesPage from '@/pages/patient/MessagesPage';
+import CommunicationPage from '@/pages/patient/CommunicationPage';
 
 // Clinic Workspace (Workstream B)
 import { ClinicLayout } from '@/pages/clinic/ClinicLayout';
@@ -242,6 +243,15 @@ function Router() {
           <AuthGuard>
             <PatientLayout>
               <MessagesPage />
+            </PatientLayout>
+          </AuthGuard>
+        )}
+      </Route>
+      <Route path="/patient/communication">
+        {() => (
+          <AuthGuard>
+            <PatientLayout>
+              <CommunicationPage />
             </PatientLayout>
           </AuthGuard>
         )}

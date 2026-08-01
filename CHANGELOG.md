@@ -6,7 +6,75 @@
 
 ---
 
-## [1.1.0] — 2026-07-30 — Patient Zero Experience (AGS-PZE-001)
+## [1.2.0] — 2026-08-01 — Wave 6: Communication Centre
+
+**Date:** 2026-08-01
+**Status:** ✅ Ready for Preview Deployment
+**Wave:** 6 — Communication Centre
+**Product:** AG Synergy v1.5.0 RC
+**Epic:** EPIC-2.3
+
+> Unified inbox combining patient messages, notifications, and clinic announcements
+> into a single Communication Centre. Notification preferences with per-type granularity,
+> daily caps, quiet hours, and pause-non-critical mode.
+
+### Added
+
+#### Backend — Notification API
+- **`workers/src/platform/notifications/notification-types.ts`** — 7 notification types, priority levels, channel definitions, typed interfaces, default preference presets.
+- **`workers/src/platform/notifications/in-memory-notification-store.ts`** — In-memory store with get/list/markRead/markAllRead/unreadCount and seedable sample data for demo.
+- **`workers/src/routes/wave7.ts`** — 7 new notification routes with JWT auth:
+  - `GET /api/v1/notifications` — list notifications (with ?unreadOnly, ?type, ?limit, ?offset)
+  - `GET /api/v1/notifications/:id` — single notification detail
+  - `PATCH /api/v1/notifications/:id/read` — mark one as read
+  - `PATCH /api/v1/notifications/read-all` — mark all as read
+  - `GET /api/v1/notifications/preferences` — get notification preferences
+  - `PATCH /api/v1/notifications/preferences` — update notification preferences
+  - `GET /api/v1/notifications/unread-count` — get unread notification count
+- **`workers/src/index.ts`** — Registered `registerNotificationRoutes(router)`.
+
+#### Frontend — Communication Centre UI
+- **`artifacts/ags-fertility/src/pages/patient/CommunicationPage.tsx`** — New unified inbox page with:
+  - 4 tabs: Inbox (merged messages + notifications), Messages, Alerts, Announcements
+  - Two-panel layout: thread/notification list + conversation/detail view
+  - Search bar with live filtering across messages and notifications
+  - Message sending with status indicators
+  - Notification mark-all-read with badge count
+  - 30-second unread count polling
+  - Empty, loading, and error states for each tab
+- **`artifacts/ags-fertility/src/components/notifications/NotificationPreferencesDialog.tsx`** — Modal dialog with:
+  - Channel toggles (in-app, SMS, email, push)
+  - Daily notification cap slider (1–20)
+  - Quiet hours with time pickers
+  - Pause non-critical toggle (for sensitive treatment periods)
+  - Per-type enable/disable with channel badges
+- **`artifacts/ags-fertility/src/components/notifications/NotifIcon.tsx`** — Icon resolver mapping notification types to contextual Lucide icons with priority-aware colors.
+- **`artifacts/ags-fertility/src/lib/message-api.ts`** — Added notification API client methods: `getNotifications`, `getUnreadCount`, `markNotificationRead`, `markAllNotificationsRead`, `getNotificationPreferences`, `updateNotificationPreferences`. Added `Notification` and `NotificationPreferences` TypeScript interfaces.
+
+#### Routing Updates
+- **`artifacts/ags-fertility/src/App.tsx`** — Added `/patient/communication` route with AuthGuard + PatientLayout.
+- **`artifacts/ags-fertility/src/components/patient/PatientLayout.tsx`** — Replaced "Messages" + "Notifications" nav items with single "Communication" link. Removes nav clutter while old `/patient/messages` and `/patient/notifications` routes remain functional for backward compatibility.
+
+#### Documentation & Governance
+- **`docs/decisions/ADR-016-communication-centre.md`** — Architecture Decision Record covering: no-new-platform-capability strategy, API surface, frontend architecture, notification preference model, regulatory compliance (PIPEDA/PHIPA), deferred items.
+- **`docs/ops/WAVE6_RESEARCH_REPORT.md`** — Research intelligence: IVF communication journeys, Canadian privacy law (PIPEDA Tier 3), notification fatigue thresholds, secure messaging best practices, clinic workflow analysis, competitive landscape (MyChart, NHS App, Cozeva).
+- **`docs/ops/WAVE6_UX_BLUEPRINT.md`** — UX specification: page structure, tab system, thread/notification list items, conversation view, notification detail, preference dialog, all states (loading/empty/error), search & filters, accessibility, color tokens.
+
+### Changed
+- **`artifacts/ags-fertility/src/components/patient/PatientLayout.tsx`** — Nav items consolidated: "Communication" replaces separate "Messages" and "Notifications" entries.
+- **`artifacts/ags-fertility/src/App.tsx`** — New route added alongside retained legacy routes.
+
+### Verified
+- ✅ Backend TypeScript compilation (workers/)
+- ✅ Frontend build (artifacts/ags-fertility/)
+
+### Notes
+- Backend notification uses in-memory store (dev/testing). Future wave integrates with D1 for persistence.
+- Push/SMS/Email delivery is architecturally designed (channel hooks in preferences model) but delivery infrastructure deferred to Wave 7.
+- Sample notification data seeded on first request for demo purposes.
+- Old `/patient/messages` and `/patient/notifications` routes remain functional for backward compatibility.
+
+---
 
 **Date:** 2026-07-30
 **Status:** ✅ PRODUCTION LIVE

@@ -18,6 +18,8 @@ import { Decision } from "../platform/trust/types.js";
 import type { CreateAppointmentRequest, UpdateAppointmentRequest } from "../platform/appointments/appointment-types.js";
 import type { CreateMessageRequest } from "../platform/messaging/message-types.js";
 import { withJwtAuth, getIdentityId } from "../middleware/jwt-auth.js";
+import { InMemoryNotificationStore } from "../platform/notifications/in-memory-notification-store.js";
+import { notificationStore } from "../platform/notifications/in-memory-notification-store.js";
 
 // ── Shared engine instances (per-request singletons via env) ──
 // In production these would be D1-backed; in-memory for integration testing.
@@ -325,5 +327,98 @@ async function _sendMessage(
     return json({ message }, 201);
   } catch (err) {
     return error(err instanceof Error ? err.message : "Failed to send message", 400);
+  }
+}
+
+// ── Notification Routes ──────────────────────────────────────
+
+export function registerNotificationRoutes(router: {
+  get: (path: string, handler: RouteHandler) => void;
+  patch: (path: string, handler: RouteHandler) => void;
+}): void {
+  router.get("/api/v1/notifications", withJwtAuth(_getNotifications as RouteHandler));
+  router.get("/api/v1/notifications/:id", withJwtAuth(_getNotificationById as RouteHandler));
+  router.patch("/api/v1/notifications/:id/read", withJwtAuth(_markNotificationRead as RouteHandler));
+  router.patch("/api/v1/notifications/read-all", withJwtAuth(_markAllNotificationsRead as RouteHandler));
+  router.get("/api/v1/notifications/preferences", withJwtAuth(_getNotificationPreferences as RouteHandler));
+  router.patch("/api/v1/notifications/preferences", withJwtAuth(_updateNotificationPreferences as RouteHandler));
+  router.get("/api/v1/notifications/unread-count", withJwtAuth(_getUnreadCount as RouteHandler));
+}
+
+// ── Notification Handler Implementations ─────────────────────
+
+function getNotificationStore(_env: Env): InMemoryNotificationStore {
+  return notificationStore;
+}
+
+async function _getNotifications(request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
+  const store = getNotificationStore(env);
+  const identityId = getIdentityId(request);
+  const url = new URL(request.url);
+  
+  const unreadOnly = url.searchParams.get("unreadOnly") === "true";
+  const type = url.searchParams.get("type") || undefined;
+  const limit = url.searchParams.get("limit");
+  const offset = url.searchParams.get("offset");
+
+  // Seed sample data if none exist
+  const existing = await store.getNotifications(identityId, { limit: 1 });
+  if (existing.length === 0) {
+    await store.seedSampleNotifications(identityId);
+  }
+
+  const notifications = await store.getNotifications(identityId, {
+    unreadOnly,
+    type,
+    limit: limit ? parseInt(limit, 10) : 50,
+    offset: offset ? parseInt(offset, 10) : 0,
+  });
+  return json({ notifications });
+}
+
+async function _getNotificationById(_request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const store = getNotificationStore(env);
+  const notification = await store.getNotification(params.id);
+  if (!notification) return error("Notification not found", 404);
+  return json({ notification });
+}
+
+async function _markNotificationRead(_request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const store = getNotificationStore(env);
+  await store.markRead(params.id);
+  return json({ success: true });
+}
+
+async function _markAllNotificationsRead(request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
+  const store = getNotificationStore(env);
+  const identityId = getIdentityId(request);
+  const count = await store.getUnreadCount(identityId);
+  await store.markAllRead(identityId);
+  return json({ success: true, markedRead: count });
+}
+
+async function _getUnreadCount(request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
+  const store = getNotificationStore(env);
+  const identityId = getIdentityId(request);
+  const count = await store.getUnreadCount(identityId);
+  return json({ unreadCount: count });
+}
+
+async function _getNotificationPreferences(request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
+  const store = getNotificationStore(env);
+  const identityId = getIdentityId(request);
+  const preferences = await store.getPreferences(identityId);
+  return json({ preferences });
+}
+
+async function _updateNotificationPreferences(request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
+  const store = getNotificationStore(env);
+  const identityId = getIdentityId(request);
+  try {
+    const body = await request.json();
+    const preferences = await store.updatePreferences(identityId, body as Partial<any>);
+    return json({ preferences });
+  } catch (err) {
+    return error(err instanceof Error ? err.message : "Failed to update preferences", 400);
   }
 }

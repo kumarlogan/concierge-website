@@ -40,11 +40,10 @@ const navItems: NavItem[] = [
   { href: "/patient/milestones", label: "Milestones", icon: <Trophy className="h-4 w-4" /> },
   { href: "/patient/coordination", label: "Coordination", icon: <Users className="h-4 w-4" /> },
   { href: "/patient/appointments", label: "Appointments", icon: <Calendar className="h-4 w-4" /> },
-  { href: "/patient/messages", label: "Messages", icon: <MessageSquare className="h-4 w-4" /> },
+  { href: "/patient/communication", label: "Communication", icon: <MessageSquare className="h-4 w-4" /> },
   { href: "/patient/profile", label: "Profile", icon: <User className="h-4 w-4" /> },
   { href: "/patient/security", label: "Security", icon: <Shield className="h-4 w-4" /> },
   { href: "/patient/consents", label: "Consents", icon: <ClipboardCheck className="h-4 w-4" /> },
-  { href: "/patient/notifications", label: "Notifications", icon: <Bell className="h-4 w-4" /> },
   { href: "/patient/timeline", label: "Journey Timeline", icon: <Clock className="h-4 w-4" /> },
   { href: "/patient/hub", label: "Journey Hub", icon: <Sparkles className="h-4 w-4" /> },
 ];

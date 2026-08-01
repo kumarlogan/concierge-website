@@ -1,7 +1,9 @@
 // Document Centre API client.
 // Communicates with the existing document upload/download APIs.
 
-import { queryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 const API_BASE = "/api/v1";
 
