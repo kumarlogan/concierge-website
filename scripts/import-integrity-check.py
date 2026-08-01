@@ -115,6 +115,7 @@ def resolve_tsconfig_paths(
     tsconfig_paths: Dict[str, List[str]],
     tsconfig_base_url: str,
     wrangler_aliases: Dict[str, str],
+    wrangler_config_dir: str = "",
 ) -> Optional[str]:
     """
     Resolve an import using TypeScript path aliases and Wrangler aliases.
@@ -125,6 +126,8 @@ def resolve_tsconfig_paths(
       - Cloudflare .js -> .ts extension replacement
     """
     # First try Wrangler aliases (more specific, no wildcard)
+    # Wrangler alias targets are relative to the wrangler.jsonc directory
+    wrangler_base = os.path.join(project_root, wrangler_config_dir) if wrangler_config_dir else project_root
     for alias_pattern, alias_target in wrangler_aliases.items():
         # Replace .js with .ts or .tsx for resolution
         ts_variants = [alias_target]
@@ -134,7 +137,7 @@ def resolve_tsconfig_paths(
         
         # Check exact match
         for variant in ts_variants:
-            resolved = os.path.normpath(os.path.join(project_root, variant))
+            resolved = os.path.normpath(os.path.join(wrangler_base, variant))
             if os.path.exists(resolved):
                 return resolved
 
@@ -604,6 +607,7 @@ def main():
                         project_root, import_path, source_file,
                         tsconfig_paths, tsconfig_base_url,
                         wrangler_aliases,
+                        wrangler_config_dir="workers",
                     )
                     if not resolved_alias:
                         # Try Vite/combined path aliases (prefix-based)
