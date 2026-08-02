@@ -6,10 +6,10 @@
 
 ---
 
-## [1.2.0] — 2026-08-01 — Wave 6: Communication Centre
+## [1.6.0] — 2026-08-01 — Wave 6: Communication Centre
 
 **Date:** 2026-08-01
-**Status:** ✅ Ready for Preview Deployment
+**Status:** ✅ Released to Production (v1.6.0)
 **Wave:** 6 — Communication Centre
 **Product:** AG Synergy v1.5.0 RC
 **Epic:** EPIC-2.3
