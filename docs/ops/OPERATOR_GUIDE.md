@@ -34,8 +34,9 @@ Operator Guide provides operational procedures for the Hermes Release Management
 | 1 | Verify git state | `git status --porcelain` | Empty |
 | 2 | Verify branch | `git branch --show-current` | `main` |
 | 3 | Verify no open PRs against main | GitHub PRs page | No open PRs |
-| 4 | Verify JWT secrets | GitHub Settings → Secrets | All 4 JWT secrets present |
-| 5 | Verify VITE_API_BASE | GitHub Settings → Secrets | Points to `https://api.agsynergy.ca` |
+|| 4 | Verify JWT secrets | GitHub Settings → Secrets | All 4 JWT secrets present |
+|| 5 | Verify TURNSTILE_SECRET_KEY | GitHub Settings → Secrets | TURNSTILE_SECRET_KEY present |
+|| 6 | Verify VITE_API_BASE | GitHub Settings → Secrets | Points to `https://api.agsynergy.ca` |
 | 6 | Verify Cloudflare token | Check token age | < 30 days old |
 | 7 | Verify CHANGELOG.md | Read latest version entry | Version matches planned release |
 | 8 | Verify PO approval | ApprovalRef | Approved |
@@ -185,6 +186,7 @@ curl https://api.agsynergy.ca
 | Update CHANGELOG.md | Per release | Release Notes Agent |
 | Rotate Cloudflare API token | Every 30 days | Operator |
 | Rotate JWT secrets | Every 90 days | Operator |
+| Rotate TURNSTILE_SECRET_KEY | Every 90 days | Operator |
 | Review Release Backlog | Monthly | PO |
 | Update Execution Guide | Per process change | Operator |
 | Update Operator Guide | Per process change | Operator |
@@ -214,6 +216,7 @@ curl https://api.agsynergy.ca
 | JWT_PRIVATE_KEY | 90 days | GitHub Secrets |
 | JWT_PUBLIC_KEY | 90 days | GitHub Secrets |
 | JWT_KID | 90 days | GitHub Secrets |
+| TURNSTILE_SECRET_KEY | 90 days | GitHub Secrets |
 | VITE_API_BASE | As needed | GitHub Secrets |
 
 ---

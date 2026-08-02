@@ -15,6 +15,9 @@ export interface Env {
   // D1 database binding — EPIC-001-005
   DB: D1Database;
 
+  // D1 notifications binding — Wave 7: Notification & Engagement Platform
+  NOTIFICATIONS: D1Database;
+
   // R2 storage binding — Wave 6: Secure Document Upload
   DOCUMENT_STORAGE: R2Bucket;
 

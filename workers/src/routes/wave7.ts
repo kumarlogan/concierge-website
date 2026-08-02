@@ -20,6 +20,12 @@ import type { CreateMessageRequest } from "../platform/messaging/message-types.j
 import { withJwtAuth, getIdentityId } from "../middleware/jwt-auth.js";
 import { InMemoryNotificationStore } from "../platform/notifications/in-memory-notification-store.js";
 import { notificationStore } from "../platform/notifications/in-memory-notification-store.js";
+import { D1NotificationStore } from "../platform/notifications/d1-notification-store.js";
+import { DeliveryEngine } from "../platform/notifications/delivery-engine.js";
+import { EscalationEngine } from "../platform/notifications/escalation-engine.js";
+import { NotificationAudit } from "../platform/notifications/notification-audit.js";
+import { NotificationAnalytics } from "../platform/notifications/analytics.js";
+import { DeliveryStatus } from "../platform/notifications/delivery-types.js";
 
 // ── Shared engine instances (per-request singletons via env) ──
 // In production these would be D1-backed; in-memory for integration testing.
@@ -351,6 +357,12 @@ function getNotificationStore(_env: Env): InMemoryNotificationStore {
   return notificationStore;
 }
 
+function getD1NotificationStore(env: Env): D1NotificationStore | null {
+  const db = env.NOTIFICATIONS as D1Database | undefined;
+  if (!db) return null;
+  return new D1NotificationStore(db);
+}
+
 async function _getNotifications(request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
   const store = getNotificationStore(env);
   const identityId = getIdentityId(request);
@@ -421,4 +433,54 @@ async function _updateNotificationPreferences(request: Request, env: Env, _param
   } catch (err) {
     return error(err instanceof Error ? err.message : "Failed to update preferences", 400);
   }
+}
+
+// ── Wave 7: Notification Delivery & Engagement Routes ──
+
+export function registerNotificationDeliveryRoutes(router: {
+  get: (path: string, handler: RouteHandler) => void;
+  post: (path: string, handler: RouteHandler) => void;
+}): void {
+  router.get("/api/v1/notifications/stream", withJwtAuth(_getNotificationStream as RouteHandler));
+  router.get("/api/v1/notifications/delivery-status/:id", withJwtAuth(_getDeliveryStatus as RouteHandler));
+  router.get("/api/v1/notifications/analytics", withJwtAuth(_getNotificationAnalytics as RouteHandler));
+  router.get("/api/v1/notifications/escalation/status", withJwtAuth(_getEscalationStatus as RouteHandler));
+}
+
+async function _getNotificationStream(_request: Request, _env: Env, _params: Record<string, string>): Promise<Response> {
+  // SSE endpoint for real-time notification updates
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode("event: connected\ndata: {\"status\":\"connected\"}\n\n"));
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
+
+async function _getDeliveryStatus(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const deliveryEngine = new DeliveryEngine(env);
+  const deliveries = await deliveryEngine.getDeliveryStatus(params.id);
+  return json({ deliveries });
+}
+
+async function _getNotificationAnalytics(_request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
+  const analytics = new NotificationAnalytics(env);
+  const data = await analytics.getAnalytics();
+  return json({ analytics: data });
+}
+
+async function _getEscalationStatus(_request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
+  const escalationEngine = new EscalationEngine(env);
+  const count = await escalationEngine.checkEscalations();
+  return json({ escalatedCount: count });
 }

@@ -134,10 +134,11 @@ import { registerDocumentRoutes } from "./routes/documents.js";
 registerDocumentRoutes(router);
 
 // ── Wave 7: Appointment Management & Messaging ────────
-import { registerAppointmentRoutes, registerMessageRoutes, registerNotificationRoutes } from "./routes/wave7.js";
+import { registerAppointmentRoutes, registerMessageRoutes, registerNotificationRoutes, registerNotificationDeliveryRoutes } from "./routes/wave7.js";
 registerAppointmentRoutes(router);
 registerMessageRoutes(router);
 registerNotificationRoutes(router);
+registerNotificationDeliveryRoutes(router);
 
 // ── Wave 3: Timeline Engine ──────────────────────────
 import { registerTimelineRoutes } from "./routes/timeline.js";
