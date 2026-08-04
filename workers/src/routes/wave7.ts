@@ -18,7 +18,15 @@ import { MessageType } from "../platform/messaging/message-types.js";
 import { Decision } from "../platform/trust/types.js";
 import type { CreateAppointmentRequest, UpdateAppointmentRequest } from "../platform/appointments/appointment-types.js";
 import type { CreateMessageRequest } from "../platform/messaging/message-types.js";
-import { withJwtAuth, getIdentityId } from "../middleware/jwt-auth.js";
+import { getIdentityId } from "../middleware/jwt-auth.js";
+import {
+  protectedRoute,
+  staffRoute,
+  identityOf,
+  assertOwnership,
+  assertParticipant,
+  resolveScopedIdentityId,
+} from "../middleware/authz.js";
 import { InMemoryNotificationStore } from "../platform/notifications/in-memory-notification-store.js";
 import { notificationStore } from "../platform/notifications/in-memory-notification-store.js";
 import { D1NotificationStore } from "../platform/notifications/d1-notification-store.js";
@@ -141,12 +149,12 @@ export function registerAppointmentRoutes(router: {
   patch: (path: string, handler: RouteHandler) => void;
   delete: (path: string, handler: RouteHandler) => void;
 }): void {
-  router.get("/api/v1/appointments", withJwtAuth(_getAppointments as RouteHandler));
-  router.get("/api/v1/appointments/slots/available", withJwtAuth(_checkAvailability as RouteHandler));
-  router.get("/api/v1/appointments/:id", withJwtAuth(_getAppointmentById as RouteHandler));
-  router.post("/api/v1/appointments", withJwtAuth(_createAppointment as RouteHandler));
-  router.patch("/api/v1/appointments/:id", withJwtAuth(_updateAppointment as RouteHandler));
-  router.delete("/api/v1/appointments/:id", withJwtAuth(_cancelAppointment as RouteHandler));
+  router.get("/api/v1/appointments", protectedRoute(_getAppointments as RouteHandler));
+  router.get("/api/v1/appointments/slots/available", protectedRoute(_checkAvailability as RouteHandler));
+  router.get("/api/v1/appointments/:id", protectedRoute(_getAppointmentById as RouteHandler));
+  router.post("/api/v1/appointments", protectedRoute(_createAppointment as RouteHandler));
+  router.patch("/api/v1/appointments/:id", protectedRoute(_updateAppointment as RouteHandler));
+  router.delete("/api/v1/appointments/:id", protectedRoute(_cancelAppointment as RouteHandler));
 }
 
 // ── Messaging Routes ──────────────────────────────────────────
@@ -155,9 +163,9 @@ export function registerMessageRoutes(router: {
   get: (path: string, handler: RouteHandler) => void;
   post: (path: string, handler: RouteHandler) => void;
 }): void {
-  router.get("/api/v1/messages/threads", withJwtAuth(_getThreads as RouteHandler));
-  router.get("/api/v1/messages/threads/:threadId", withJwtAuth(_getThreadMessages as RouteHandler));
-  router.post("/api/v1/messages", withJwtAuth(_sendMessage as RouteHandler));
+  router.get("/api/v1/messages/threads", protectedRoute(_getThreads as RouteHandler));
+  router.get("/api/v1/messages/threads/:threadId", protectedRoute(_getThreadMessages as RouteHandler));
+  router.post("/api/v1/messages", protectedRoute(_sendMessage as RouteHandler));
 }
 
 // ── Appointment Handler Implementations ──────────────────────
@@ -168,12 +176,12 @@ async function _getAppointments(
   _params: Record<string, string>,
 ): Promise<Response> {
   const engine = getAppointmentEngine(env);
-  const identityId = getIdentityId(request);
   const url = new URL(request.url);
 
   const filters: AppointmentFilters = {};
-  // Use authenticated identity as patientId (cryptographic binding)
-  const patientId = url.searchParams.get("patientId") || identityId;
+  // A caller-supplied patientId is honoured only for clinic staff; a patient
+  // asking for someone else's appointments is denied, not silently rescoped.
+  const patientId = resolveScopedIdentityId(identityOf(request), url.searchParams.get("patientId"));
   const providerId = url.searchParams.get("providerId");
   const status = url.searchParams.get("status");
   const type = url.searchParams.get("type");
@@ -192,7 +200,7 @@ async function _getAppointments(
 }
 
 async function _getAppointmentById(
-  _request: Request,
+  request: Request,
   env: Env,
   params: Record<string, string>,
 ): Promise<Response> {
@@ -201,6 +209,7 @@ async function _getAppointmentById(
   if (!appointment) {
     return error("Appointment not found", 404);
   }
+  assertOwnership(identityOf(request), appointment.patientId, "appointment");
   return json({ appointment });
 }
 
@@ -237,6 +246,11 @@ async function _updateAppointment(
 ): Promise<Response> {
   const engine = getAppointmentEngine(env);
   try {
+    const existing = await engine.get(params.id);
+    if (!existing) {
+      return error("Appointment not found", 404);
+    }
+    assertOwnership(identityOf(request), existing.patientId, "appointment");
     const body = await request.json();
     const appointment = await engine.update(params.id, body as UpdateAppointmentRequest);
     return json({ appointment });
@@ -295,10 +309,9 @@ async function _getThreads(
   _params: Record<string, string>,
 ): Promise<Response> {
   const engine = getMessageEngine(env);
-  const identityId = getIdentityId(request);
   const url = new URL(request.url);
-  // Default to authenticated identity — no anonymous access
-  const participantId = url.searchParams.get("participantId") || identityId;
+  // A caller-supplied participantId is honoured only for clinic staff.
+  const participantId = resolveScopedIdentityId(identityOf(request), url.searchParams.get("participantId"));
   const limit = url.searchParams.get("limit");
   const offset = url.searchParams.get("offset");
 
@@ -311,12 +324,17 @@ async function _getThreads(
 }
 
 async function _getThreadMessages(
-  _request: Request,
+  request: Request,
   env: Env,
   params: Record<string, string>,
 ): Promise<Response> {
   const engine = getMessageEngine(env);
   const messages = await engine.listThread(params.threadId);
+  // Membership is derived from the thread contents: the caller must be a
+  // sender or recipient of at least one message. An empty/unknown thread is
+  // denied rather than returned, so thread ids cannot be probed.
+  const participants = messages.flatMap((m) => [m.senderId, m.recipientId]);
+  assertParticipant(identityOf(request), participants, "message thread");
   return json({ messages });
 }
 
@@ -352,13 +370,13 @@ export function registerNotificationRoutes(router: {
   get: (path: string, handler: RouteHandler) => void;
   patch: (path: string, handler: RouteHandler) => void;
 }): void {
-  router.get("/api/v1/notifications", withJwtAuth(_getNotifications as RouteHandler));
-  router.get("/api/v1/notifications/:id", withJwtAuth(_getNotificationById as RouteHandler));
-  router.patch("/api/v1/notifications/:id/read", withJwtAuth(_markNotificationRead as RouteHandler));
-  router.patch("/api/v1/notifications/read-all", withJwtAuth(_markAllNotificationsRead as RouteHandler));
-  router.get("/api/v1/notifications/preferences", withJwtAuth(_getNotificationPreferences as RouteHandler));
-  router.patch("/api/v1/notifications/preferences", withJwtAuth(_updateNotificationPreferences as RouteHandler));
-  router.get("/api/v1/notifications/unread-count", withJwtAuth(_getUnreadCount as RouteHandler));
+  router.get("/api/v1/notifications", protectedRoute(_getNotifications as RouteHandler));
+  router.get("/api/v1/notifications/:id", protectedRoute(_getNotificationById as RouteHandler));
+  router.patch("/api/v1/notifications/:id/read", protectedRoute(_markNotificationRead as RouteHandler));
+  router.patch("/api/v1/notifications/read-all", protectedRoute(_markAllNotificationsRead as RouteHandler));
+  router.get("/api/v1/notifications/preferences", protectedRoute(_getNotificationPreferences as RouteHandler));
+  router.patch("/api/v1/notifications/preferences", protectedRoute(_updateNotificationPreferences as RouteHandler));
+  router.get("/api/v1/notifications/unread-count", protectedRoute(_getUnreadCount as RouteHandler));
 }
 
 // ── Notification Handler Implementations ─────────────────────
@@ -398,15 +416,19 @@ async function _getNotifications(request: Request, env: Env, _params: Record<str
   return json({ notifications });
 }
 
-async function _getNotificationById(_request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+async function _getNotificationById(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
   const store = getNotificationStore(env);
   const notification = await store.getNotification(params.id);
   if (!notification) return error("Notification not found", 404);
+  assertOwnership(identityOf(request), notification.identityId, "notification");
   return json({ notification });
 }
 
-async function _markNotificationRead(_request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+async function _markNotificationRead(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
   const store = getNotificationStore(env);
+  const notification = await store.getNotification(params.id);
+  if (!notification) return error("Notification not found", 404);
+  assertOwnership(identityOf(request), notification.identityId, "notification");
   await store.markRead(params.id);
   return json({ success: true });
 }
@@ -451,10 +473,10 @@ export function registerNotificationDeliveryRoutes(router: {
   get: (path: string, handler: RouteHandler) => void;
   post: (path: string, handler: RouteHandler) => void;
 }): void {
-  router.get("/api/v1/notifications/stream", withJwtAuth(_getNotificationStream as RouteHandler));
-  router.get("/api/v1/notifications/delivery-status/:id", withJwtAuth(_getDeliveryStatus as RouteHandler));
-  router.get("/api/v1/notifications/analytics", withJwtAuth(_getNotificationAnalytics as RouteHandler));
-  router.get("/api/v1/notifications/escalation/status", withJwtAuth(_getEscalationStatus as RouteHandler));
+  router.get("/api/v1/notifications/stream", protectedRoute(_getNotificationStream as RouteHandler));
+  router.get("/api/v1/notifications/delivery-status/:id", protectedRoute(_getDeliveryStatus as RouteHandler));
+  router.get("/api/v1/notifications/analytics", protectedRoute(_getNotificationAnalytics as RouteHandler));
+  router.get("/api/v1/notifications/escalation/status", protectedRoute(_getEscalationStatus as RouteHandler));
 }
 
 async function _getNotificationStream(_request: Request, _env: Env, _params: Record<string, string>): Promise<Response> {
@@ -503,38 +525,38 @@ export function registerWorkflowRoutes(router: {
   patch: (path: string, handler: RouteHandler) => void;
 }): void {
   // Workflow management (literal paths registered before :id to avoid shadowing)
-  router.get("/api/v1/workflows/dashboard", withJwtAuth(_getDashboard as RouteHandler));
-  router.get("/api/v1/workflows/search", withJwtAuth(_searchWorkflows as RouteHandler));
-  router.post("/api/v1/workflows", withJwtAuth(_startWorkflow as RouteHandler));
-  router.get("/api/v1/workflows/:id", withJwtAuth(_getWorkflow as RouteHandler));
-  router.patch("/api/v1/workflows/:id/pause", withJwtAuth(_pauseWorkflow as RouteHandler));
-  router.patch("/api/v1/workflows/:id/resume", withJwtAuth(_resumeWorkflow as RouteHandler));
-  router.post("/api/v1/workflows/:id/cancel", withJwtAuth(_cancelWorkflow as RouteHandler));
-  router.get("/api/v1/workflows/:workflowId/tasks", withJwtAuth(_getWorkflowTasks as RouteHandler));
-  router.get("/api/v1/workflows/:workflowId/history", withJwtAuth(_getWorkflowHistory as RouteHandler));
-  router.get("/api/v1/workflows/:workflowId/audit", withJwtAuth(_getWorkflowAudit as RouteHandler));
-  router.post("/api/v1/workflows/:workflowId/override", withJwtAuth(_manualOverride as RouteHandler));
+  router.get("/api/v1/workflows/dashboard", staffRoute(_getDashboard as RouteHandler));
+  router.get("/api/v1/workflows/search", staffRoute(_searchWorkflows as RouteHandler));
+  router.post("/api/v1/workflows", staffRoute(_startWorkflow as RouteHandler));
+  router.get("/api/v1/workflows/:id", staffRoute(_getWorkflow as RouteHandler));
+  router.patch("/api/v1/workflows/:id/pause", staffRoute(_pauseWorkflow as RouteHandler));
+  router.patch("/api/v1/workflows/:id/resume", staffRoute(_resumeWorkflow as RouteHandler));
+  router.post("/api/v1/workflows/:id/cancel", staffRoute(_cancelWorkflow as RouteHandler));
+  router.get("/api/v1/workflows/:workflowId/tasks", staffRoute(_getWorkflowTasks as RouteHandler));
+  router.get("/api/v1/workflows/:workflowId/history", staffRoute(_getWorkflowHistory as RouteHandler));
+  router.get("/api/v1/workflows/:workflowId/audit", staffRoute(_getWorkflowAudit as RouteHandler));
+  router.post("/api/v1/workflows/:workflowId/override", staffRoute(_manualOverride as RouteHandler));
 
   // Approval gates
-  router.get("/api/v1/workflows/:workflowId/approvals", withJwtAuth(_getApprovals as RouteHandler));
-  router.post("/api/v1/approvals/:gateId/decide", withJwtAuth(_decideApproval as RouteHandler));
-  router.post("/api/v1/approvals/:gateId/override", withJwtAuth(_overrideApproval as RouteHandler));
+  router.get("/api/v1/workflows/:workflowId/approvals", staffRoute(_getApprovals as RouteHandler));
+  router.post("/api/v1/approvals/:gateId/decide", staffRoute(_decideApproval as RouteHandler));
+  router.post("/api/v1/approvals/:gateId/override", staffRoute(_overrideApproval as RouteHandler));
 
   // Task management (literal :search before :id)
-  router.get("/api/v1/tasks/search", withJwtAuth(_searchTasks as RouteHandler));
-  router.get("/api/v1/tasks/:id", withJwtAuth(_getTask as RouteHandler));
-  router.patch("/api/v1/tasks/:id/state", withJwtAuth(_transitionTask as RouteHandler));
-  router.post("/api/v1/tasks/:id/assign", withJwtAuth(_assignTask as RouteHandler));
-  router.post("/api/v1/tasks/:id/claim", withJwtAuth(_claimTask as RouteHandler));
-  router.post("/api/v1/tasks/:id/complete", withJwtAuth(_completeTask as RouteHandler));
-  router.post("/api/v1/tasks/:id/escalate", withJwtAuth(_escalateTask as RouteHandler));
-  router.get("/api/v1/tasks/:id/evidence", withJwtAuth(_getEvidencePack as RouteHandler));
-  router.get("/api/v1/tasks/:id/audit", withJwtAuth(_getTaskAudit as RouteHandler));
+  router.get("/api/v1/tasks/search", staffRoute(_searchTasks as RouteHandler));
+  router.get("/api/v1/tasks/:id", staffRoute(_getTask as RouteHandler));
+  router.patch("/api/v1/tasks/:id/state", staffRoute(_transitionTask as RouteHandler));
+  router.post("/api/v1/tasks/:id/assign", staffRoute(_assignTask as RouteHandler));
+  router.post("/api/v1/tasks/:id/claim", staffRoute(_claimTask as RouteHandler));
+  router.post("/api/v1/tasks/:id/complete", staffRoute(_completeTask as RouteHandler));
+  router.post("/api/v1/tasks/:id/escalate", staffRoute(_escalateTask as RouteHandler));
+  router.get("/api/v1/tasks/:id/evidence", staffRoute(_getEvidencePack as RouteHandler));
+  router.get("/api/v1/tasks/:id/audit", staffRoute(_getTaskAudit as RouteHandler));
 
   // Task queue (coordinator dashboard)
-  router.get("/api/v1/queue", withJwtAuth(_getQueue as RouteHandler));
-  router.get("/api/v1/queue/stats", withJwtAuth(_getQueueStats as RouteHandler));
-  router.post("/api/v1/queue/batch", withJwtAuth(_batchAssign as RouteHandler));
+  router.get("/api/v1/queue", staffRoute(_getQueue as RouteHandler));
+  router.get("/api/v1/queue/stats", staffRoute(_getQueueStats as RouteHandler));
+  router.post("/api/v1/queue/batch", staffRoute(_batchAssign as RouteHandler));
 }
 
 // ── Wave 8: Workflow Route Handlers ──

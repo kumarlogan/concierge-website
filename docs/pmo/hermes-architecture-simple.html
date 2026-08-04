@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes Architecture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+  }
+  .arch {
+    max-width: 900px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #38bdf8;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+  .layer {
+    width: 100%;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 0;
+    position: relative;
+  }
+  .layer-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+  .boxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .box {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+  .box-title { font-weight: 600; }
+  .box-sub { font-size: 0.7rem; opacity: 0.7; margin-top: 2px; }
+
+  /* Layers */
+  .l-frontend { background: #0c4a6e40; border: 1px solid #22d3ee; }
+  .l-frontend .layer-label { color: #22d3ee; }
+  .l-frontend .box { background: #0c4a6e; border: 1px solid #22d3ee; }
+
+  .l-backend { background: #064e3b30; border: 1px solid #34d399; }
+  .l-backend .layer-label { color: #34d399; }
+  .l-backend .box { background: #064e3b; border: 1px solid #34d399; }
+
+  .l-data { background: #4c1d9530; border: 1px solid #a78bfa; }
+  .l-data .layer-label { color: #a78bfa; }
+  .l-data .box { background: #4c1d95; border: 1px solid #a78bfa; }
+
+  .l-hermes { background: #78350f30; border: 1px solid #fbbf24; }
+  .l-hermes .layer-label { color: #fbbf24; }
+  .l-hermes .box { background: #78350f; border: 1px solid #fbbf24; }
+
+  .l-sec { background: #88133730; border: 1px solid #fb7185; }
+  .l-sec .layer-label { color: #fb7185; }
+  .l-sec .box { background: #881337; border: 1px solid #fb7185; }
+
+  .arrow {
+    color: #64748b;
+    font-size: 1.2rem;
+    padding: 4px 0;
+  }
+
+  .divider {
+    width: 100%;
+    border-top: 2px dashed #fb7185;
+    margin: 4px 0;
+    position: relative;
+  }
+  .divider-label {
+    position: absolute;
+    right: 20px;
+    top: -8px;
+    background: #0f172a;
+    padding: 0 8px;
+    font-size: 0.6rem;
+    color: #fb7185;
+    font-weight: 600;
+  }
+
+  .grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #94a3b8;
+  }
+
+  .stats {
+    display: flex; gap: 16px; justify-content: center;
+    margin-top: 1.5rem; flex-wrap: wrap;
+  }
+  .stat {
+    background: #1e293b; border: 1px solid #334155;
+    border-radius: 8px; padding: 8px 16px;
+    text-align: center;
+  }
+  .stat-num { font-size: 1.2rem; font-weight: 700; color: #38bdf8; }
+  .stat-lbl { font-size: 0.65rem; color: #64748b; text-transform: uppercase; }
+
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 1rem; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #94a3b8; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="arch">
+  <h1>Hermes Platform · Architecture Diagram</h1>
+
+  <!-- Layer 1: Frontend -->
+  <div class="layer l-frontend">
+    <div class="layer-label">☀️ Product Layer · Cloudflare Pages</div>
+    <div class="boxes">
+      <div class="box"><div class="box-title">Patient Portal</div><div class="box-sub">React · Vite · Tailwind</div></div>
+      <div class="box"><div class="box-title">Concierge</div><div class="box-sub">Telegram Ops Bot</div></div>
+      <div class="box"><div class="box-title">Admin</div><div class="box-sub">Telegram Admin Bot</div></div>
+      <div class="box" style="opacity:0.5"><div class="box-title">Clinic Portal</div><div class="box-sub">📋 Phase 3</div></div>
+    </div>
+  </div>
+
+  <div class="arrow">↓ HTTPS</div>
+
+  <!-- Layer 2: Workers -->
+  <div class="layer l-backend">
+    <div class="layer-label">🟢 API Layer · Cloudflare Workers (agsynergy-api)</div>
+    <div style="margin-bottom:8px;font-size:0.7rem;color:#34d399">Middleware: JWT · RBAC · Rate Limit · Turnstile · CORS</div>
+    <div class="boxes">
+      <div class="box"><div class="box-title">Public API</div><div class="box-sub">/health · /clinics · /faqs · /contact · /consultations</div></div>
+      <div class="box"><div class="box-title">Protected API</div><div class="box-sub">/leads · /ops · /identity · /documents</div></div>
+      <div class="box"><div class="box-title">Webhooks</div><div class="box-sub">/telegram · /admin</div></div>
+    </div>
+    <div style="margin-top:10px">
+      <div style="font-size:0.7rem;color:#34d399;margin-bottom:4px">Platform Capabilities</div>
+      <div class="grid">
+        <span class="chip">Identity</span>
+        <span class="chip">Trust</span>
+        <span class="chip">Documents</span>
+        <span class="chip">Consent</span>
+        <span class="chip">Appointments</span>
+        <span class="chip">Messaging</span>
+        <span class="chip">Notifications</span>
+        <span class="chip">Timeline</span>
+        <span class="chip">Workflow Engine</span>
+        <span class="chip">EPCL</span>
+        <span class="chip">WAS</span>
+        <span class="chip">RBAC</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">↓ D1 · R2</div>
+
+  <!-- Layer 3: Data -->
+  <div class="layer l-data">
+    <div class="layer-label">💾 Data · Cloudflare D1 + R2</div>
+    <div class="boxes">
+      <div class="box"><div class="box-title">D1 Database</div><div class="box-sub">12 migrations · 25+ tables · SQLite</div></div>
+      <div class="box"><div class="box-title">R2 Storage</div><div class="box-sub">Patient documents · Pre-signed URLs</div></div>
+      <div class="box"><div class="box-title">Audit Logs</div><div class="box-sub">Tamper-evident event store</div></div>
+    </div>
+  </div>
+
+  <!-- PHI Boundary -->
+  <div class="divider"><span class="divider-label">⬆ PATIENT DATA BOUNDARY — HERMES BELOW ⬆</span></div>
+
+  <!-- Layer 4: Hermes -->
+  <div class="layer l-hermes">
+    <div class="layer-label">🤖 Hermes Platform · AI Execution Layer (isolated ops plane)</div>
+    <div class="boxes">
+      <div class="box"><div class="box-title">Intent Engine</div><div class="box-sub">Classify → Route</div></div>
+      <div class="box"><div class="box-title">EPCL Planning</div><div class="box-sub">Roadmap → Budget → Dispatch</div></div>
+      <div class="box"><div class="box-title">WAS Activation</div><div class="box-sub">8-state state machine</div></div>
+      <div class="box"><div class="box-title">Execution Gateway</div><div class="box-sub">Plan → Dispatch → Review</div></div>
+      <div class="box"><div class="box-title">Provider Framework</div><div class="box-sub">Discovery · Loader · Guard</div></div>
+      <div class="box"><div class="box-title">Workforce</div><div class="box-sub">Orchestration · Metrics</div></div>
+      <div class="box"><div class="box-title">Security</div><div class="box-sub">Risk · Audit · Scanning</div></div>
+      <div class="box"><div class="box-title">Governance</div><div class="box-sub">Dashboard · Reports</div></div>
+    </div>
+  </div>
+
+  <div class="arrow">↓ Git</div>
+
+  <!-- Layer 5: Deployment -->
+  <div class="layer l-sec">
+    <div class="layer-label">🐙 CI/CD · GitHub Actions</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:0.7rem;">
+      <span style="color:#fb7185">push → main →</span>
+      <span style="color:#94a3b8">typecheck →</span>
+      <span style="color:#94a3b8">test →</span>
+      <span style="color:#94a3b8">build →</span>
+      <span style="color:#34d399">deploy preview →</span>
+      <span style="color:#22d3ee">human approval →</span>
+      <span style="color:#fbbf24">deploy production</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="stat-num">614</div><div class="stat-lbl">Tests Passing</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-lbl">Pass Rate</div></div>
+    <div class="stat"><div class="stat-num">12</div><div class="stat-lbl">Migrations</div></div>
+    <div class="stat"><div class="stat-num">25+</div><div class="stat-lbl">Tables</div></div>
+    <div class="stat"><div class="stat-num">Phases 0-2</div><div class="stat-lbl">Complete</div></div>
+  </div>
+
+  <div class="legend">
+    <div class="leg-item"><span class="leg-dot" style="background:#22d3ee"></span> Product</div>
+    <div class="leg-item"><span class="leg-dot" style="background:#34d399"></span> API</div>
+    <div class="leg-item"><span class="leg-dot" style="background:#a78bfa"></span> Data</div>
+    <div class="leg-item"><span class="leg-dot" style="background:#fbbf24"></span> Hermes</div>
+    <div class="leg-item"><span class="leg-dot" style="background:#fb7185"></span> CI/CD</div>
+  </div>
+</div>
+</body>
+</html>
