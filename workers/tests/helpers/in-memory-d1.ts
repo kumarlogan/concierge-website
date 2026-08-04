@@ -17,6 +17,9 @@ export class InMemoryD1 {
   readonly tables: Record<string, Map<string, Row>> = {};
 
   constructor() {
+    // PRG-022: workflow_instances added so startWorkflow() INSERT is captured
+    // rather than silently no-oping when InMemoryD1.execute() finds no table.
+    this.tables['workflow_instances'] = new Map();
     this.tables['workflow_events'] = new Map();
     this.tables['task_instances'] = new Map();
     this.tables['approval_gates'] = new Map();
@@ -88,14 +91,13 @@ export class InMemoryD1 {
       const cols = (colsMatch?.[1] ?? '').split(',').map((c) => c.trim());
       const row: Row = {};
       for (const col of cols) row[col] = values[idx++] ?? null;
-      this.tables[table].set(String(row.id), row);
+      this.tables[table].set(String(row.id ?? crypto.randomUUID()), row);
       return undefined;
     }
 
     if (/^UPDATE/i.test(stmt)) {
       const setMatch = /SET\s+([\s\S]*?)\s+WHERE/i.exec(stmt);
       const setClause = setMatch?.[1] ?? '';
-      // parse assignments: split on comma — values consumed in order
       const assignments = setClause.split(',').map((a) => a.trim());
       const sets: Array<[string, unknown]> = [];
       for (const a of assignments) {
@@ -116,7 +118,6 @@ export class InMemoryD1 {
     }
 
     // SELECT
-    const selectRest = /^SELECT\s+.*?\s+FROM\s+\S+(\s+WHERE\s+(.*))?(\s+ORDER\s+BY\s+(.*))?(\s+LIMIT\s+(\?|\d+))?(\s+OFFSET\s+(\?|\d+))?$/is.exec(stmt);
     const isCount = /COUNT\(\s*\*\s*\)/i.test(stmt);
     const rows = [...this.tables[table].values()];
 
@@ -160,7 +161,7 @@ export class InMemoryD1 {
 
     if (isCount) {
       const total = rows.filter((r) => cond(r)).length;
-      return [{ depth: total }];
+      return [{ cnt: total }];
     }
     return filtered;
   }
@@ -169,7 +170,6 @@ export class InMemoryD1 {
   private buildCond(whereText: string, values: unknown[], next: () => number): (r: Row) => boolean {
     const txt = whereText.trim();
     if (!txt || txt.toLowerCase() === 'where') return () => true;
-    // Split top-level AND (not inside parens)
     const parts = txt.split(/\s+AND\s+/i).map((p) => p.trim());
     return (row: Row) => {
       for (let part of parts) {
@@ -182,7 +182,6 @@ export class InMemoryD1 {
   }
 
   private singleCond(part: string, row: Row, values: unknown[], next: () => number): boolean {
-    // col IN (?, ...)
     const inMatch = /^([A-Za-z_][A-Za-z0-9_]*)\s+IN\s*\((.*)\)$/s.exec(part);
     if (inMatch) {
       const placeholders = (inMatch[2].match(/\?/g) || []).length;
@@ -205,12 +204,13 @@ export class InMemoryD1 {
         default: return true;
       }
     }
-    // col = literal
     const litMatch = /^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*'([^']*)'$/.exec(part);
     if (litMatch) return row[litMatch[1]] === litMatch[2];
-    // Single placeholder condition (e.g. col = ?)
     const valMatch = /^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\?$/.exec(part);
     if (valMatch) return row[valMatch[1]] === values[next()];
+    // IS NULL check
+    const isNullMatch = /^([A-Za-z_][A-Za-z0-9_]*)\s+IS\s+NULL$/i.exec(part);
+    if (isNullMatch) return row[isNullMatch[1]] === null || row[isNullMatch[1]] === undefined;
     return true;
   }
 }
