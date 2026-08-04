@@ -177,10 +177,18 @@ export const patchOpsLead: RouteHandler = async (request, env, params) => {
   }
 
   const input = body as LeadUpdateInput;
+  const principal = getPrincipal(request);
   const result = await updateLead(env.DB, leadId, input);
   if (!result.success) {
     return json({ success: false, error: result.error, message: result.message }, result.status);
   }
+  // Audit log: record lead status changes for compliance (PRG-021).
+  writeLeadAuditLog(
+    env.DB,
+    leadId,
+    principal?.userId ?? null,
+    `update_lead:${Object.keys(input).join(",")}`,
+  ).catch(() => {/* non-critical */});
   return json({ success: true, lead: result.lead });
 };
 
@@ -250,3 +258,23 @@ export const getOpsTimeline: RouteHandler = async (request, env, _params) => {
     return json({ success: false, error: "internal_error", message: "Unexpected error" }, 500);
   }
 };
+
+
+// ── Audit log helper ──────────────────────────────────────────────────────────
+// Writes a record to audit_logs for every lead mutation. Fire-and-forget.
+async function writeLeadAuditLog(
+  db: any,
+  leadId: string,
+  actorId: string | null,
+  action: string,
+): Promise<void> {
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await db
+    .prepare(
+      `INSERT INTO audit_logs (id, actor_id, action, target_type, target_id, decision, created_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
+    )
+    .bind(id, actorId, action, "lead", leadId, "ALLOW", now)
+    .run();
+}
