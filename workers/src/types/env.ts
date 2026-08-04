@@ -38,6 +38,11 @@ export interface Env {
   // Cloudflare Turnstile secret key — bot protection for public endpoints
   TURNSTILE_SECRET_KEY?: string;
 
+  // Site URL for constructing absolute links (e.g. email verification links).
+  // Production: https://agsynergy.ca
+  // Set via wrangler vars — never committed as a real value.
+  SITE_URL?: string;
+
   // JWT signing keypair — provisioned as GH secrets → wrangler vars
   JWT_PRIVATE_KEY?: string;
   JWT_PUBLIC_KEY?: string;
