@@ -28,7 +28,8 @@
     "ENVIRONMENT": "development",
     "RATE_LIMIT_WINDOW_MS": "60000",
     "RATE_LIMIT_LIMIT": "60",
-    "TURNSTILE_SECRET_KEY": ""
+    "TURNSTILE_SECRET_KEY": "",
+    "SITE_URL": "https://agsynergy.ca"
   },
   "d1_databases": [
     {
@@ -64,7 +65,8 @@
         "ENVIRONMENT": "production",
         "RATE_LIMIT_WINDOW_MS": "60000",
         "RATE_LIMIT_LIMIT": "60",
-        "TURNSTILE_SECRET_KEY": ""
+        "TURNSTILE_SECRET_KEY": "",
+        "SITE_URL": "https://agsynergy.ca"
       },
       "d1_databases": [
         {
@@ -94,7 +96,8 @@
         "ENVIRONMENT": "preview",
         "RATE_LIMIT_WINDOW_MS": "60000",
         "RATE_LIMIT_LIMIT": "60",
-        "TURNSTILE_SECRET_KEY": ""
+        "TURNSTILE_SECRET_KEY": "",
+        "SITE_URL": "https://agsynergy.ca"
       },
       "d1_databases": [
         {
