@@ -322,7 +322,12 @@ The `.github/workflows/deploy.yml` pipeline runs automatically on every push to 
 
 ### WARNING: no test or typecheck gate in the deploy pipeline
 
-**Neither `vitest` nor `tsc` is run during deployment.** The CI pipeline will deploy TypeScript that does not compile and code that fails all tests, as long as the integrity checks and bundle guard pass. Correctness is entirely the author's responsibility before pushing to `main`. Run `pnpm run typecheck` and `pnpm --filter @workspace/workers run test` locally before every push.
+**The deploy pipeline (`deploy.yml`) still has no test or typecheck step.** However, a separate CI workflow (`.github/workflows/ci.yml`) now runs on pull requests and non-main branches, executing:
+
+- **`ci/test`** — runs the worker test suite (blocking)
+- **`ci/typecheck`** — runs TypeScript typecheck with a ratchet (errors may fall, never rise)
+
+These checks must pass before merging to `main`. The deploy pipeline itself remains unchanged — it deploys on every push to `main` without running tests or typecheck. Correctness is the author's responsibility before pushing to `main`. Run `pnpm run typecheck` and `pnpm --filter @workspace/workers run test` locally before every push.
 
 ### Preview deployment
 
@@ -361,7 +366,17 @@ Work-item identifiers in use: `EPIC-00X`, `EPIC-00X-00Y`, `EPIC-00X.Y`, `Wave N`
 
 ### Branching
 
-Trunk-based development. Approximately 98% of commits go directly to `main` without a pull request. Feature branches are used only in exceptional cases (2 non-main branches currently exist, both with open PRs). There is no branch protection policy enforced by configuration files in the repo.
+Trunk-based development. Approximately 98% of commits go directly to `main` without a pull request. Feature branches are used only in exceptional cases (2 non-main branches currently exist, both with open PRs).
+
+### Branch protection
+
+Branch protection for `main` is **not available** on this repository. The repo is a private repository on the free GitHub plan, and branch protection rules require GitHub Pro or a public repository. The engineering team should evaluate upgrading to GitHub Pro to enable:
+
+- Required status checks (`ci/test`, `ci/typecheck`) before merge
+- Required pull request reviews
+- Admin enforcement
+
+Until branch protection is enabled, the CI workflow (`ci.yml`) provides the quality gate at the workflow level. The `ci/test` and `ci/typecheck` checks must be manually verified before merging any PR.
 
 ### Code review
 

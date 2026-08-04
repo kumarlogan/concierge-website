@@ -6,6 +6,83 @@
 
 ---
 
+## [Unreleased] — Security & Production Readiness — Waves 1–3B
+
+**Status:** 🔄 In Review — PRs #3, #4, #5, #6, #7
+**Engineering Waves:** 1, 2, 3A, 3B
+**Objectives:** Eliminate confirmed IDOR/BOLA, restore D1 persistence for patient data,
+close patient-journey breaks, wire CI quality gate.
+
+> All changes in this section are on open PRs and have NOT yet merged to main.
+> This entry is required for Hermes engineering certification of the PRs.
+
+---
+
+### Security
+
+#### Critical: IDOR/BOLA fixes (PR #4, PR #5)
+- **`workers/src/middleware/authz.ts`** — New shared authorization primitive. `assertOwnership`, `assertParticipant`, `resolveScopedIdentityId`, `requireStaff`, `protectedRoute`, `staffRoute`. Closes the root cause behind 9 IDOR defects where any authenticated patient could read another patient's records by changing an ID in the URL.
+- **`workers/src/routes/wave7.ts`** — Ownership enforcement applied to `GET/PATCH /appointments/:id`, `GET /messages/threads/:threadId`, `GET/PATCH /notifications/:id`. List endpoints (`?patientId=`, `?participantId=`) scoped so non-staff callers cannot enumerate across identities. Workflow/task/queue surfaces closed to patients (staff only).
+- **`workers/src/routes/trustRuntime.ts`** — `GET /consent/history` and `GET /permissions` now verify that the caller's JWT-bound identity matches the requested `identityId`. Non-staff callers receive 403 on cross-identity queries (PRG-033).
+- **`workers/tests/middleware/authz.test.ts`** — 17 unit tests covering both directions: patient scope enforcement and staff cross-patient access.
+- **`artifacts/ags-fertility/src/lib/auth-guard.tsx`** — `ClinicGuard` added. Six clinic workspace routes now require `clinic`, `staff`, or `administrator` identity type. Anonymous or patient access renders a 403 notice (PR #3).
+
+#### High: Registration and MFA
+- **`artifacts/ags-fertility/src/pages/patient/RegisterPage.tsx`** — Removed dev-mode email auto-verification. Patients must now click the verification link; identity ownership is confirmed before login is permitted (PRG-003).
+- **`artifacts/ags-fertility/src/pages/patient/MfaVerifyPage.tsx`** — New page. MFA-enrolled patients were permanently locked out after login because `/patient/mfa` had no route. Added with full session-lost handling (PRG-005).
+
+---
+
+### Added
+
+#### CI Quality Gate (PR #4)
+- **`.github/workflows/ci.yml`** — New workflow. Runs worker test suite (blocking) and TypeScript ratchet (errors may fall, never rise, baseline 250) on every pull request. Previously: every push to main auto-deployed both workers with no test and no typecheck (PRG-002).
+- **`scripts/typecheck-ratchet.sh`** — TypeScript error ratchet script. Allows CI to land against a pre-existing error baseline without being disabled on day one.
+
+#### Email Verification Landing Page (PR #6)
+- **`artifacts/ags-fertility/src/pages/patient/VerifyEmailPage.tsx`** — New `/patient/verify-email` route. Reads `?token=` from URL on mount, calls `completeEmailVerification`, handles no-token / loading / success / error states (PRG-004).
+- **`workers/src/types/env.ts`** — `SITE_URL?: string` added for future email link construction.
+- **`workers/wrangler.jsonc`** — `SITE_URL = https://agsynergy.ca` in all three env blocks.
+
+#### D1 Persistence (PR #6, PR #7)
+- **`workers/src/platform/workflow/engine/workflow-engine.ts`** — `db: D1Database` added to `WorkflowEngineConfig` via clean DI. `startWorkflow()` now INSERTs into `workflow_instances`. `pauseWorkflow`, `resumeWorkflow`, `cancelWorkflow`, `executeStateTransition` all UPDATE the row. Dashboard JOIN now returns real patient data (PRG-022).
+- **`workers/migrations/0012_consent_schema_reconciliation.sql`** — Forward reconciliation. Adds `updated_at` to `consents`, ensures `consent_registry` exists. Resolves PRG-014 (dual-migration conflict from 0006 vs 0008).
+- **`workers/src/platform/trust/d1-consent-engine.ts`** — New. Full D1-backed consent storage using validated 0006 production schema. Consent grants now survive Worker isolate recycles (PRG-011).
+- **`workers/migrations/0013_timeline.sql`** — Creates `patient_stages`, `patient_milestones`, `patient_timeline_events`.
+- **`workers/src/platform/timeline/d1-timeline-engine.ts`** — New. IVF treatment journey persists across requests. Patient-zero state seeded on first access (PRG-006).
+
+#### Clinic Portal: Real Data (PR #7)
+- **`workers/src/routes/clinic.ts`** — Replaces hardcoded `_mockPatients` array with D1 query against `identities WHERE identity_type = 'patient'`. Supports status filter, search, pagination (PRG-009).
+- **`workers/src/routes/clinic-messages.ts`** — Replaces hardcoded triage queue with real patient identity queries. Message templates unchanged (PRG-010).
+
+---
+
+### Fixed
+
+- **`workers/src/index.ts`** — `AUTHORIZATION_ENGINE` wired via thin adapter over `DecisionEngine`. `POST /authorization/check` and `GET /permissions` previously threw TypeError on every call (PRG-013).
+- **`workers/src/routes/consultations.ts`** — Fire-and-forget `INSERT INTO audit_logs` after consultation submission. New consultations now appear in the ops timeline (PRG-020).
+- **`workers/src/routes/ops.ts`** — Audit log entry on lead status change. Compliance trail for patient contact records (PRG-021).
+- **`artifacts/ags-fertility/src/lib/document-api.ts`** — Auth headers added to all document API calls (previously returned 401 in production). Correct two-step upload flow: `POST /documents` then `POST /documents/:id/upload` (PRG-008).
+- **`artifacts/ags-fertility/src/lib/patient-api.ts`** — `requestEmailVerification` return type corrected to `Promise<void>` (backend returns no token).
+
+---
+
+### Tests
+- **`workers/tests/middleware/authz.test.ts`** — 17 tests: ownership enforcement and staff cross-patient access.
+- **`workers/tests/platform/workflow-engine.test.ts`** — Updated to pass `db: D1Database` to `WorkflowEngine` constructor after PRG-022 config change.
+- **`workers/tests/helpers/in-memory-d1.ts`** — Added `workflow_instances` table; fixed COUNT query column name from `depth` to `cnt`.
+
+---
+
+### Migration prerequisites before deploying
+The following migrations must be applied to `agsynergy-db` before deploying workers that use the new D1 engines:
+```
+wrangler d1 migrations apply agsynergy-db --env production
+```
+Applies: `0012_consent_schema_reconciliation.sql`, `0013_timeline.sql`
+
+
+
 ## [1.6.0] — 2026-08-01 — Wave 6: Communication Centre
 
 **Date:** 2026-08-01
