@@ -27,7 +27,7 @@ import { CookieConsentBanner } from '@/components/CookieConsentBanner';
 
 // Patient Workspace (Wave 5)
 import { AuthProvider } from '@/lib/auth-context';
-import { AuthGuard, GuestGuard } from '@/lib/auth-guard';
+import { AuthGuard, ClinicGuard, GuestGuard } from '@/lib/auth-guard';
 import PatientLayout from '@/components/patient/PatientLayout';
 import LoginPage from '@/pages/patient/LoginPage';
 import RegisterPage from '@/pages/patient/RegisterPage';
@@ -258,46 +258,61 @@ function Router() {
       </Route>
 
       {/* ── Clinic Workspace (Workstream B) ──────────────────── */}
+      {/* Every clinic route is wrapped in ClinicGuard. The guard is a
+          fail-closed allowlist on identity type — patients and anonymous
+          visitors never reach a clinic console. */}
       <Route path="/clinic/dashboard">
         {() => (
-          <ClinicLayout>
-            <ProviderDashboardPage />
-          </ClinicLayout>
+          <ClinicGuard>
+            <ClinicLayout>
+              <ProviderDashboardPage />
+            </ClinicLayout>
+          </ClinicGuard>
         )}
       </Route>
       <Route path="/clinic/schedule">
         {() => (
-          <ClinicLayout>
-            <ClinicSchedulePage />
-          </ClinicLayout>
+          <ClinicGuard>
+            <ClinicLayout>
+              <ClinicSchedulePage />
+            </ClinicLayout>
+          </ClinicGuard>
         )}
       </Route>
       <Route path="/clinic/search">
         {() => (
-          <ClinicLayout>
-            <PatientSearchPage />
-          </ClinicLayout>
+          <ClinicGuard>
+            <ClinicLayout>
+              <PatientSearchPage />
+            </ClinicLayout>
+          </ClinicGuard>
         )}
       </Route>
       <Route path="/clinic/patient-status">
         {() => (
-          <ClinicLayout>
-            <PatientStatusPage />
-          </ClinicLayout>
+          <ClinicGuard>
+            <ClinicLayout>
+              <PatientStatusPage />
+            </ClinicLayout>
+          </ClinicGuard>
         )}
       </Route>
       <Route path="/clinic/messages">
         {() => (
-          <ClinicLayout>
-            <ClinicMessagesPage />
-          </ClinicLayout>
+          <ClinicGuard>
+            <ClinicLayout>
+              <ClinicMessagesPage />
+            </ClinicLayout>
+          </ClinicGuard>
         )}
       </Route>
       <Route path="/clinic/patients">
         {() => (
-          <ClinicLayout>
-            <PatientSearchPage />
-          </ClinicLayout>
+          <ClinicGuard>
+            <ClinicLayout>
+              <PatientSearchPage />
+            </ClinicLayout>
+          </ClinicGuard>
         )}
       </Route>
 
