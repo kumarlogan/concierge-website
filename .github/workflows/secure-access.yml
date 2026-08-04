@@ -42,6 +42,19 @@ jobs:
           APP_ID=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['id'])" 2>/dev/null)
           echo "id=$APP_ID" >> $GITHUB_OUTPUT
 
+      - name: Rename Zero Trust Org (fix tab title)
+        run: |
+          curl -s -X PUT \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://api.cloudflare.com/client/v4/accounts/${{ steps.account.outputs.id }}/access/organizations" \
+            -d '{
+              "name": "AG Synergy",
+              "auth_domain": "kumarlogan.cloudflareaccess.com",
+              "is_ui_read_only": false,
+              "user_seat_expiration_inactive_time": "720h"
+            }' | python3 -c "import sys,json; d=json.load(sys.stdin); print('✅ Org name set to:', d.get('result',{}).get('name','?'))" 2>/dev/null
+
       - name: Create Allow Policy (kumarlogan@gmail.com)
         run: |
           curl -s -X POST \
