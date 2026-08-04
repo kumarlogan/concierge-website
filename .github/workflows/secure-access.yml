@@ -13,34 +13,33 @@ jobs:
           RESP=$(curl -s -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             "https://api.cloudflare.com/client/v4/accounts")
-          echo "id=$(echo $RESP | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result'][0]['id'])" 2>/dev/null)" >> $GITHUB_OUTPUT
-          echo "name=$(echo $RESP | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result'][0]['name'])" 2>/dev/null)" >> $GITHUB_OUTPUT
+          echo "id=$(echo $RESP | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d[\"result\"][0][\"id\"])' 2>/dev/null)" >> $GITHUB_OUTPUT
+          echo "name=$(echo $RESP | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d[\"result\"][0][\"name\"])' 2>/dev/null)" >> $GITHUB_OUTPUT
 
-      - name: Create Access Application
+      - name: Find or Create Access Application
         id: app
         run: |
-          RESP=$(curl -s -X POST \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+          ACCOUNT_ID="${{ steps.account.outputs.id }}"
+          TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          # Try to find existing app
+          EXISTING=$(curl -s -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/json" \
-            "https://api.cloudflare.com/client/v4/accounts/${{ steps.account.outputs.id }}/access/apps" \
-            -d '{
-              "name": "AG Synergy",
-              "domain": "agsynergy.ca",
-              "type": "self_hosted",
-              "session_duration": "24h",
-              "auto_redirect_to_identity": false,
-              "app_launcher_visible": false,
-              "cors_headers": {
-                "allowed_origins": ["https://agsynergy.ca", "https://api.agsynergy.ca"],
-                "allowed_methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-                "allowed_headers": ["*"],
-                "allow_all_origins": false
-              }
-            }')
-          echo "App API response:"
-          echo "$RESP" | python3 -m json.tool
-          APP_ID=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result']['id'])" 2>/dev/null)
-          echo "id=$APP_ID" >> $GITHUB_OUTPUT
+            "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/access/apps" \
+            | python3 -c 'import sys,json;d=json.load(sys.stdin);[print(a["id"]) for a in d.get("result",[]) if "agsynergy.ca" in str(a.get("self_hosted_domains",[]))]' 2>/dev/null)
+          
+          if [ -n "$EXISTING" ]; then
+            echo "Reusing existing app: $EXISTING"
+            echo "id=$EXISTING" >> $GITHUB_OUTPUT
+          else
+            RESP=$(curl -s -X POST \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/access/apps" \
+              -d '{"name":"AG Synergy","domain":"agsynergy.ca","type":"self_hosted","session_duration":"24h","auto_redirect_to_identity":false,"app_launcher_visible":false}')
+            APP_ID=$(echo "$RESP" | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["result"]["id"])' 2>/dev/null)
+            echo "Created app: $APP_ID"
+            echo "id=$APP_ID" >> $GITHUB_OUTPUT
+          fi
 
       - name: Rename Zero Trust Org (fix tab title)
         run: |
@@ -48,12 +47,8 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             "https://api.cloudflare.com/client/v4/accounts/${{ steps.account.outputs.id }}/access/organizations" \
-            -d '{
-              "name": "AG Synergy",
-              "auth_domain": "kumarlogan.cloudflareaccess.com",
-              "is_ui_read_only": false,
-              "user_seat_expiration_inactive_time": "720h"
-            }' | python3 -c "import sys,json; d=json.load(sys.stdin); print('✅ Org name set to:', d.get('result',{}).get('name','?'))" 2>/dev/null
+            -d '{"name":"AG Synergy","auth_domain":"kumarlogan.cloudflareaccess.com","is_ui_read_only":false,"user_seat_expiration_inactive_time":"720h"}' \
+            | python3 -c 'import sys,json;d=json.load(sys.stdin);print("✅ Org name:",d.get("result",{}).get("name","FAIL") if d.get("success") else d.get("errors"))' 2>/dev/null
 
       - name: Create Allow Policy (kumarlogan@gmail.com)
         run: |
@@ -61,16 +56,8 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             "https://api.cloudflare.com/client/v4/accounts/${{ steps.account.outputs.id }}/access/apps/${{ steps.app.outputs.id }}/policies" \
-            -d '{
-              "name": "Allow KL",
-              "decision": "allow",
-              "precedence": 1,
-              "include": [
-                {"email": {"email": "kumarlogan@gmail.com"}}
-              ],
-              "require": [],
-              "exclude": []
-            }' | python3 -m json.tool
+            -d '{"name":"Allow KL","decision":"allow","precedence":1,"include":[{"email":{"email":"kumarlogan@gmail.com"}}],"require":[],"exclude":[]}' \
+            | python3 -c 'import sys,json;d=json.load(sys.stdin);print("✅ Allow policy:",d.get("success","FAIL"))' 2>/dev/null
 
       - name: Create Block Policy (everyone else)
         run: |
@@ -78,14 +65,8 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             "https://api.cloudflare.com/client/v4/accounts/${{ steps.account.outputs.id }}/access/apps/${{ steps.app.outputs.id }}/policies" \
-            -d '{
-              "name": "Block All",
-              "decision": "block",
-              "precedence": 2,
-              "include": [{"everyone": {}}],
-              "require": [],
-              "exclude": []
-            }' | python3 -m json.tool
+            -d '{"name":"Block All","decision":"block","precedence":2,"include":[{"everyone":{}}],"require":[],"exclude":[]}' \
+            | python3 -c 'import sys,json;d=json.load(sys.stdin);print("✅ Block policy:",d.get("success","FAIL"))' 2>/dev/null
 
       - name: Summary
         run: |
