@@ -40,14 +40,11 @@ CREATE TABLE IF NOT EXISTS consents (
 -- Indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_consents_identity ON consents(identity_id);
 CREATE INDEX IF NOT EXISTS idx_consents_type ON consents(consent_type);
-CREATE INDEX IF NOT EXISTS idx_consents_status ON consents(status);
-CREATE INDEX IF NOT EXISTS idx_consents_active ON consents(identity_id, consent_type)
-    WHERE status = 'active';
-CREATE INDEX IF NOT EXISTS idx_consents_expiry ON consents(expires_at)
-    WHERE expires_at IS NOT NULL AND status = 'active';
--- NOTE: idx_consents_patient on patient_identity_id was removed because
--- that column belongs to the superseded 0008 design iteration. See 0012
--- and the DECLARATION.md for the schema reconciliation rationale.
+CREATE INDEX IF NOT EXISTS idx_consents_expiry ON consents(expires_at);
+-- NOTE: idx_consents_status and idx_consents_active were removed because
+-- they reference the 'status' column which belongs to the superseded 0008
+-- schema. Production (0006) uses 'granted' (INTEGER). Migration 0012 handles
+-- the schema reconciliation — those indexes belong there if needed.
 
 -- ── Consent History Table ─────────────────────────────────────
 -- Append-only audit trail for all consent state changes.
