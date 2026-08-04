@@ -30,6 +30,7 @@ import { ApprovalGateService } from '../approval/approval-gate';
 import { TimerService } from '../timers/timer-service';
 
 export interface WorkflowEngineConfig {
+  db: D1Database;         // clean DI, never reach into EventStore internals
   eventStore: EventStore;
   taskOrchestrator: TaskOrchestrator;
   approvalGate: ApprovalGateService;
@@ -37,12 +38,14 @@ export interface WorkflowEngineConfig {
 }
 
 export class WorkflowEngine {
+  private db: D1Database;
   private eventStore: EventStore;
   private taskOrchestrator: TaskOrchestrator;
   private approvalGate: ApprovalGateService;
   private timerService: TimerService;
 
   constructor(config: WorkflowEngineConfig) {
+    this.db = config.db;
     this.eventStore = config.eventStore;
     this.taskOrchestrator = config.taskOrchestrator;
     this.approvalGate = config.approvalGate;
@@ -69,7 +72,25 @@ export class WorkflowEngine {
       updatedAt: Date.now(),
     };
 
-    // 3. Persist instance via event store
+    // 3. Persist to D1 so the dashboard JOIN has rows to read.
+    await this.db.prepare(
+      `INSERT INTO workflow_instances
+         (id, definition_id, patient_id, current_state, status, context,
+          started_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      instance.id,
+      instance.definitionId,
+      instance.patientId,
+      instance.currentState,
+      instance.status,
+      JSON.stringify(instance.context),
+      instance.createdAt,
+      instance.createdAt,
+      instance.updatedAt,
+    ).run();
+
+    // 4. Emit event
     await this.emitEvent({
       workflowInstanceId: instance.id,
       eventType: 'workflow.started',
@@ -80,7 +101,7 @@ export class WorkflowEngine {
       version: 1,
     });
 
-    // 4. Generate initial tasks for the starting state
+    // 5. Generate initial tasks for the starting state
     await this.taskOrchestrator.generateTasksForState(instance, 'pre_treatment.consultation' as JourneyState);
 
     return instance;
@@ -116,6 +137,11 @@ export class WorkflowEngine {
       throw new Error(`Cannot pause workflow in status: ${instance.status}`);
     }
 
+    // Persist to D1
+    await this.db.prepare(
+      `UPDATE workflow_instances SET status = 'paused', paused_at = ?, pause_reason = ?, updated_at = ? WHERE id = ?`
+    ).bind(Date.now(), reason, Date.now(), id).run();
+
     // Suspend all timers for this workflow
     await this.timerService.suspendTimersForWorkflow(id);
 
@@ -143,6 +169,11 @@ export class WorkflowEngine {
       throw new Error(`Cannot resume workflow in status: ${instance.status}`);
     }
 
+    // Persist to D1
+    await this.db.prepare(
+      `UPDATE workflow_instances SET status = 'running', paused_at = NULL, pause_reason = NULL, updated_at = ? WHERE id = ?`
+    ).bind(Date.now(), id).run();
+
     // Resume timers
     await this.timerService.resumeTimersForWorkflow(id);
 
@@ -169,6 +200,11 @@ export class WorkflowEngine {
     if (instance.status === 'completed' || instance.status === 'cancelled') {
       throw new Error(`Cannot cancel workflow in status: ${instance.status}`);
     }
+
+    // Persist to D1
+    await this.db.prepare(
+      `UPDATE workflow_instances SET status = 'cancelled', completed_at = ?, updated_at = ? WHERE id = ?`
+    ).bind(Date.now(), Date.now(), id).run();
 
     // Cancel all pending tasks
     await this.taskOrchestrator.cancelAllTasksForWorkflow(id, reason);
@@ -275,7 +311,7 @@ export class WorkflowEngine {
 
     // Check each possible transition from current state
     const validTransitions = stateMachine.getValidJourneyTransitions(instance.currentState);
-    
+
     for (const transition of validTransitions) {
       const validation = await transitionValidator.validateJourneyTransition({
         workflowInstance: instance,
@@ -310,6 +346,17 @@ export class WorkflowEngine {
     if (newState === 'completed') {
       instance.status = 'completed';
       instance.completedAt = Date.now();
+    }
+
+    // Persist the state change to D1 so getInstance() reads current state
+    await this.db.prepare(
+      `UPDATE workflow_instances SET current_state = ?, updated_at = ? WHERE id = ?`
+    ).bind(newState, Date.now(), instance.id).run();
+
+    if (newState === 'completed') {
+      await this.db.prepare(
+        `UPDATE workflow_instances SET status = 'completed', completed_at = ? WHERE id = ?`
+      ).bind(Date.now(), instance.id).run();
     }
 
     // Emit state change event
