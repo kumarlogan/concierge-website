@@ -1,0 +1,334 @@
+# KNOWN_GAPS.yaml — machine-readable register of defects, drift, and debt
+# Generated 2026-08-04 by an external AI engineering session.
+#
+# Every entry was found by reading repository files. Nothing here is speculative.
+# Each gap carries: what is wrong, the evidence path, the consequence, and a
+# recommended remedy. Remedies are RECOMMENDATIONS ONLY — none were executed by
+# the session that produced this file, which made no changes to application code.
+#
+# Severity scale:
+#   critical - will fail or has failed in production, or is a live security exposure
+#   high     - materially misleads engineering work or loses data
+#   medium   - correctness/maintainability risk, or documentation that misdirects
+#   low      - hygiene
+#
+# Update obligations: see docs/context/CONTEXT_MAINTENANCE.md
+schema_version: 1
+generated: 2026-08-04
+repository: kumarlogan/concierge-website
+total_gaps: 20
+confidence_legend:
+  observed: directly read from repository files
+  inferred: reasoned from repository evidence
+  unknown: not determinable from the repository
+
+gaps:
+
+  # ---------------------------------------------------------------- CRITICAL
+  - id: GAP-001
+    severity: critical
+    category: runtime_defect
+    title: AUTHORIZATION_ENGINE is declared and called but never constructed
+    detail: >-
+      AUTHORIZATION_ENGINE appears in the Env type and is invoked by two live
+      endpoints, but nothing ever instantiates it. Both endpoints will throw a
+      runtime TypeError when called.
+    affected:
+      - POST /api/v1/authorization/check
+      - GET /api/v1/permissions
+    evidence: [workers/src/types/env.ts, workers/src/routes/trustRuntime.ts]
+    consequence: Two authorization endpoints are hard-broken in production.
+    recommendation: >-
+      Either construct and wire the engine, or remove the endpoints and the Env
+      declaration. Do not leave a declared-but-absent binding in the type.
+    confidence: observed
+
+  - id: GAP-002
+    severity: critical
+    category: schema_conflict
+    title: The consents table is defined twice with incompatible schemas
+    detail: >-
+      `consents` is created in 0006_trust_runtime.sql and created again, with a
+      wider and incompatible column set, in 0008_consent_engine.sql. Because both
+      use IF NOT EXISTS, whichever ran first wins and the second definition's
+      columns (patient_identity_id, status, resource_type, revoked_by, updated_at)
+      never land in the live database.
+    evidence: [workers/migrations/0006_trust_runtime.sql, workers/migrations/0008_consent_engine.sql]
+    consequence: >-
+      Code written against the 0008 schema will fail against the live table. Silent
+      divergence between what migrations describe and what the database contains.
+    recommendation: >-
+      Inspect the live D1 schema to establish ground truth, then write a forward
+      migration that reconciles the table to a single intended definition.
+    confidence: observed
+
+  - id: GAP-003
+    severity: critical
+    category: security
+    title: Clinic console routes lack an authentication guard
+    detail: >-
+      Six clinic console routes are reachable without clinic-role authentication.
+      Open PR #3 (branch fix/clinic-route-auth-guard, opened 2026-08-03) adds a
+      ClinicGuard to close this and is unmerged as of 2026-08-04.
+    evidence: [workers/src/routes/clinic.ts, "PR #3"]
+    consequence: Unauthenticated or patient-role access to clinic-facing surfaces.
+    recommendation: Review and merge PR #3. This is the highest-priority open item in the repository.
+    confidence: observed
+
+  - id: GAP-004
+    severity: critical
+    category: cicd
+    title: No test or typecheck gate exists in the deployment pipeline
+    detail: >-
+      .github/workflows/deploy.yml fires on every push to main and deploys both
+      workers with no manual approval. It runs three integrity checks (repo
+      cleanliness, required files, import graph) and a production-bundle endpoint
+      guard, but never runs the 68-file test suite and never typechecks.
+    evidence: [.github/workflows/deploy.yml]
+    consequence: >-
+      A commit that breaks types or tests reaches production automatically. The
+      only thing standing between a bad commit and agsynergy.ca is the author.
+    recommendation: >-
+      Add typecheck and test jobs as required pre-deploy steps. This is the single
+      highest-leverage engineering change available in this repository.
+    confidence: observed
+
+  # -------------------------------------------------------------------- HIGH
+  - id: GAP-005
+    severity: high
+    category: architecture_reality_gap
+    title: The EPCL to WAS to WEF pipeline is entirely unreachable
+    detail: >-
+      The AI platform pipeline described across the documentation corpus as the
+      core of Hermes does not execute. All 11 combined feature flags across EPCL
+      and WAS default to false, no HTTP route reaches any of it, and WEF has no
+      execution engine at all — WEFDelegator contains an explicit TODO stating
+      delegation returns a simulated success. WAVE2_AUDIT_REPORT.md independently
+      records that the certified orchestration path was never invoked and the wave
+      was delivered as a direct coding task.
+    evidence:
+      - workers/src/platform/epcl/feature-flags.ts
+      - workers/src/platform/was/was-feature-flags.ts
+      - workers/src/platform/was/wef-delegator.ts
+      - WAVE2_AUDIT_REPORT.md
+    consequence: >-
+      A reader of the documentation will substantially overestimate platform
+      capability. Any plan that assumes autonomous EPCL-driven execution is
+      currently unfounded.
+    recommendation: >-
+      Decide explicitly whether this track is active or parked, and record the
+      decision as an ADR. If parked, say so at the top of the platform documents so
+      no future session mistakes design for capability.
+    confidence: observed
+
+  - id: GAP-006
+    severity: high
+    category: data_loss
+    title: In-memory singletons shadow live D1 tables
+    detail: >-
+      ConsentEngine and DelegationEngine are module-level singletons backed by Map
+      objects. The D1 `consents` and `delegations` tables exist but are not wired to
+      them. Messaging, appointments, timeline, and document metadata are likewise
+      in-memory. All of this data evaporates on Worker cold start.
+    evidence:
+      - workers/src/platform/trust/consent-engine.ts
+      - workers/src/platform/trust/delegation-engine.ts
+      - workers/src/platform/messaging/message-engine.ts
+      - workers/src/platform/appointments/index.ts
+    consequence: >-
+      Consent grants and delegations — records with compliance significance in a
+      clinical context — do not persist. Endpoints appear to work in testing and
+      lose data in production.
+    recommendation: >-
+      Wire the trust engines to their existing D1 tables first, since those carry
+      compliance weight. Then create a messages table and migrate messaging off
+      globalThis.
+    confidence: observed
+
+  - id: GAP-007
+    severity: high
+    category: security_architecture
+    title: Dual execution stack, one of which bypasses all runtime guards
+    detail: >-
+      Two execution paths coexist. Stack A applies ProviderRuntimeGuard with eight
+      fail-closed checks. Stack B, entered via executeCapability, bypasses all
+      runtime guards and tenant enforcement.
+    evidence: [docs/architecture/HERMES_PLATFORM_M1.md]
+    consequence: Security posture depends on which code path a caller happens to take.
+    recommendation: Route Stack B through the same guard, or delete it if Stack A supersedes it.
+    confidence: observed
+
+  - id: GAP-008
+    severity: high
+    category: infrastructure
+    title: NOTIFICATIONS D1 binding is declared but unprovisioned
+    detail: The binding exists in wrangler.jsonc for all environments with an empty database_id.
+    evidence: [wrangler.jsonc]
+    consequence: Any code touching this binding fails at runtime.
+    recommendation: Provision the database and populate the id, or remove the binding until it is needed.
+    confidence: observed
+
+  - id: GAP-009
+    severity: high
+    category: security
+    title: Frontend stores JWTs in localStorage
+    detail: A custom TokenStore persists bearer tokens to localStorage.
+    evidence: [artifacts/ags-fertility/]
+    consequence: Any XSS in the SPA yields full token theft. Elevated concern given patient data.
+    recommendation: Move to httpOnly cookies, or accept the risk explicitly and record it as an ADR.
+    confidence: observed
+
+  - id: GAP-010
+    severity: high
+    category: test_coverage
+    title: The frontend has zero tests
+    detail: 68 test files exist across the worker and library code; artifacts/ags-fertility has none. Coverage thresholds are not enforced anywhere.
+    evidence: [vitest.config.ts, workers/vitest.config.ts]
+    consequence: A 35-page patient-facing application with no automated verification.
+    confidence: observed
+
+  # ------------------------------------------------------------------ MEDIUM
+  - id: GAP-011
+    severity: medium
+    category: documentation_integrity
+    title: ADR-016 is used twice for two different decisions
+    detail: >-
+      docs/decisions/ADR-016-communication-centre.md and
+      docs/adr/ADR-016-project-state-execution-registry.md are unrelated decisions
+      sharing a number. The ADR namespace was split across two directories
+      mid-project, creating a five-ADR overlap zone.
+    evidence: [docs/decisions/, docs/adr/]
+    consequence: Citing "ADR-016" is ambiguous.
+    recommendation: >-
+      Adopt docs/adr/ as the single home from ADR-019 onward. Do not renumber
+      existing ADRs; disambiguate by full path. See docs/context/DECISION_LOG.md.
+    confidence: observed
+
+  - id: GAP-012
+    severity: medium
+    category: documentation_integrity
+    title: Root DECISIONS.md indexes only ADR-001
+    detail: 19 ADR entries exist across 18 files; DECISIONS.md lists one.
+    evidence: [DECISIONS.md]
+    consequence: The apparent decision index is effectively empty, so decisions are invisible to a new reader.
+    recommendation: docs/context/DECISION_LOG.md now serves as the index. DECISIONS.md is preserved unchanged.
+    confidence: observed
+
+  - id: GAP-013
+    severity: medium
+    category: documentation_drift
+    title: TASKS.md is frozen at Phase 1
+    detail: >-
+      TASKS.md shows EPIC-002-005 as Not Started and tracks no Wave work, while
+      ROADMAP.md and CURRENT_SPRINT.md declare Phase 2 complete across nine waves.
+    evidence: [TASKS.md, ROADMAP.md, CURRENT_SPRINT.md]
+    consequence: An AI session reading TASKS.md first will work from a state roughly nine waves stale.
+    recommendation: Mark TASKS.md historical at its head, or bring it current. Do not delete it.
+    confidence: observed
+
+  - id: GAP-014
+    severity: medium
+    category: documentation_drift
+    title: SECURITY.md is stale and understates the security posture
+    detail: >-
+      Dated 2026-07-18, it describes Phase 2 auth as upcoming and cites 141 tests.
+      By 2026-07-29 there were 614 passing tests and JWT auth live on 39 routes.
+    evidence: [SECURITY.md, SECURITY_CERTIFICATION_REPORT.md]
+    consequence: The document a security reviewer would open first is the most misleading one.
+    recommendation: Add a header pointing to SECURITY_CERTIFICATION_REPORT.md as current.
+    confidence: observed
+
+  - id: GAP-015
+    severity: medium
+    category: documentation_structure
+    title: Six sets of overlapping documentation directories
+    detail: >-
+      docs/operations/ (124 files) vs docs/ops/ (74 files); docs/decisions/ vs
+      docs/adr/; docs/company/ vs docs/organization/ vs docs/mission/;
+      docs/roadmaps/ vs root ROADMAP.md; docs/releases/ vs root release notes; and
+      three separate agent registries (docs/ops/AGENT_REGISTRY.md,
+      docs/ops/RELEASE_AGENT_REGISTRY.md, docs/reconciliation/HERMES_RUNTIME_AGENT_REGISTRY.md).
+    evidence: [docs/]
+    consequence: No reader can tell which of a pair is authoritative without reading both.
+    recommendation: See the consolidation table in docs/context/DOCUMENT_INDEX.md. Not executed.
+    confidence: observed
+
+  - id: GAP-016
+    severity: medium
+    category: release_hygiene
+    title: Version constant is stale
+    detail: workers/src/version.ts reports 1.1.0 while CHANGELOG.md is at 1.6.0. The version extraction script is not being run.
+    evidence: [workers/src/version.ts, CHANGELOG.md]
+    consequence: Deployed builds misreport their version, undermining incident triage.
+    recommendation: Run the extraction script in CI so the constant cannot drift.
+    confidence: observed
+
+  - id: GAP-017
+    severity: medium
+    category: migration_hygiene
+    title: Migration numbering is already broken in two places
+    detail: >-
+      Two files share the 0002_ prefix (0002_identity_core.sql and
+      0002_rbac_foundation.sql), and the notifications migration is named 011_
+      without the leading zero used elsewhere.
+    evidence: [workers/migrations/]
+    consequence: Ordering is ambiguous and lexical sorting misplaces 011_.
+    recommendation: >-
+      Do not renumber applied migrations. Fix the convention going forward — see
+      docs/context/ENGINEERING_GUIDE.md for the required format for the next migration.
+    confidence: observed
+
+  - id: GAP-018
+    severity: medium
+    category: cicd
+    title: CI overrides the repository gitleaks configuration
+    detail: security.yml runs gitleaks with its own config, so the custom Cloudflare-token rule in .gitleaks.toml never applies in CI.
+    evidence: [.github/workflows/security.yml, .gitleaks.toml]
+    consequence: The repository's most relevant secret rule is inactive precisely where it matters.
+    recommendation: Point the workflow at the repository config.
+    confidence: observed
+
+  - id: GAP-019
+    severity: medium
+    category: environment
+    title: Node version mismatch between development and CI
+    detail: Replit development runs Node 24; CI runs Node 22.
+    evidence: [.replit, .node-version, .github/workflows/]
+    consequence: Behaviour differences between local verification and the pipeline.
+    recommendation: Pin both to the same major version.
+    confidence: observed
+
+  - id: GAP-020
+    severity: medium
+    category: technical_debt
+    title: Duplicate type definitions and a latent circular dependency
+    detail: >-
+      AgentCapability, AgentState, ActivationState and AgentRecord are defined
+      independently in both shared/contracts/agent.ts and hermes/agents/registry.ts.
+      Two distinct Principal interfaces coexist in hermes/identity/types.ts and
+      hermes/contracts/platform-api.ts. Separately, the EPIC-007 plan describes
+      hermes/services/execution/ depending on workers/src/platform/{epcl,was}/,
+      which would invert the established workers -> hermes direction and create a
+      cycle if implemented as written.
+    evidence:
+      - shared/contracts/agent.ts
+      - hermes/agents/registry.ts
+      - hermes/identity/types.ts
+      - hermes/contracts/platform-api.ts
+      - EPIC-007 plan document
+    consequence: Types drift apart silently; the planned dependency would not build cleanly.
+    recommendation: >-
+      Make shared/contracts the single definition and have hermes import it. Revise
+      the EPIC-007 dependency direction before implementing it.
+    confidence: observed
+
+# ---------------------------------------------------------------------------
+# Also recorded, below the severity threshold above:
+#   - attached_assets/ contains 4 Replit paste-log text files that do not belong in version control.
+#   - Rate limiting is per-isolate only, with no cross-isolate enforcement.
+#   - Several clinic endpoints return hardcoded mock data.
+#   - The SSE notification stream emits one `connected` event and then stalls.
+#   - lib/api-zod and lib/db are deprecated per ADR-001 but still present, consumed
+#     only by the undeployed artifacts/api-server Express prototype.
+#   - The faqs and services D1 tables have no code consumers; the frontend uses static data.
+#   - hermes-website/ is not a frontend — it holds backend integration test scripts.

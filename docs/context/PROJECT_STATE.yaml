@@ -1,0 +1,269 @@
+# PROJECT_STATE.yaml — machine-readable snapshot of what this repository IS
+# Generated 2026-08-04 by an external AI engineering session.
+#
+# This file is the single entry point for a machine reader. It answers, in order:
+# what is this, what is deployed, what actually works, what does not, and where
+# do I look next. Where prose documentation elsewhere in the repository conflicts
+# with this file, this file records BOTH and names the discrepancy — it does not
+# quietly overwrite history.
+#
+# Update obligations: see docs/context/CONTEXT_MAINTENANCE.md
+schema_version: 1
+generated: 2026-08-04
+repository: kumarlogan/concierge-website
+default_branch: main
+confidence_legend:
+  observed: directly read from repository files
+  inferred: reasoned from repository evidence
+  unknown: not determinable from the repository
+
+# ---------------------------------------------------------------------------
+identity:
+  repository_name: concierge-website
+  former_repository_name: hermes-website
+  renamed_by: GOV-001
+  renamed: 2026-07
+  evidence: NAMING_STANDARDS.md, GOV-001_MIGRATION_CHECKLIST.md
+  confidence: observed
+
+  # These four names are used interchangeably across the documentation corpus
+  # and are the single most common source of confusion for a new reader.
+  taxonomy:
+    AGS:
+      meaning: The company.
+      confidence: observed
+    Hermes:
+      meaning: >-
+        The AI engineering platform and control plane used to build and operate
+        products. Lives in hermes/ and workers/src/platform/.
+      confidence: observed
+    Concierge:
+      meaning: >-
+        The internal product name. Used throughout engineering and governance
+        documentation.
+      confidence: observed
+    "AG Synergy":
+      meaning: >-
+        The public-facing patient brand and domain (agsynergy.ca). What end users
+        actually see.
+      confidence: observed
+  taxonomy_source: NAMING_STANDARDS.md (2026-07-26)
+  taxonomy_note: >-
+    The live Cloudflare Worker serving the site is still named `hermes-website`;
+    the worker rename was deliberately deferred during GOV-001. Do not assume the
+    worker name reflects current product naming.
+
+# ---------------------------------------------------------------------------
+what_this_is:
+  summary: >-
+    A pnpm monorepo containing a patient-facing fertility clinic web application
+    (AG Synergy) built on Cloudflare Workers + D1 + R2, together with an ambitious
+    AI engineering platform layer (Hermes) intended to plan and execute engineering
+    work autonomously.
+  two_tracks:
+    - track: product
+      description: >-
+        The AGS Fertility Concierge patient portal and clinic console. This track is
+        live in production and carries real functionality.
+      status: operational
+      confidence: observed
+    - track: platform
+      description: >-
+        The Hermes AI workforce platform — EPCL planning, WAS activation, WEF
+        execution, Trust Runtime, PSER project state. Extensively designed,
+        substantially coded, and largely NOT reachable at runtime.
+      status: largely_dormant
+      confidence: observed
+  critical_reader_note: >-
+    The volume and confidence of documentation about the platform track is not
+    proportional to how much of it executes. Treat platform documentation as design
+    intent unless ARCHITECTURE.yaml marks the subsystem `production`.
+
+# ---------------------------------------------------------------------------
+deployed_state:
+  hosting: Cloudflare
+  workers:
+    - name: hermes-website
+      serves: [agsynergy.ca, www.agsynergy.ca]
+      source: artifacts/ags-fertility (built SPA)
+      note: Name is legacy; see identity.taxonomy_note.
+      confidence: observed
+    - name: agsynergy-api
+      serves: [api.agsynergy.ca]
+      source: workers/
+      confidence: observed
+  bindings:
+    - name: DB
+      type: d1
+      resource: agsynergy-db
+      status: provisioned
+      confidence: observed
+    - name: DOCUMENT_STORAGE
+      type: r2
+      status: provisioned
+      confidence: observed
+    - name: NOTIFICATIONS
+      type: d1
+      resource: agsynergy-notifications
+      status: UNPROVISIONED
+      detail: database_id is an empty string in all environments; accessing this binding fails at runtime.
+      evidence: wrangler.jsonc
+      confidence: observed
+  deploy_trigger: Every push to main auto-deploys both workers. No manual approval gate.
+  evidence: .github/workflows/deploy.yml, wrangler.jsonc
+  confidence: observed
+
+# ---------------------------------------------------------------------------
+scale:
+  workers_typescript_files: 199
+  hermes_files: 222
+  platform_subsystems: 15
+  http_endpoints: ~110
+  d1_tables: 68
+  migrations: 12
+  test_files: 68
+  frontend_pages: 35
+  markdown_files_root: 47
+  markdown_files_docs_tree: 467
+  docs_subdirectories: 26
+  confidence: observed
+  note: >-
+    The documentation corpus (514 markdown files) is larger than the code surface.
+    This is the defining characteristic of the repository and the reason this
+    context layer exists.
+
+# ---------------------------------------------------------------------------
+# Capability status. This is the section to read before believing any claim of
+# completeness made elsewhere in the repository.
+capabilities:
+  implemented:
+    - name: Identity and authentication
+      detail: End-to-end auth with D1 backing, JWT (RS256) key management, magic link, OAuth/OIDC, MFA, password flows.
+      evidence: workers/src/platform/identity/
+      confidence: observed
+    - name: Trust runtime
+      detail: Six engines (trust scoring, consent, policy, risk, delegation, decision) wired to 11 JWT-gated routes.
+      caveat: AUTHORIZATION_ENGINE is never constructed — see known_gaps.
+      evidence: workers/src/platform/trust/
+      confidence: observed
+    - name: Workflow engine
+      detail: D1-backed event-sourced engine with 30+ live routes covering task orchestration, approval gates, timers.
+      evidence: workers/src/platform/workflow/
+      confidence: observed
+    - name: Document management
+      detail: R2-backed storage with consent and policy integration.
+      caveat: Document metadata is held in an in-process singleton, not D1.
+      evidence: workers/src/platform/documents/
+      confidence: observed
+    - name: Patient portal frontend
+      detail: React + Vite SPA, 35+ pages, patient and clinic workspaces, Waves 5-7 promoted to production.
+      evidence: artifacts/ags-fertility/
+      confidence: observed
+    - name: Telegram operations surface
+      detail: Webhook routes and admin bot for operating the site via Telegram.
+      evidence: workers/src/routes/telegram.ts, workers/src/routes/adminBot.ts
+      confidence: observed
+
+  partially_implemented:
+    - name: Notifications
+      detail: D1 delivery-record store exists; actual FCM/SES/Twilio delivery is a simulated stub. Target D1 binding is unprovisioned.
+      evidence: workers/src/platform/notifications/
+      confidence: observed
+    - name: Appointments
+      detail: Fully routed but backed by an in-memory engine on globalThis. Data does not survive isolate recycle.
+      evidence: workers/src/platform/appointments/
+      confidence: observed
+    - name: Messaging
+      detail: Fully routed, in-memory only. No messages table exists in any migration.
+      evidence: workers/src/platform/messaging/
+      confidence: observed
+    - name: Clinic console
+      detail: Routes exist; several return hardcoded mock data. Auth guard missing (open PR #3 addresses this).
+      evidence: workers/src/routes/clinic.ts, workers/src/routes/clinic-messages.ts
+      confidence: observed
+
+  built_but_dormant_note: >-
+    Substantial, well-structured code with no runtime reachability. Not dead code —
+    deliberately gated — but a reader must not assume it runs.
+  built_but_dormant:
+    - name: EPCL (Executive Planning and Control Layer)
+      detail: Complete 12-stage planning workflow with rich types. No HTTP route. All feature flags default false.
+      evidence: workers/src/platform/epcl/, workers/src/platform/epcl/feature-flags.ts
+      confidence: observed
+    - name: WAS (Workforce Activation Service)
+      detail: Full 7-state activation machine with observability and duplicate protection. No HTTP route. Flags default false.
+      evidence: workers/src/platform/was/
+      confidence: observed
+    - name: WEF (Workforce Execution Framework)
+      detail: No execution engine exists. WEFDelegator carries an explicit TODO stating delegation returns simulated success only.
+      evidence: workers/src/platform/was/wef-delegator.ts
+      confidence: observed
+    - name: Timeline, Providers, Credentials, Release
+      detail: In-memory, no D1 backing, no HTTP exposure.
+      confidence: observed
+  dormant_flag_count: 11
+  dormant_summary: >-
+    The EPCL -> WAS -> WEF pipeline, described across the documentation corpus as the
+    core of the AI platform, is entirely unreachable in production. WAVE2_AUDIT_REPORT.md
+    independently confirms the certified orchestration path was never invoked; that
+    wave was delivered as a direct coding task instead.
+
+  missing:
+    - name: Automated quality gate in CI
+      detail: No test run and no typecheck in the deploy pipeline.
+      confidence: observed
+    - name: Frontend test coverage
+      detail: Zero tests in artifacts/ags-fertility.
+      confidence: observed
+    - name: Migration rollback capability
+      detail: Forward-only SQL, applied manually. No down migrations, no CI application step.
+      confidence: observed
+    - name: Global rate limiting
+      detail: Rate limiter is per-isolate only; no cross-isolate enforcement.
+      evidence: workers/src/middleware/rateLimit.ts
+      confidence: observed
+
+# ---------------------------------------------------------------------------
+engineering_process:
+  workflow: trunk-based
+  direct_to_main_share: ~98%
+  code_review: >-
+    PRs are exceptional and self-merged without external review. One PR was merged by
+    its author two minutes after opening.
+  work_item_scheme: [EPIC-NNN-NNN, "Wave N", GOV-NNN, "M1-M9"]
+  commit_convention: Conventional prefixes (fix/feat/docs/ci) layered over EPIC and Wave labels; ~28% of commits use no prefix.
+  issue_tracker: >-
+    0 GitHub Issues. Work is tracked in markdown documents, which is a primary cause of
+    the documentation drift catalogued in KNOWN_GAPS.yaml.
+  authorship: Predominantly AI-assisted. Commit history carries AI assistant signatures throughout.
+  primary_dev_environment: Replit
+  confidence: observed
+
+# ---------------------------------------------------------------------------
+documentation_health:
+  total_markdown_files: 514
+  index_existed_before_this_layer: false
+  authority_model_existed_before: false
+  assessment: >-
+    The repository does not suffer from missing documentation. It suffers from
+    documentation volume without navigation or authority ranking, which causes AI
+    sessions to act on superseded documents. Roughly half of the 47 root markdown
+    files are point-in-time historical records that read like current-state
+    documents.
+  known_conflict_count: 7
+  conflicts_index: docs/context/DOCUMENT_INDEX.md
+  confidence: observed
+
+# ---------------------------------------------------------------------------
+where_to_look_next:
+  architecture: docs/context/ARCHITECTURE.yaml
+  what_is_broken: docs/context/KNOWN_GAPS.yaml
+  what_is_in_flight: docs/context/CURRENT_WORK.yaml
+  plans_and_waves: docs/context/ROADMAP.yaml
+  how_to_work_here: docs/context/ENGINEERING_GUIDE.md
+  which_document_to_trust: docs/context/DOCUMENT_INDEX.md
+  what_was_decided: docs/context/DECISION_LOG.md
+  unfamiliar_terms: docs/context/GLOSSARY.md
+  how_to_collaborate_as_an_ai: docs/context/AI_COLLABORATION.md
+  how_to_keep_this_accurate: docs/context/CONTEXT_MAINTENANCE.md
+  full_evidence_base: docs/engineering/reports/

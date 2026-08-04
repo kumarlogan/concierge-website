@@ -8,6 +8,28 @@
 **Public Brand:** AG Synergy  
 **Last Deployed:** See [deployment history](./CHANGELOG.md)
 
+## 🧭 AI Context Layer — start here
+
+**New to this repository, or starting an AI engineering session? Read
+[`docs/context/`](./docs/context/) first.**
+
+This repository contains over 500 markdown files. The context layer is the
+machine-readable index that tells you what is current, what is historical, and what
+actually runs — so you do not have to explore to find out.
+
+| Read first | Purpose |
+|---|---|
+| [`docs/context/README.md`](./docs/context/README.md) | Entry point and reading order |
+| [`docs/context/PROJECT_STATE.yaml`](./docs/context/PROJECT_STATE.yaml) | What is deployed and what actually works |
+| [`docs/context/KNOWN_GAPS.yaml`](./docs/context/KNOWN_GAPS.yaml) | Known defects — check before reporting one |
+| [`docs/context/ENGINEERING_GUIDE.md`](./docs/context/ENGINEERING_GUIDE.md) | How to set up, build, test, and deploy |
+| [`docs/context/DOCUMENT_INDEX.md`](./docs/context/DOCUMENT_INDEX.md) | Which document to trust, and which are historical records |
+
+Supporting engineering reports: [`docs/engineering/reports/`](./docs/engineering/reports/).
+
+If you change the repository, [`docs/context/CONTEXT_MAINTENANCE.md`](./docs/context/CONTEXT_MAINTENANCE.md)
+describes what you are obliged to update alongside it.
+
 ## Quick Links
 - [Project Constitution](./PROJECT.md)
 - [Product Boundaries](./PRODUCT_BOUNDARIES.md)
@@ -35,4 +57,5 @@
 | LLM | DeepSeek |
 
 ## Getting Started
-*Developer onboarding guide will be added in Epic 1.*
+See [`docs/context/ENGINEERING_GUIDE.md`](./docs/context/ENGINEERING_GUIDE.md) for
+environment setup, commands, conventions, and deployment.
