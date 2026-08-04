@@ -110,6 +110,7 @@ import { registerTrustRuntimeRoutes } from "./routes/trustRuntime.js";
 // Trust engines are exported as module-level singletons by their own modules.
 // We wire those SAME instances into env (single source of truth) rather than
 // constructing duplicates. DocumentService has no singleton, so we construct one.
+import { D1ConsentEngine } from "./platform/trust/d1-consent-engine.js"; // D1ConsentEngine replaces in-memory singleton (PRG-011)
 import { consentEngine } from "./platform/trust/consent-engine.js";
 import { trustEngine } from "./platform/trust/trust-engine.js";
 import { policyEngine } from "./platform/trust/policy-engine.js";
@@ -263,7 +264,12 @@ function wirePlatformEngines(env: Env): void {
   // every request because `env` is rebuilt per invocation, but the singleton
   // DocumentService instance is shared, preserving cross-request document state.
   const target = env as unknown as Record<string, unknown>;
-  target.CONSENT_ENGINE = consentEngine;
+  // D1ConsentEngine replaces in-memory singleton (PRG-011)
+  target.CONSENT_ENGINE = new D1ConsentEngine(env.DB);
+  // KNOWN LIMITATION: decisionEngine still holds a reference to the old in-memory
+  // consentEngine singleton. Consent evaluation inside decisionEngine therefore
+  // does not go through D1 until decisionEngine is refactored to accept injected
+  // dependencies (tracked separately).
   target.TRUST_ENGINE = trustEngine;
   target.POLICY_ENGINE = policyEngine;
   target.RISK_ENGINE = riskEngine;

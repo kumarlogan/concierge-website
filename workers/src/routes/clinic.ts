@@ -33,71 +33,93 @@ function error(message: string, status = 400): Response {
   return json({ error: message }, status);
 }
 
-// ── Mock patient data (in-memory for demonstration) ─────────
+// ── Patient Record type (D1-backed) ─────────────────────────
 
 interface PatientRecord {
   id: string;
-  name: string;
-  email: string;
-  status: string;
-  lastAppointment: string | null;
-  nextAppointment: string | null;
-  providerId: string;
+  name: string;        // display_name ?? 'Unknown'
+  email: string;       // email ?? ''
+  status: string;      // identity status: 'registered'|'verified'|'active' etc.
+  createdAt: string;
+  lastLoginAt: string | null;
 }
-
-const _mockPatients: PatientRecord[] = [
-  { id: "patient-001", name: "Alice Johnson", email: "alice@example.com", status: "active", lastAppointment: "2026-07-20T10:00:00Z", nextAppointment: "2026-08-03T14:00:00Z", providerId: "provider-001" },
-  { id: "patient-002", name: "Bob Smith", email: "bob@example.com", status: "active", lastAppointment: "2026-07-18T09:00:00Z", nextAppointment: "2026-08-01T11:00:00Z", providerId: "provider-001" },
-  { id: "patient-003", name: "Carol Davis", email: "carol@example.com", status: "pending", lastAppointment: null, nextAppointment: "2026-07-28T15:00:00Z", providerId: "provider-002" },
-  { id: "patient-004", name: "David Wilson", email: "david@example.com", status: "completed", lastAppointment: "2026-06-15T10:00:00Z", nextAppointment: null, providerId: "provider-001" },
-  { id: "patient-005", name: "Eva Martinez", email: "eva@example.com", status: "active", lastAppointment: "2026-07-25T13:00:00Z", nextAppointment: "2026-08-10T09:00:00Z", providerId: "provider-002" },
-  { id: "patient-006", name: "Frank Brown", email: "frank@example.com", status: "inactive", lastAppointment: "2026-05-01T10:00:00Z", nextAppointment: null, providerId: "provider-002" },
-  { id: "patient-007", name: "Grace Lee", email: "grace@example.com", status: "active", lastAppointment: "2026-07-22T11:00:00Z", nextAppointment: "2026-08-05T10:00:00Z", providerId: "provider-001" },
-  { id: "patient-008", name: "Henry Kim", email: "henry@example.com", status: "pending", lastAppointment: null, nextAppointment: "2026-07-30T14:00:00Z", providerId: "provider-001" },
-];
 
 // ── Handler Implementations ─────────────────────────────────
 
 async function _listPatients(
   request: Request,
-  _env: Env,
+  env: Env,
   _params: Record<string, string>,
 ): Promise<Response> {
   const url = new URL(request.url);
   const status = url.searchParams.get("status");
-  const providerId = url.searchParams.get("providerId");
   const search = url.searchParams.get("search")?.toLowerCase();
+  const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50", 10), 100);
+  const offset = parseInt(url.searchParams.get("offset") ?? "0", 10);
 
-  let patients = [..._mockPatients];
+  let sql = `SELECT id, display_name, email, status, created_at, last_login_at
+             FROM identities WHERE identity_type = 'patient'`;
+  const params: (string | number)[] = [];
 
   if (status) {
-    patients = patients.filter((p) => p.status === status);
+    sql += ` AND status = ?`;
+    params.push(status);
   }
-  if (providerId) {
-    patients = patients.filter((p) => p.providerId === providerId);
-  }
+  // search: approximate match via LIKE on display_name or email
   if (search) {
-    patients = patients.filter(
-      (p) =>
-        p.name.toLowerCase().includes(search) ||
-        p.email.toLowerCase().includes(search) ||
-        p.id.toLowerCase().includes(search),
-    );
+    sql += ` AND (LOWER(display_name) LIKE ? OR LOWER(email) LIKE ?)`;
+    params.push(`%${search}%`, `%${search}%`);
   }
 
-  return json({ patients });
+  const countSql = sql.replace(
+    "SELECT id, display_name, email, status, created_at, last_login_at",
+    "SELECT COUNT(*) AS cnt"
+  );
+  const countRow = await env.DB.prepare(countSql).bind(...params).first<{ cnt: number }>();
+  const total = countRow?.cnt ?? 0;
+
+  sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
+
+  const rows = await env.DB.prepare(sql).bind(...params).all<{
+    id: string; display_name: string | null; email: string | null;
+    status: string; created_at: string; last_login_at: string | null;
+  }>();
+
+  const patients = (rows.results ?? []).map(r => ({
+    id: r.id,
+    name: r.display_name ?? "Unknown",
+    email: r.email ?? "",
+    status: r.status,
+    createdAt: r.created_at,
+    lastLoginAt: r.last_login_at,
+  }));
+
+  return json({ patients, total, limit, offset });
 }
 
 async function _getPatient(
   _request: Request,
-  _env: Env,
+  env: Env,
   params: Record<string, string>,
 ): Promise<Response> {
-  const patient = _mockPatients.find((p) => p.id === params.id);
-  if (!patient) {
-    return error("Patient not found", 404);
-  }
-  return json({ patient });
+  const row = await env.DB.prepare(
+    `SELECT id, display_name, email, status, created_at, last_login_at
+     FROM identities WHERE id = ? AND identity_type = 'patient' LIMIT 1`
+  ).bind(params.id).first<{ id: string; display_name: string | null; email: string | null; status: string; created_at: string; last_login_at: string | null }>();
+
+  if (!row) return error("Patient not found", 404);
+
+  return json({
+    patient: {
+      id: row.id,
+      name: row.display_name ?? "Unknown",
+      email: row.email ?? "",
+      status: row.status,
+      createdAt: row.created_at,
+      lastLoginAt: row.last_login_at,
+    }
+  });
 }
 
 async function _getClinicSchedule(

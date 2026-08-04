@@ -74,64 +74,34 @@ const _messageTemplates: MessageTemplate[] = [
   },
 ];
 
-// ── Triage Queue ───────────────────────────────────────────
-
-interface TriageItem {
-  threadId: string;
-  patientId: string;
-  patientName: string;
-  lastMessage: string;
-  lastMessageAt: string;
-  lastMessageType: string;
-  unreadCount: number;
-  priority: "high" | "medium" | "low";
-  flagged: boolean;
-}
-
-const _mockTriageQueue: TriageItem[] = [
-  {
-    threadId: "triage-001",
-    patientId: "patient-001",
-    patientName: "Alice Johnson",
-    lastMessage: "I'm experiencing some side effects from the medication. Should I be concerned?",
-    lastMessageAt: "2026-07-27T09:30:00Z",
-    lastMessageType: "text",
-    unreadCount: 2,
-    priority: "high",
-    flagged: true,
-  },
-  {
-    threadId: "triage-002",
-    patientId: "patient-002",
-    patientName: "Bob Smith",
-    lastMessage: "Can I reschedule my appointment next week?",
-    lastMessageAt: "2026-07-26T14:15:00Z",
-    lastMessageType: "text",
-    unreadCount: 1,
-    priority: "medium",
-    flagged: false,
-  },
-  {
-    threadId: "triage-003",
-    patientId: "patient-005",
-    patientName: "Eva Martinez",
-    lastMessage: "Thank you for the information!",
-    lastMessageAt: "2026-07-25T16:00:00Z",
-    lastMessageType: "text",
-    unreadCount: 0,
-    priority: "low",
-    flagged: false,
-  },
-];
-
 // ── Handler Implementations ─────────────────────────────────
 
 async function _getTriageQueue(
   _request: Request,
-  _env: Env,
+  env: Env,
   _params: Record<string, string>,
 ): Promise<Response> {
-  return json({ queue: _mockTriageQueue });
+  // Build triage from real patients. Message counts are unavailable until
+  // messaging is migrated to D1 (tracked as a separate backlog item).
+  const rows = await env.DB.prepare(
+    `SELECT id, display_name, email, status, last_login_at, updated_at
+     FROM identities
+     WHERE identity_type = 'patient' AND status IN ('verified', 'active')
+     ORDER BY updated_at DESC LIMIT 50`
+  ).all<{ id: string; display_name: string | null; email: string | null; status: string; last_login_at: string | null; updated_at: string }>();
+
+  const queue = (rows.results ?? []).map(r => ({
+    patientId: r.id,
+    patientName: r.display_name ?? "Unknown",
+    email: r.email ?? "",
+    status: r.status,
+    lastActivityAt: r.last_login_at ?? r.updated_at,
+    unreadCount: 0,           // in-memory messaging; count not available from D1
+    priority: "medium" as const,
+    flagged: false,
+  }));
+
+  return json({ queue });
 }
 
 async function _getMessageTemplates(
@@ -212,20 +182,25 @@ async function _flagThread(
 
 async function _getPatientConversations(
   _request: Request,
-  _env: Env,
+  env: Env,
   _params: Record<string, string>,
 ): Promise<Response> {
-  // In production this would aggregate all patient conversations
-  return json({
-    conversations: _mockTriageQueue.map((item) => ({
-      threadId: item.threadId,
-      patientId: item.patientId,
-      patientName: item.patientName,
-      lastMessage: item.lastMessage,
-      lastMessageAt: item.lastMessageAt,
-      unreadCount: item.unreadCount,
-    })),
-  });
+  const rows = await env.DB.prepare(
+    `SELECT id, display_name, email, updated_at
+     FROM identities WHERE identity_type = 'patient'
+     ORDER BY updated_at DESC LIMIT 50`
+  ).all<{ id: string; display_name: string | null; email: string | null; updated_at: string }>();
+
+  const conversations = (rows.results ?? []).map(r => ({
+    threadId: `thread-${r.id}`,
+    patientId: r.id,
+    patientName: r.display_name ?? "Unknown",
+    lastMessage: null,
+    lastMessageAt: r.updated_at,
+    unreadCount: 0,
+  }));
+
+  return json({ conversations });
 }
 
 // ── Route Registration ─────────────────────────────────────
