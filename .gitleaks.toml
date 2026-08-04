@@ -19,5 +19,8 @@ paths = [
   '''docs/operations/EPIC-002-006A2_SCRIPT_REVIEW\.md''',
   '''workers/docs/DEPLOYMENT\.md''',
   '''CHANGELOG\.md''',
+  # False positives: test code demonstrating secret detection patterns
+  '''workers/src/platform/identity/jwt-manager\.ts''',
+  '''workers/tests/hermes\.006h\.security-hardening\.test\.ts''',
 ]
 # The literal token value itself must NEVER be allowed — only pattern references.
