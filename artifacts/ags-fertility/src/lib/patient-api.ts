@@ -329,9 +329,13 @@ export const patientAuth = {
     });
   },
 
-  /** Request email verification */
-  async requestEmailVerification(identityId: string, email: string): Promise<{ token: string }> {
-    return apiRequest<{ token: string }>("/identity/email/verify", {
+  /**
+   * Request email verification.
+   * Backend returns { success: true, message: "Verification email sent" } — no token.
+   * PRG-004: fixed return type from { token: string } to void.
+   */
+  async requestEmailVerification(identityId: string, email: string): Promise<void> {
+    await apiRequest("/identity/email/verify", {
       body: { identityId, email },
     });
   },

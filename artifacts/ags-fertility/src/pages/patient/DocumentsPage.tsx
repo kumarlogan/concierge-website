@@ -41,6 +41,7 @@ import {
 } from "@/lib/document-status";
 import {
   fetchDocuments,
+  uploadDocument,
   downloadDocument,
   getPreviewUrl,
   shareDocument,
@@ -253,10 +254,8 @@ function UploadDialog({
     setProgress(0);
 
     try {
-      const init = await fetchDocuments(); // TODO: replace with initiateUpload for proper upload flow
-      // In production: initiateUpload → uploadToPresignedUrl
-      toast.success(`Uploading ${file.name}...`);
-      setProgress(100);
+      await uploadDocument(file, selectedCategory, (pct) => setProgress(pct));
+      toast.success(`${file.name} uploaded successfully.`);
       invalidateDocumentCache();
       onUploaded();
       onOpenChange(false);
