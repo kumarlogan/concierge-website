@@ -45,7 +45,7 @@ import {
   type Notification,
 } from "@/lib/message-api";
 import { getNotifIcon, getNotifIconColor } from "@/components/notifications/NotifIcon";
-import { NotificationPreferencesDialog } from "@/components/notifications/NotificationPreferencesDialog";
+import NotificationPreferencesDialog from "@/components/notifications/NotificationPreferencesDialog";
 
 type FilterType = "all" | "unread" | "appointment_reminder" | "medication_reminder" | "timeline_update" | "lab_result" | "document_shared" | "clinic_announcement" | "system";
 

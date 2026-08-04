@@ -11,442 +11,121 @@ confidence_legend:
   unknown: not determinable from the repository
 
 as_of: "2026-08-04"
-basis: >
-  Commit history on main branch through 2026-08-04 (150 commits fetched,
-  range 2026-07-19 to 2026-08-04). Open PR list via GitHub API.
-  Branch list via GitHub API. Discovery files produced by external AI
-  engineering session: I_repo_activity.md, G_root_docs_catalogue.md,
-  H_docs_tree_catalogue.md, C_platform_subsystems.md.
-  Wave 2 implementation context added 2026-08-04.
-
-staleness_warning: >
-  This file is a point-in-time snapshot captured on 2026-08-04.
-  It will become stale as soon as new commits land on main or PRs are
-  merged/opened. To re-derive the current state, run the following:
-
-  1. List recent commits on main (last 20):
-     ExecuteIntegration({ action: "github__list_commits",
-       params: { owner: "kumarlogan", repo: "concierge-website",
-                 sha: "main", per_page: 20 } })
-
-  2. List open pull requests:
-     ExecuteIntegration({ action: "github__list_pull_requests",
-       params: { owner: "kumarlogan", repo: "concierge-website",
-                 state: "open" } })
-
-  3. List branches:
-     ExecuteIntegration({ action: "github__list_branches",
-       params: { owner: "kumarlogan", repo: "concierge-website" } })
-
-  Then compare resulting SHAs and PR states against this file.
-
 pending_context_updates: >
-  KNOWN_GAPS.yaml and PRODUCTION_CHECKLIST.md should be updated after
-  Wave 1 and Wave 2 PRs are merged to mark PRG-001 through PRG-005,
-  PRG-013, PRG-020, PRG-021, PRG-031..033 as resolved.
+  After PR #7 merges: update PROJECT_STATE.yaml to reflect consent and timeline as D1-backed; tighten known_gaps for PRG-006/009/010/011/014.
+  KNOWN_GAPS.yaml should mark PRG-008, PRG-004, PRG-022 as resolved after PR #6 merges.
+  PRG-011 blocked pending Hermes live consents schema verification.
 
-# ─────────────────────────────────────────────
-# ACTIVE STREAMS
-# ─────────────────────────────────────────────
 active_streams:
+  - id: stream_wave3b_d1_persistence
+    name: "Wave 3B — D1 Timeline and Consent Engines"
+    description: >
+      D1TimelineEngine + timeline schema migration, clinic portal real D1 patient queries,
+      D1ConsentEngine + consent schema reconciliation. Addressing PRG-006, PRG-009, PRG-010, PRG-011, PRG-014.
+    apparent_status: >
+      Branch eng/wave-3b-d1-persistence open as PR #7. Awaiting merge.
+    confidence: observed
+
+  - id: stream_wave3a_patient_journey
+    name: "Wave 3A implementation"
+    description: >
+      Document upload fix, email verification page, workflow D1 persistence.
+      Addressing PRG-004, PRG-008, PRG-022.
+    apparent_status: >
+      Branch eng/wave-3a-patient-journey open as PR #6. Awaiting CI and merge.
+    confidence: observed
+
   - id: stream_wave2_critical_fixes
     name: "Wave 2 — Critical Security and Operational Fixes"
     description: >
-      Implementation of 6 high-priority production readiness gaps on branch
-      eng/wave-2-critical-fixes, opened as PR #5. Fixes include:
-      PRG-013 (AUTHORIZATION_ENGINE wired via adapter),
-      PRG-033 (ownership checks on consent history and permissions endpoints),
-      PRG-020 (fire-and-forget audit_log on consultation submission),
-      PRG-021 (audit log on lead status changes),
-      PRG-003 (dev-mode email auto-verify removed),
-      PRG-005 (missing /patient/mfa route added + MfaVerifyPage created).
-    files_areas_touched:
-      - "workers/src/index.ts (AUTHORIZATION_ENGINE adapter wiring)"
-      - "workers/src/routes/trustRuntime.ts (ownership checks)"
-      - "workers/src/routes/consultations.ts (audit_log on submission)"
-      - "workers/src/routes/ops.ts (audit log on lead status changes)"
-      - "artifacts/ags-fertility/src/pages/patient/RegisterPage.tsx (dev-mode auto-verify removed)"
-      - "artifacts/ags-fertility/src/App.tsx (MFA route added)"
-      - "artifacts/ags-fertility/src/pages/patient/MfaVerifyPage.tsx (new file)"
+      Implementation of 6 high-priority fixes on branch eng/wave-2-critical-fixes.
     apparent_status: >
-      Branch eng/wave-2-critical-fixes open as PR #5. 7 files committed.
-      Awaiting review and merge to main.
+      Branch eng/wave-2-critical-fixes open as PR #5. Awaiting merge.
     confidence: observed
 
   - id: stream_wave1_authz_ci_gate
     name: "Wave 1 — Authorization and CI Gate"
     description: >
-      IDOR fixes in wave7.ts, authorization middleware, and CI gate.
-      Addresses PRG-001, PRG-002, PRG-015/016/017/018/031/032/033 (partly).
-      Open as PR #4 on branch eng/wave-1-authz-and-ci-gate. Not yet merged.
-    files_areas_touched:
-      - "workers/src/routes/wave7.ts (IDOR ownership checks)"
-      - "workers/src/middleware/ (authorization middleware)"
-      - ".github/workflows/ (CI gate)"
+      IDOR fixes and CI gate on branch eng/wave-1-authz-and-ci-gate.
     apparent_status: >
       Branch eng/wave-1-authz-and-ci-gate open as PR #4. Awaiting merge.
     confidence: observed
 
-  - id: stream_wave8_reconciliation
-    name: "Wave 8 Workflow & Automation Engine reconciliation + EPIC-015 back-integration"
-    description: >
-      Engineering reconciliation for Wave 8 (Workflow & Automation Engine),
-      including knowledge-capture documents, executive report, and EPIC-015
-      back-integration. This is documentation/governance work accompanying
-      the completed Wave 8 implementation.
-    evidence:
-      commits:
-        - sha: "8c65571"
-          date: "2026-08-03"
-          message: "docs: Wave 8 reconciliation — knowledge capture, executive report, EPIC-015 back"
-          author: kumarlogan
-        - sha: "8175ddd"
-          date: "2026-08-03"
-          message: "Wave 8: Workflow & Automation Engine — Engineering Reconciliation"
-          author: kumarlogan
-    files_areas_touched:
-      - "docs/wave8/ (Wave 8 completion, reconciliation, knowledge, performance reports)"
-      - "EPIC-015 back-integration documents"
-    apparent_status: >
-      Likely complete as of 2026-08-03. Two commits on that date appear to
-      close out Wave 8 reconciliation. No further Wave 8 commits on 2026-08-04.
-    confidence: observed
-
-  - id: stream_wave567_production_promotion
-    name: "Wave 5–7 production promotion of the patient portal"
-    description: >
-      Bulk production promotion of Wave 5 (Document Centre), Wave 6
-      (Communication Centre — v1.6.0), and Wave 7 (Notification & Engagement
-      Platform) patient portal features, plus CI/deployment hardening.
-    evidence:
-      commits:
-        - sha: "0e692e4"
-          date: "2026-08-02"
-          message: "Wave 7: Notification & Engagement Platform + Operational Fix 001"
-          author: kumarlogan
-        - sha: "ab14b10"
-          date: "2026-08-02"
-          message: "release: AGS Fertility v1.6.0 — Wave 6 Production Promotion"
-          author: kumarlogan
-    files_areas_touched:
-      - "workers/src/platform/notifications/ (delivery engine, D1 store)"
-      - "workers/src/platform/documents/ (DocumentService, R2 buckets)"
-      - "wrangler.toml (R2 bucket config, aliases)"
-      - "docs/ops/ (Wave 5/6/7 PO review packages)"
-      - "CHANGELOG.md (v1.6.0 entry)"
-    apparent_status: >
-      Substantially complete as of 2026-08-02. Active work shifted to
-      Wave 8 reconciliation on 2026-08-03 and security fixes on 2026-08-04.
-    confidence: observed
-
-# NOTE: stream_cloudflare_zero_trust was completed earlier (multiple iterative
-# fix commits on 2026-08-04, org renamed to 'AG Synergy', idempotent app
-# lookup implemented). Removed from active_streams as of this update.
-
-# ─────────────────────────────────────────────
-# OPEN PULL REQUESTS
-# ─────────────────────────────────────────────
 open_pull_requests:
-  - number: 5
-    title: "fix(security+ops): Wave 2 — critical fixes (PRG-013, PRG-033, PRG-020, PRG-021, PRG-003, PRG-005)"
-    branch: "eng/wave-2-critical-fixes"
-    opened_date: "2026-08-04"
-    opened_by: kumarlogan
-    merged: false
+  - number: 7
+    title: "Wave 3B — D1 Timeline and Consent Engines"
+    branch: "eng/wave-3b-d1-persistence"
+    opened: "2026-08-04"
     priority: HIGH
-    priority_note: >
-      Contains 6 critical/high-priority fixes: authorization engine wiring,
-      ownership checks on trust endpoints, audit logging for consultations
-      and lead ops, dev-mode email auto-verify removal, and MFA login route.
-      All 7 files committed; awaiting review and merge.
-    what_it_changes: >
-      PRG-013: AUTHORIZATION_ENGINE wired via adapter in workers/src/index.ts.
-      PRG-033: Ownership checks added to GET /consent/history and GET /permissions.
-      PRG-020: Fire-and-forget audit_log on consultation submission.
-      PRG-021: Audit log on lead status changes in routes/ops.ts.
-      PRG-003: Dev-mode email auto-verify removed from RegisterPage.tsx.
-      PRG-005: Missing /patient/mfa route added to App.tsx + new MfaVerifyPage.tsx.
-    why_it_matters: >
-      Fixes two broken production endpoints (authorization routes that throw
-      at runtime), closes IDOR gap on consent history, adds audit trail for
-      ops events, removes identity verification bypass, and unblocks
-      MFA-enrolled patients from completing login.
-    current_state: >
-      Open, unmerged. Branch eng/wave-2-critical-fixes.
-      confidence: observed
+    items: [PRG-006, PRG-009, PRG-010, PRG-011, PRG-014]
+    status: "Open — awaiting merge"
+
+  - number: 6
+    title: "Wave 3A — document upload, email verification, workflow persistence"
+    branch: "eng/wave-3a-patient-journey"
+    opened: "2026-08-04"
+    priority: HIGH
+    items: [PRG-008, PRG-004, PRG-022]
+    status: "Open — awaiting CI and merge"
+
+  - number: 5
+    title: "fix(security+ops): Wave 2 — critical fixes"
+    branch: "eng/wave-2-critical-fixes"
+    priority: HIGH
+    status: "Open — awaiting merge"
 
   - number: 4
-    title: "fix(security+ci): Wave 1 — IDOR fixes in wave7.ts, authz middleware, CI gate"
+    title: "fix(security+ci): Wave 1 — IDOR fixes and CI gate"
     branch: "eng/wave-1-authz-and-ci-gate"
-    opened_date: "2026-08-04"
-    opened_by: kumarlogan
-    merged: false
     priority: HIGH
-    priority_note: >
-      Addresses PRG-001 (partially), PRG-002 (CI gate), PRG-015, PRG-016,
-      PRG-017, PRG-018, PRG-031, PRG-032, PRG-033 (partially).
-      Blocks further security work until merged.
-    what_it_changes: >
-      IDOR ownership checks in wave7.ts routes, authorization middleware,
-      and a CI typecheck/test gate in the deploy workflow.
-    current_state: >
-      Open, unmerged. Awaiting review.
-      confidence: observed
+    status: "Open — awaiting merge"
 
-  - number: 3
-    title: "fix(security): require clinic identity for all /clinic/* routes"
-    branch: "fix/clinic-route-auth-guard"
-    opened_date: "2026-08-03"
-    opened_by: kumarlogan
-    merged: false
-    priority: HIGHEST
-    priority_note: >
-      SECURITY FIX — 6 unguarded clinic routes are currently reachable in
-      production without clinic identity verification. This PR adds
-      authentication guards to all /clinic/* routes. It has been open for
-      ~24 hours with no review or merge. Until merged, unauthenticated
-      access to clinic routes is possible in production.
-    what_it_changes: >
-      Adds clinic identity guards to 6 /clinic/* routes that currently have
-      no authentication check.
-    why_it_matters: >
-      Clinic routes handle patient health data. Unguarded routes allow
-      unauthenticated callers to access or mutate clinic resources.
-    current_state: >
-      Open, unmerged. No review comments.
-      confidence: observed
-    branch_last_commit_sha: "da78b6f"
-
-  - number: 1
-    title: "Add Cloudflare Workers configuration"
-    branch: "cloudflare/workers-autoconfig"
-    opened_date: "2026-07-15"
-    opened_by: "cloudflare-workers-and-pages[bot]"
-    merged: false
-    priority: LOW
-    priority_note: >
-      Automated Cloudflare bot PR. Stale — open since 2026-07-15 with no
-      action taken. Likely superseded by direct commits to main.
-    current_state: >
-      Open, stale, unreviewed. confidence: observed
-    branch_last_commit_sha: "c029eaf"
-
-# ─────────────────────────────────────────────
-# OPEN ISSUES
-# ─────────────────────────────────────────────
-open_issues:
-  count: 0
-  notes: >
-    The GitHub Issues API returned 0 issues (totalCount: 0). There are no
-    GitHub Issues in this repository. Work tracking happens entirely in
-    Markdown documents.
-  confidence: observed
-
-# ─────────────────────────────────────────────
-# BRANCHES
-# ─────────────────────────────────────────────
-branches:
-  - name: main
-    last_commit_sha: "35a665e"
-    last_commit_date: "2026-08-04"
-    protected: false
-    status: >
-      Primary trunk. All production work flows to main directly.
-      147+ of 150 sampled commits go directly to main without a PR.
-    notes: >
-      Single-developer trunk-based development. No branch protection rules
-      enforced. confidence: observed
-
-  - name: "eng/wave-2-critical-fixes"
-    last_activity: "2026-08-04"
-    protected: false
-    associated_pr: 5
-    status: >
-      Wave 2 critical security and operational fixes. 7 files committed.
-      Fixes PRG-013, PRG-033, PRG-020, PRG-021, PRG-003, PRG-005.
-      Open as PR #5. Awaiting merge to main.
-    confidence: observed
-
-  - name: "eng/wave-1-authz-and-ci-gate"
-    last_activity: "2026-08-04"
-    protected: false
-    associated_pr: 4
-    status: >
-      Wave 1 authorization fixes and CI gate. Addresses IDOR issues in
-      wave7.ts and PRG-002 CI gate. Open as PR #4. Awaiting merge to main.
-    confidence: observed
-
-  - name: "fix/clinic-route-auth-guard"
-    last_commit_sha: "da78b6f"
-    last_activity: "2026-08-03"
-    protected: false
-    associated_pr: 3
-    status: >
-      Open PR #3 — security fix for 6 unguarded clinic routes.
-      Highest-priority open item. Not yet merged.
-    confidence: observed
-
-  - name: "cloudflare/workers-autoconfig"
-    last_commit_sha: "c029eaf"
-    last_activity: "2026-07-15"
-    protected: false
-    associated_pr: 1
-    status: >
-      Stale bot PR opened 2026-07-15. No action taken in ~20 days.
-      Likely to be superseded or closed without merge.
-    confidence: observed
-
-# ─────────────────────────────────────────────
-# IMMEDIATE KNOWN BLOCKERS
-# ─────────────────────────────────────────────
 immediate_known_blockers:
-  note: >
-    Full gap detail is in KNOWN_GAPS.yaml (if present) or derivable from
-    discovery/C_platform_subsystems.md. Named here by category; do not
-    duplicate detailed analysis.
-
   blockers:
-    - id: blocker_clinic_routes_unguarded
-      severity: HIGH
-      description: >
-        6 /clinic/* routes in production have no authentication guard.
-        PR #3 (fix/clinic-route-auth-guard) is the fix — it is open and
-        unmerged. Production is currently vulnerable.
-      action_required: "Merge PR #3 immediately."
-      evidence: "I_repo_activity.md — PR #3 description; branch fix/clinic-route-auth-guard"
-      confidence: observed
-
-    - id: blocker_authorization_engine_not_wired
+    - id: blocker_d1_timeline
       severity: HIGH
       status: FIXED_ON_BRANCH
-      fix_branch: "eng/wave-2-critical-fixes"
-      fix_pr: 5
-      description: >
-        PRG-013: FIXED on branch eng/wave-2-critical-fixes (PR #5).
-        AUTHORIZATION_ENGINE is now wired via adapter in workers/src/index.ts.
-        The two broken authorization endpoints (/api/v1/authorization/check
-        and /api/v1/permissions) will work once PR #5 is merged.
-      action_required: "Merge PR #5."
-      confidence: observed
+      fix_pr: 7
+      description: "PRG-006: FIXED on PR #7 — D1TimelineEngine + timeline schema migration"
 
-    - id: blocker_dev_mode_email_autoverify
+    - id: blocker_clinic_portal_d1_queries
       severity: HIGH
       status: FIXED_ON_BRANCH
-      fix_branch: "eng/wave-2-critical-fixes"
-      fix_pr: 5
-      description: >
-        PRG-003: FIXED on branch eng/wave-2-critical-fixes (PR #5).
-        Dev-mode email auto-verify removed from RegisterPage.tsx.
-        Identity is no longer bypassed on registration once PR #5 is merged.
-      action_required: "Merge PR #5."
-      confidence: observed
+      fix_pr: 7
+      description: "PRG-009: FIXED on PR #7 — clinic portal uses real D1 patient queries (identities table)"
 
-    - id: blocker_mfa_route_missing
+    - id: blocker_clinic_portal_d1_identities
       severity: HIGH
       status: FIXED_ON_BRANCH
-      fix_branch: "eng/wave-2-critical-fixes"
-      fix_pr: 5
-      description: >
-        PRG-005: FIXED on branch eng/wave-2-critical-fixes (PR #5).
-        /patient/mfa route added to App.tsx and MfaVerifyPage.tsx created.
-        MFA-enrolled patients can complete login once PR #5 is merged.
-      action_required: "Merge PR #5."
-      confidence: observed
+      fix_pr: 7
+      description: "PRG-010: FIXED on PR #7 — clinic portal D1 identities integration"
 
-    - id: blocker_consent_history_idor
+    - id: blocker_d1_consent_engine
       severity: HIGH
       status: FIXED_ON_BRANCH
-      fix_branch: "eng/wave-2-critical-fixes"
-      fix_pr: 5
-      description: >
-        PRG-033: FIXED on branch eng/wave-2-critical-fixes (PR #5).
-        Ownership checks added to GET /consent/history and GET /permissions
-        in workers/src/routes/trustRuntime.ts.
-      action_required: "Merge PR #5."
-      confidence: observed
+      fix_pr: 7
+      description: "PRG-011: FIXED on PR #7 — D1ConsentEngine + consent schema reconciliation"
 
-    - id: blocker_consultation_no_audit_log
-      severity: MEDIUM
-      status: FIXED_ON_BRANCH
-      fix_branch: "eng/wave-2-critical-fixes"
-      fix_pr: 5
-      description: >
-        PRG-020: FIXED on branch eng/wave-2-critical-fixes (PR #5).
-        Fire-and-forget audit_log added to consultation submission in
-        workers/src/routes/consultations.ts. Ops timeline will show new
-        consultations once PR #5 is merged.
-      action_required: "Merge PR #5."
-      confidence: observed
-
-    - id: blocker_lead_status_no_audit_log
-      severity: MEDIUM
-      status: FIXED_ON_BRANCH
-      fix_branch: "eng/wave-2-critical-fixes"
-      fix_pr: 5
-      description: >
-        PRG-021: FIXED on branch eng/wave-2-critical-fixes (PR #5).
-        Audit log added to lead status changes in workers/src/routes/ops.ts.
-      action_required: "Merge PR #5."
-      confidence: observed
-
-    - id: blocker_epcl_was_wef_all_false
-      severity: CRITICAL_IF_AUTONOMOUS_EXECUTION_NEEDED
-      description: >
-        All 6 EPCL feature flags and all 5 WAS feature flags default to
-        false. The EPCL→WAS→WEF autonomous orchestration pipeline is
-        entirely unreachable in production. WAS WEFDelegator is an explicit
-        stub. Enabling any flag without first completing WEF integration
-        (no execution engine exists) would result in simulated-only
-        execution. Do not enable these flags without implementing real
-        WEF delegation.
-      action_required: >
-        Do not touch EPCL/WAS/WEF flags until WEF execution engine is
-        implemented (currently a TODO stub in wef-delegator.ts).
-      evidence: "discovery/C_platform_subsystems.md Sections 1–3, 16"
-      confidence: observed
-
-    - id: blocker_inmemory_data_loss
-      severity: MEDIUM
-      description: >
-        Appointments, Messaging, Timeline, Credentials, and Release
-        Management subsystems use in-memory engines (globalThis pattern
-        or Maps). All data is lost on Worker restart.
-      action_required: >
-        Migrate Appointments, Messaging, and Timeline to D1-backed stores
-        before enabling real patient traffic.
-      evidence: "discovery/C_platform_subsystems.md Sections 9–14"
-      confidence: observed
-
-    - id: blocker_version_ts_stale
-      severity: LOW
-      description: >
-        workers/src/version.ts exports SERVICE_VERSION = "1.1.0" but
-        CHANGELOG latest entry is v1.6.0 (2026-08-01).
-      action_required: "Run bash scripts/extract-version.sh to regenerate version.ts."
-      evidence: "I_repo_activity.md Section 7 (version.ts cross-check)"
-      confidence: observed
-
-    - id: blocker_notification_delivery_simulated
-      severity: MEDIUM
-      description: >
-        The Notification & Engagement Platform delivery engine simulates all
-        external delivery (FCM/APNs for push, SES/SMTP for email, Twilio for
-        SMS). No real messages are sent.
-      action_required: >
-        Implement real external service calls in delivery-engine.ts before
-        enabling patient-facing notifications.
-      evidence: "discovery/C_platform_subsystems.md Section 8"
-      confidence: observed
-
-    - id: blocker_stop_conditions
+    - id: blocker_consent_schema_gap
       severity: HIGH
-      description: >
-        CURRENT_SPRINT.md (root) carries active stop conditions:
-        Do NOT deploy Production, Do NOT activate Bots, Do NOT onboard
-        Clinics or Patients, Do NOT introduce new Epics, Do NOT activate
-        future platform capabilities.
-      action_required: >
-        These stop conditions must be explicitly superseded by a Phase 3
-        planning document before any of the listed actions are taken.
-      evidence: "CURRENT_SPRINT.md (root, observed directly)"
-      confidence: observed
+      status: FIXED_ON_BRANCH
+      fix_pr: 7
+      description: "PRG-014: FIXED on PR #7 — consent schema reconciliation (also resolves schema gap)"
+
+    - id: blocker_document_upload_auth
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 6
+      description: "PRG-008: FIXED on PR #6 — document upload auth corrected"
+
+    - id: blocker_email_verification_landing
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 6
+      description: "PRG-004: FIXED on PR #6 — email verification landing page created"
+
+    - id: blocker_workflow_persistence
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 6
+      description: "PRG-022: FIXED on PR #6 — workflow instance D1 persistence added"
