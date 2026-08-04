@@ -6,17 +6,16 @@
 
 import type { Env, RouteHandler } from "../types/env.js";
 import { withJwtAuth, getIdentityId } from "../middleware/jwt-auth.js";
-import { InMemoryTimelineEngine } from "../platform/timeline/index.js";
+import { D1TimelineEngine } from "../platform/timeline/d1-timeline-engine.js";
 import type { TimelineEngine } from "../platform/timeline/index.js";
 import type { IvfStage, StageStatus, Milestone, TimelineEvent, ProgressSummary, ExpectedDateInfo, FullTimeline } from "../platform/timeline/index.js";
 
 // ── Engine Instance ────────────────────────────────────────
-// Per-request engine for isolation. In production this would
-// be backed by D1/KV, but the InMemory engine is the reference
-// implementation for the TimelineEngine interface.
+// PRG-006: migrated from per-request InMemoryTimelineEngine to
+// D1-backed D1TimelineEngine for persistent patient state.
 
-function getEngine(_env: Env): TimelineEngine {
-  return new InMemoryTimelineEngine();
+function getEngine(env: Env): TimelineEngine {
+  return new D1TimelineEngine(env.DB);
 }
 
 // ── Helper ─────────────────────────────────────────────────
