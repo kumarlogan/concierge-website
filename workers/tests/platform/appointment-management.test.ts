@@ -11,14 +11,14 @@ describe("Appointment Validation", () => {
     const existing = [{
       id: "appt-1",
       providerId: "provider-1",
-      startAt: "2026-08-01T10:00:00Z",
-      endAt: "2026-08-01T11:00:00Z",
+      startAt: "2026-08-10T10:00:00Z",
+      endAt: "2026-08-10T11:00:00Z",
       status: AppointmentStatus.SCHEDULED,
     }];
 
     const newAppt = {
-      startAt: "2026-08-01T10:30:00Z",
-      endAt: "2026-08-01T11:30:00Z",
+      startAt: "2026-08-10T10:30:00Z",
+      endAt: "2026-08-10T11:30:00Z",
       providerId: "provider-1",
     };
 
@@ -31,14 +31,14 @@ describe("Appointment Validation", () => {
     const existing = [{
       id: "appt-1",
       providerId: "provider-1",
-      startAt: "2026-08-01T10:00:00Z",
-      endAt: "2026-08-01T11:00:00Z",
+      startAt: "2026-08-10T10:00:00Z",
+      endAt: "2026-08-10T11:00:00Z",
       status: AppointmentStatus.SCHEDULED,
     }];
 
     const newAppt = {
-      startAt: "2026-08-01T11:00:00Z",
-      endAt: "2026-08-01T12:00:00Z",
+      startAt: "2026-08-10T11:00:00Z",
+      endAt: "2026-08-10T12:00:00Z",
       providerId: "provider-1",
     };
 
@@ -51,14 +51,14 @@ describe("Appointment Validation", () => {
     const existing = [{
       id: "appt-1",
       providerId: "provider-1",
-      startAt: "2026-08-01T10:00:00Z",
-      endAt: "2026-08-01T11:00:00Z",
+      startAt: "2026-08-10T10:00:00Z",
+      endAt: "2026-08-10T11:00:00Z",
       status: AppointmentStatus.SCHEDULED,
     }];
 
     const newAppt = {
-      startAt: "2026-08-01T10:30:00Z",
-      endAt: "2026-08-01T11:30:00Z",
+      startAt: "2026-08-10T10:30:00Z",
+      endAt: "2026-08-10T11:30:00Z",
       providerId: "provider-2",
     };
 
@@ -70,14 +70,14 @@ describe("Appointment Validation", () => {
     const existing = [{
       id: "appt-1",
       providerId: "provider-1",
-      startAt: "2026-08-01T10:00:00Z",
-      endAt: "2026-08-01T11:00:00Z",
+      startAt: "2026-08-10T10:00:00Z",
+      endAt: "2026-08-10T11:00:00Z",
       status: AppointmentStatus.CANCELLED,
     }];
 
     const newAppt = {
-      startAt: "2026-08-01T10:30:00Z",
-      endAt: "2026-08-01T11:30:00Z",
+      startAt: "2026-08-10T10:30:00Z",
+      endAt: "2026-08-10T11:30:00Z",
       providerId: "provider-1",
     };
 

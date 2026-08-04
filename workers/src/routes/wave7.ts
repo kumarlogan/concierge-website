@@ -7,6 +7,7 @@
 // └─────────────────────────────────────────────────────────────┘
 
 import type { Env, RouteHandler } from "../types/env.js";
+import type { StartWorkflowRequest, Actor, TaskActionRequest, TaskSearchRequest, WorkflowSearchRequest, WorkflowContext, WorkflowStatus } from "../platform/workflow/types.js";
 import { InMemoryAppointmentEngine } from "../platform/appointments/in-memory-appointment-engine.js";
 import type { ConsentVerificationResult } from "../platform/appointments/appointment-engine.js";
 import type { AppointmentFilters } from "../platform/appointments/appointment-types.js";
@@ -20,6 +21,21 @@ import type { CreateMessageRequest } from "../platform/messaging/message-types.j
 import { withJwtAuth, getIdentityId } from "../middleware/jwt-auth.js";
 import { InMemoryNotificationStore } from "../platform/notifications/in-memory-notification-store.js";
 import { notificationStore } from "../platform/notifications/in-memory-notification-store.js";
+import { D1NotificationStore } from "../platform/notifications/d1-notification-store.js";
+import { DeliveryEngine } from "../platform/notifications/delivery-engine.js";
+import { EscalationEngine } from "../platform/notifications/escalation-engine.js";
+import { NotificationAudit } from "../platform/notifications/notification-audit.js";
+import { NotificationAnalytics } from "../platform/notifications/analytics.js";
+import { DeliveryStatus } from "../platform/notifications/delivery-types.js";
+import type { EvidencePackTemplate, WorkflowInstance } from "../platform/workflow/types.js";
+import { WorkflowEngine } from "../platform/workflow/engine/workflow-engine.js";
+import { EventStore } from "../platform/workflow/events/event-store.js";
+import { TaskOrchestrator } from "../platform/workflow/tasks/task-orchestrator.js";
+import { ApprovalGateService } from "../platform/workflow/approval/approval-gate.js";
+import { TimerService } from "../platform/workflow/timers/timer-service.js";
+import { QueueManager } from "../platform/workflow/tasks/queue-manager.js";
+import { BatchOperations } from "../platform/workflow/tasks/batch-operations.js";
+import { EvidencePackBuilder, defaultEvidencePackTemplate } from "../platform/workflow/approval/evidence-pack.js";
 
 // ── Shared engine instances (per-request singletons via env) ──
 // In production these would be D1-backed; in-memory for integration testing.
@@ -351,6 +367,12 @@ function getNotificationStore(_env: Env): InMemoryNotificationStore {
   return notificationStore;
 }
 
+function getD1NotificationStore(env: Env): D1NotificationStore | null {
+  const db = env.NOTIFICATIONS as D1Database | undefined;
+  if (!db) return null;
+  return new D1NotificationStore(db);
+}
+
 async function _getNotifications(request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
   const store = getNotificationStore(env);
   const identityId = getIdentityId(request);
@@ -421,4 +443,351 @@ async function _updateNotificationPreferences(request: Request, env: Env, _param
   } catch (err) {
     return error(err instanceof Error ? err.message : "Failed to update preferences", 400);
   }
+}
+
+// ── Wave 7: Notification Delivery & Engagement Routes ──
+
+export function registerNotificationDeliveryRoutes(router: {
+  get: (path: string, handler: RouteHandler) => void;
+  post: (path: string, handler: RouteHandler) => void;
+}): void {
+  router.get("/api/v1/notifications/stream", withJwtAuth(_getNotificationStream as RouteHandler));
+  router.get("/api/v1/notifications/delivery-status/:id", withJwtAuth(_getDeliveryStatus as RouteHandler));
+  router.get("/api/v1/notifications/analytics", withJwtAuth(_getNotificationAnalytics as RouteHandler));
+  router.get("/api/v1/notifications/escalation/status", withJwtAuth(_getEscalationStatus as RouteHandler));
+}
+
+async function _getNotificationStream(_request: Request, _env: Env, _params: Record<string, string>): Promise<Response> {
+  // SSE endpoint for real-time notification updates
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode("event: connected\ndata: {\"status\":\"connected\"}\n\n"));
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
+
+async function _getDeliveryStatus(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const deliveryEngine = new DeliveryEngine(env);
+  const deliveries = await deliveryEngine.getDeliveryStatus(params.id);
+  return json({ deliveries });
+}
+
+async function _getNotificationAnalytics(_request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
+  const analytics = new NotificationAnalytics(env);
+  const data = await analytics.getAnalytics();
+  return json({ analytics: data });
+}
+
+async function _getEscalationStatus(_request: Request, env: Env, _params: Record<string, string>): Promise<Response> {
+  const escalationEngine = new EscalationEngine(env);
+  const count = await escalationEngine.checkEscalations();
+  return json({ escalatedCount: count });
+}
+
+// ── Wave 8: Workflow & Automation Engine Routes ──
+
+export function registerWorkflowRoutes(router: {
+  get: (path: string, handler: RouteHandler) => void;
+  post: (path: string, handler: RouteHandler) => void;
+  patch: (path: string, handler: RouteHandler) => void;
+}): void {
+  // Workflow management (literal paths registered before :id to avoid shadowing)
+  router.get("/api/v1/workflows/dashboard", withJwtAuth(_getDashboard as RouteHandler));
+  router.get("/api/v1/workflows/search", withJwtAuth(_searchWorkflows as RouteHandler));
+  router.post("/api/v1/workflows", withJwtAuth(_startWorkflow as RouteHandler));
+  router.get("/api/v1/workflows/:id", withJwtAuth(_getWorkflow as RouteHandler));
+  router.patch("/api/v1/workflows/:id/pause", withJwtAuth(_pauseWorkflow as RouteHandler));
+  router.patch("/api/v1/workflows/:id/resume", withJwtAuth(_resumeWorkflow as RouteHandler));
+  router.post("/api/v1/workflows/:id/cancel", withJwtAuth(_cancelWorkflow as RouteHandler));
+  router.get("/api/v1/workflows/:workflowId/tasks", withJwtAuth(_getWorkflowTasks as RouteHandler));
+  router.get("/api/v1/workflows/:workflowId/history", withJwtAuth(_getWorkflowHistory as RouteHandler));
+  router.get("/api/v1/workflows/:workflowId/audit", withJwtAuth(_getWorkflowAudit as RouteHandler));
+  router.post("/api/v1/workflows/:workflowId/override", withJwtAuth(_manualOverride as RouteHandler));
+
+  // Approval gates
+  router.get("/api/v1/workflows/:workflowId/approvals", withJwtAuth(_getApprovals as RouteHandler));
+  router.post("/api/v1/approvals/:gateId/decide", withJwtAuth(_decideApproval as RouteHandler));
+  router.post("/api/v1/approvals/:gateId/override", withJwtAuth(_overrideApproval as RouteHandler));
+
+  // Task management (literal :search before :id)
+  router.get("/api/v1/tasks/search", withJwtAuth(_searchTasks as RouteHandler));
+  router.get("/api/v1/tasks/:id", withJwtAuth(_getTask as RouteHandler));
+  router.patch("/api/v1/tasks/:id/state", withJwtAuth(_transitionTask as RouteHandler));
+  router.post("/api/v1/tasks/:id/assign", withJwtAuth(_assignTask as RouteHandler));
+  router.post("/api/v1/tasks/:id/claim", withJwtAuth(_claimTask as RouteHandler));
+  router.post("/api/v1/tasks/:id/complete", withJwtAuth(_completeTask as RouteHandler));
+  router.post("/api/v1/tasks/:id/escalate", withJwtAuth(_escalateTask as RouteHandler));
+  router.get("/api/v1/tasks/:id/evidence", withJwtAuth(_getEvidencePack as RouteHandler));
+  router.get("/api/v1/tasks/:id/audit", withJwtAuth(_getTaskAudit as RouteHandler));
+
+  // Task queue (coordinator dashboard)
+  router.get("/api/v1/queue", withJwtAuth(_getQueue as RouteHandler));
+  router.get("/api/v1/queue/stats", withJwtAuth(_getQueueStats as RouteHandler));
+  router.post("/api/v1/queue/batch", withJwtAuth(_batchAssign as RouteHandler));
+}
+
+// ── Wave 8: Workflow Route Handlers ──
+
+// Single wiring point for the workflow dependency graph. Every engine is
+// constructed with its real D1 owner (env.DB) and the shared EventStore, so
+// the runtime is fully D1-backed with one owner per dependency.
+function buildWorkflowEventStore(env: Env): EventStore {
+  return new EventStore({ db: env.DB });
+}
+
+function buildWorkflowEngine(env: Env): WorkflowEngine {
+  const eventStore = buildWorkflowEventStore(env);
+  return new WorkflowEngine({
+    eventStore,
+    taskOrchestrator: new TaskOrchestrator({ db: env.DB, eventStore }),
+    approvalGate: new ApprovalGateService({ db: env.DB, eventStore }),
+    timerService: new TimerService({ db: env.DB, eventStore }),
+  });
+}
+
+async function _startWorkflow(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const engine = buildWorkflowEngine(env);
+  const req: StartWorkflowRequest = {
+    definitionId: String(body.definitionId ?? ""),
+    patientId: String(body.patientId ?? ""),
+    initialContext: body.initialContext as Partial<WorkflowContext> | undefined,
+  };
+  const instance = await engine.startWorkflow(req, { type: "user", id: identityId });
+  return json({ workflow: instance });
+}
+
+async function _getWorkflow(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const engine = buildWorkflowEngine(env);
+  const instance = await engine.getInstance(params.id);
+  if (!instance) return error("Workflow not found", 404);
+  return json({ workflow: instance });
+}
+
+async function _pauseWorkflow(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const engine = buildWorkflowEngine(env);
+  await engine.pauseWorkflow(params.id, (body.reason as string) || "", { type: "user", id: identityId });
+  return json({ ok: true });
+}
+
+async function _resumeWorkflow(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const engine = buildWorkflowEngine(env);
+  await engine.resumeWorkflow(params.id, { type: "user", id: identityId });
+  return json({ ok: true });
+}
+
+async function _cancelWorkflow(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const engine = buildWorkflowEngine(env);
+  await engine.cancelWorkflow(params.id, (body.reason as string) || "", { type: "user", id: identityId });
+  return json({ ok: true });
+}
+
+async function _getWorkflowTasks(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const eventStore = buildWorkflowEventStore(env);
+  const orchestrator = new TaskOrchestrator({ db: env.DB, eventStore });
+  const results = await orchestrator.searchTasks({ workflowInstanceId: params.workflowId, limit: 100, offset: 0 });
+  return json({ tasks: results.items, total: results.total });
+}
+
+async function _getTask(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const eventStore = buildWorkflowEventStore(env);
+  const orchestrator = new TaskOrchestrator({ db: env.DB, eventStore });
+  const task = await orchestrator.getTask(params.id);
+  if (!task) return error("Task not found", 404);
+  return json({ task });
+}
+
+async function _transitionTask(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const engine = buildWorkflowEngine(env);
+  const action = (body.action as TaskActionRequest["action"]) || "claim";
+  const task = await engine.processTaskAction(params.id, {
+    action,
+    actor: { type: "user", id: identityId },
+    payload: body.payload as Record<string, unknown> | undefined,
+  });
+  return json({ task });
+}
+
+async function _assignTask(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const eventStore = buildWorkflowEventStore(env);
+  const orchestrator = new TaskOrchestrator({ db: env.DB, eventStore });
+  const assigneeId = String(body.assigneeId ?? "");
+  const task = await orchestrator.reassignTask(params.id, assigneeId, { type: "user", id: identityId });
+  return json({ task });
+}
+
+async function _claimTask(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const eventStore = buildWorkflowEventStore(env);
+  const orchestrator = new TaskOrchestrator({ db: env.DB, eventStore });
+  const task = await orchestrator.claimTask(params.id, identityId);
+  return json({ task });
+}
+
+async function _completeTask(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const eventStore = buildWorkflowEventStore(env);
+  const orchestrator = new TaskOrchestrator({ db: env.DB, eventStore });
+  const task = await orchestrator.completeTask(params.id, (body.outcome as Record<string, unknown>) || {}, { type: "user", id: identityId });
+  return json({ task });
+}
+
+async function _escalateTask(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const eventStore = buildWorkflowEventStore(env);
+  const orchestrator = new TaskOrchestrator({ db: env.DB, eventStore });
+  const task = await orchestrator.escalateTask(params.id, (body.reason as string) || "", { type: "user", id: identityId });
+  return json({ task });
+}
+
+async function _getQueue(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const queueManager = new QueueManager({ db: env.DB });
+  const depth = await queueManager.getQueueDepth("default");
+  return json({ queueDepth: depth });
+}
+
+async function _getQueueStats(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const queueManager = new QueueManager({ db: env.DB });
+  const depth = await queueManager.getQueueDepth("default");
+  return json({ queueDepth: depth });
+}
+
+async function _batchAssign(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const assignments = Array.isArray(body.assignments) ? (body.assignments as string[]) : [];
+  const eventStore = buildWorkflowEventStore(env);
+  const batchOps = new BatchOperations({ db: env.DB, eventStore });
+  const results = await batchOps.bulkClaim(assignments, { type: "user", id: identityId });
+  return json({ results });
+}
+
+async function _getApprovals(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const eventStore = buildWorkflowEventStore(env);
+  const gateService = new ApprovalGateService({ db: env.DB, eventStore });
+  const gates = await gateService.getApprovedGatesForWorkflow(params.workflowId);
+  return json({ approvals: gates });
+}
+
+async function _decideApproval(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const eventStore = buildWorkflowEventStore(env);
+  const gateService = new ApprovalGateService({ db: env.DB, eventStore });
+  const decisionValue: "approve" | "deny" | "escalate" = body.decision === "deny" || body.decision === "escalate" ? body.decision : "approve";
+  const decision = await gateService.processDecision(params.gateId, {
+    decision: decisionValue,
+    approver: { type: "user", id: identityId },
+    reason: (body.reason as string) || "",
+    evidenceReviewed: body.evidenceReviewed as Record<string, unknown> | undefined,
+  });
+  return json({ decision });
+}
+
+async function _overrideApproval(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const eventStore = buildWorkflowEventStore(env);
+  const gateService = new ApprovalGateService({ db: env.DB, eventStore });
+  const decisionValue: "approve" | "deny" | "escalate" = body.decision === "deny" || body.decision === "escalate" ? body.decision : "approve";
+  const decision = await gateService.processDecision(params.gateId, {
+    decision: decisionValue,
+    approver: { type: "user", id: identityId },
+    reason: (body.reason as string) || "",
+    evidenceReviewed: { override: true, reason: body.overrideReason as string },
+  });
+  return json({ decision });
+}
+
+async function _getEvidencePack(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const eventStore = buildWorkflowEventStore(env);
+  const builder = new EvidencePackBuilder({ eventStore });
+  const orchestrator = new TaskOrchestrator({ db: env.DB, eventStore });
+  const task = await orchestrator.getTask(params.id);
+  if (!task) return error("Task not found", 404);
+  const engine = buildWorkflowEngine(env);
+  const instance = await engine.getInstance(task.workflowInstanceId);
+  if (!instance) return error("Workflow not found", 404);
+  const pack = await builder.buildFromTemplate(defaultEvidencePackTemplate, task, instance);
+  return json({ evidencePack: pack });
+}
+
+async function _getWorkflowHistory(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const eventStore = buildWorkflowEventStore(env);
+  const events = await eventStore.getEventsForWorkflow(params.workflowId, 100, 0);
+  return json({ events });
+}
+
+async function _getWorkflowAudit(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const eventStore = buildWorkflowEventStore(env);
+  const events = await eventStore.getEventsForWorkflow(params.workflowId, 500, 0);
+  return json({ auditTrail: events });
+}
+
+async function _getTaskAudit(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const eventStore = buildWorkflowEventStore(env);
+  const events = await eventStore.getEventsByCorrelationId(params.id);
+  return json({ auditTrail: events });
+}
+
+async function _manualOverride(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const identityId = getIdentityId(request);
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const eventStore = buildWorkflowEventStore(env);
+  await eventStore.append({
+    workflowInstanceId: params.workflowId,
+    eventType: "manual.override",
+    payload: { reason: (body.reason as string) || "", override: (body.override as Record<string, unknown>) || {} },
+    actor: { type: "user", id: identityId },
+    correlationId: params.workflowId,
+    timestamp: Date.now(),
+    version: 1,
+  });
+  return json({ ok: true });
+}
+
+async function _getDashboard(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const eventStore = buildWorkflowEventStore(env);
+  const orchestrator = new TaskOrchestrator({ db: env.DB, eventStore });
+  const dashboard = await orchestrator.getDashboardQueue({ type: "user", id: "system" });
+  return json({ dashboard });
+}
+
+async function _searchWorkflows(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const url = new URL(request.url);
+  const engine = buildWorkflowEngine(env);
+  const statusRaw = url.searchParams.get("status");
+  const status = statusRaw ? [statusRaw as WorkflowStatus] : undefined;
+  const results = await engine.searchInstances({ status, limit: 50, offset: 0 });
+  return json({ results });
+}
+
+async function _searchTasks(request: Request, env: Env, params: Record<string, string>): Promise<Response> {
+  const eventStore = buildWorkflowEventStore(env);
+  const orchestrator = new TaskOrchestrator({ db: env.DB, eventStore });
+  const results = await orchestrator.searchTasks({ limit: 50, offset: 0 });
+  return json({ results });
 }

@@ -1,0 +1,910 @@
+# ROADMAP.yaml — machine-readable context
+# Generated 2026-08-04 by an external AI engineering session.
+# Evidence-based: entries cite repository paths.
+# Update obligations: see docs/context/CONTEXT_MAINTENANCE.md
+schema_version: 1
+generated: 2026-08-04
+repository: kumarlogan/concierge-website
+confidence_legend:
+  observed: directly read from repository files
+  inferred: reasoned from repository evidence
+  unknown: not determinable from the repository
+
+# ─────────────────────────────────────────────
+# SOURCES
+# ─────────────────────────────────────────────
+sources:
+  - path: ROADMAP.md
+    last_updated: "2026-07-27"
+    treated_as_authoritative: true
+    notes: >
+      Primary product-level roadmap. Covers Phases 0–4 and Waves 1–9.
+      Phase/Wave status claims are cross-checked against commits and other docs.
+      (confidence: observed)
+
+  - path: CURRENT_SPRINT.md
+    last_updated: unknown
+    treated_as_authoritative: true
+    notes: >
+      Root-level sprint tracker. Declares Wave 9 complete, Phase 2 delivered,
+      version 1.22.0-dev. Stop conditions forbid production deploy and bot
+      activation. (confidence: observed)
+
+  - path: docs/governance/CURRENT_SPRINT.md
+    last_updated: "2026-07-26"
+    treated_as_authoritative: true
+    notes: >
+      Per ADR-015 this is the canonical CURRENT_SPRINT. Covers Sprint S2.2.2
+      (Wave 5.1). CONFLICTS with root CURRENT_SPRINT.md — describes a
+      different (earlier) sprint. See conflicts section. (confidence: observed)
+
+  - path: docs/platform/AI_PLATFORM_ROADMAP.md
+    last_updated: "2026-07-27"
+    treated_as_authoritative: true
+    notes: >
+      Separate AI Platform roadmap (Phases A–K). Authoritative for platform
+      capability track, distinct from Concierge product roadmap.
+      (confidence: observed)
+
+  - path: TASKS.md
+    last_updated: unknown
+    treated_as_authoritative: false
+    notes: >
+      Frozen at Phase 1 / Epic 2 snapshot. Marks EPIC-002-005 (Admin Bot) as
+      Not Started while ROADMAP.md declares Phase 2 complete. Unreliable as
+      current task reference. (confidence: observed) (stale)
+
+  - path: CHANGELOG.md
+    last_updated: "2026-08-01"
+    treated_as_authoritative: true
+    notes: >
+      35 versions from 0.1.0 to 1.21.0 (planned). Latest released entry v1.6.0
+      (Wave 6, 2026-08-01). (confidence: observed)
+
+  - path: COMPLETION_REPORT.md
+    last_updated: "2026-07-27"
+    treated_as_authoritative: false
+    notes: "Historical point-in-time record. (confidence: observed)"
+
+  - path: WAVE2_AUDIT_REPORT.md
+    last_updated: "2026-07-30"
+    treated_as_authoritative: true
+    notes: >
+      Audit finding that Wave 2 bypassed certified EPCL→WAS→WEF orchestration.
+      (confidence: observed)
+
+  - path: discovery/C_platform_subsystems.md
+    last_updated: "2026-08-04"
+    treated_as_authoritative: true
+    notes: >
+      External AI session discovery of workers/src/platform/ — 130 TypeScript
+      files; feature-flag state, route wiring, stub analysis.
+      (confidence: observed)
+
+# ─────────────────────────────────────────────
+# DELIVERY MODEL
+# ─────────────────────────────────────────────
+delivery_model:
+  description: >
+    Layered work-item hierarchy: Company → Business Unit → Platform → Product →
+    Portfolio → Roadmap → Phase → Wave → Epic → Sprint → Story → Task.
+    WEF v1.1 (Workforce Execution Framework) governs all execution.
+    confidence: observed (ADR-015, ADR-017, AI_PLATFORM_ROADMAP.md)
+
+  layers:
+    Phase:
+      description: >
+        Top-level product delivery grouping. Phases 0–4 for Concierge;
+        Phases A–K for AI Platform.
+      example: "Phase 2 — Patient Workflow Platform"
+      evidence: ROADMAP.md
+
+    Wave:
+      description: >
+        Numbered delivery increment within a Phase. Waves contain one or more
+        Epics and deliver a coherent product capability.
+      example: "Wave 6 — Secure Document Upload & Consent Implementation"
+      evidence: "ROADMAP.md, CHANGELOG.md, commit history"
+
+    EPIC:
+      description: >
+        Named unit of engineering work within a Wave. Two notations observed:
+        two-tier EPIC-NNN-NNN (e.g. EPIC-002-005) and single-tier EPIC-NNN
+        (e.g. EPIC-004). Later EPICs use dot notation (EPIC-005.9) or plain
+        numbers (EPIC-014, EPIC-015).
+      example_two_tier: "EPIC-003-005: Workforce Orchestration Platform"
+      example_single_tier: "EPIC-004 (3/6): WorkflowStore abstraction"
+      example_dot: "EPIC-005.9: Execution Gateway"
+      evidence: "commit history, TASKS.md, ROADMAP.md"
+
+    GOV:
+      description: >
+        Governance framework items, parallel to product Epics.
+        GOV-001 through GOV-004 observed.
+      example: "GOV-002: Operational Governance & Phase 2 Kickoff"
+      evidence: "commit history (GOV-002, GOV-004), NAMING_STANDARDS.md"
+
+    Milestone:
+      description: >
+        M1–M9 milestones within an EPIC, used for large platform Epics.
+      example: "M1 (trust persistence), M2 (checksum), M3 (signature verification)"
+      evidence: HERMES_CORE_NIGHT_PROMPT.md
+
+# ─────────────────────────────────────────────
+# PHASES  (Concierge product roadmap)
+# ─────────────────────────────────────────────
+phases:
+  - id: Phase_0
+    name: "Platform Foundation"
+    stated_status: "Complete"
+    completion_date: "2026-07-18"
+    evidence: "ROADMAP.md (observed), CHANGELOG.md (observed)"
+    description: >
+      Static marketing website, Cloudflare Pages, GitHub CI/CD,
+      Telegram/Hermes workflow, core documentation (PROJECT.md,
+      AI_OPERATING_MODEL.md, PRODUCT_BOUNDARIES.md, ARCHITECTURE.md, ADR-001).
+    conflicts: []
+
+  - id: Phase_1
+    name: "Digital Concierge Platform"
+    stated_status: "Complete — 100%"
+    completion_date: "2026-07-26"
+    evidence: "ROADMAP.md (observed), CHANGELOG.md (observed)"
+    description: >
+      Backend foundation (EPIC-001), RBAC/auth (EPIC-002-001 through
+      EPIC-002-004-IMPL), Hermes platform (EPIC-003-001 through EPIC-003-006),
+      persistent ops platform (EPIC-004, EPIC-004.5). 465/465 tests.
+    conflicts:
+      - id: CONFLICT_TASKS_VS_ROADMAP
+        description: >
+          TASKS.md marks EPIC-002-005 (Hermes Admin Bot) as
+          "Not Started" under Epic 2 "In Progress". ROADMAP.md declares
+          Phase 1 100% complete and lists EPIC-002-005 as completed
+          2026-07-25. ROADMAP.md is treated as authoritative; TASKS.md is
+          frozen at a stale snapshot and was not updated to reflect
+          subsequent wave work.
+        claim_a:
+          source: TASKS.md
+          text: "EPIC-002-005: Hermes Admin Bot — ⬜ Not Started"
+        claim_b:
+          source: ROADMAP.md
+          text: "EPIC-002-005 — Hermes Admin Bot — completed 2026-07-25"
+        resolution: unknown  # ROADMAP.md is more recent but TASKS.md was never updated
+
+  - id: Phase_2
+    name: "Patient Workflow Platform"
+    stated_status: "Complete — All 9 waves delivered"
+    completion_date_claimed_roadmap: "2026-07-27"
+    completion_date_claimed_project: "2026-07-26"
+    version: "1.22.0-dev"
+    evidence: >
+      ROADMAP.md (2026-07-27), CURRENT_SPRINT.md (root), COMPLETION_REPORT.md
+      (2026-07-27), PROJECT.md
+    description: >
+      Patient accounts, authentication, identity core, trust runtime, consent,
+      policy engine, secure document upload, appointment management, messaging,
+      launch readiness, business activation. Waves 1–9.
+    conflicts:
+      - id: CONFLICT_PHASE2_DATE
+        description: >
+          PROJECT.md states Phase 2 complete "2026-07-26". ROADMAP.md states
+          Phase 2 complete "2026-07-27". One date is wrong; ROADMAP.md is
+          treated as the more authoritative source.
+        claim_a:
+          source: PROJECT.md
+          text: "Phase 2 — Complete (2026-07-26)"
+        claim_b:
+          source: ROADMAP.md
+          text: "Phase 2 Wave 9 Complete — 2026-07-27"
+      - id: CONFLICT_QUALITY_GATES_VS_WAVE2_AUDIT
+        description: >
+          CURRENT_SPRINT.md (root) lists all quality gates as Passed, implying
+          certified pipeline execution. WAVE2_AUDIT_REPORT.md explicitly
+          documents that Wave 2 did not execute through the certified
+          EPCL→WAS→WEF orchestration path.
+        claim_a:
+          source: CURRENT_SPRINT.md
+          text: >
+            "Implementation ✅ Passed, QA Agent ✅ Passed, Security Agent
+            ✅ Passed, Governance synchronization ✅ Passed,
+            Operational validation ✅ Passed"
+        claim_b:
+          source: WAVE2_AUDIT_REPORT.md
+          text: >
+            "Wave 2 did not execute through the certified Hermes Foundation
+            architecture ... The certified execution path was never invoked
+            ... runtime behavior is that of a traditional coding agent"
+
+  - id: Phase_3
+    name: "Clinic Collaboration Platform"
+    stated_status: "Planned — not yet scoped"
+    completion_date: null
+    evidence: "ROADMAP.md (observed)"
+    description: >
+      Clinic accounts, dashboards, shared patient journey views, clinic-side
+      document management, treatment milestone tracking, operational analytics.
+      Will be scoped after Phase 2 completion.
+    conflicts: []
+
+  - id: Phase_4
+    name: "Healthcare Technology Ecosystem"
+    stated_status: "Planned — not yet scoped"
+    completion_date: null
+    evidence: "ROADMAP.md (observed)"
+    description: >
+      API ecosystem for third-party integration, advanced analytics,
+      AI-assisted operational intelligence, multi-clinic coordination.
+      Will be scoped after Phase 3.
+    conflicts: []
+
+# ─────────────────────────────────────────────
+# WAVES  (Concierge Phase 2 delivery waves)
+# ─────────────────────────────────────────────
+waves:
+  - number: 1
+    name: "Trust & Identity Foundation — Architecture"
+    stated_status: "Complete"
+    delivery_date: unknown
+    shipped: >
+      Architecture documents for Trust & Identity. No implementation code
+      (architecture-only wave).
+    verification:
+      corroborated: true
+      notes: >
+        ROADMAP.md and AI_PLATFORM_ROADMAP.md (Phase B) both confirm Wave 1
+        architecture complete. No implementation artifacts expected.
+      (confidence: observed)
+
+  - number: 2
+    name: "AI Platform Governance Core — Architecture"
+    stated_status: "Complete"
+    delivery_date: unknown
+    shipped: >
+      Policy Engine and Consent & Trust architecture designs; Capability
+      Registry (11-capability inventory); Engineering Standards (110 standards,
+      19 categories); Capability Maturity Model (8 levels); Workforce Identity
+      expansion (14 agent types). Architecture only — no implementation code.
+    verification:
+      corroborated: partially
+      notes: >
+        ROADMAP.md marks Wave 2 complete. However WAVE2_AUDIT_REPORT.md
+        (2026-07-30) found that the certified EPCL→WAS→WEF orchestration path
+        was never actually invoked during Wave 2 delivery. All feature flags
+        for EPCL and WAS default to false; the WAS WEFDelegator is an explicit
+        stub. Wave 2 was implemented as direct coding rather than through
+        the certified Hermes Foundation autonomous pipeline. The "Complete"
+        status reflects delivered artifacts, not execution via the certified
+        AI orchestration framework.
+      WAVE2_AUDIT_REPORT_FINDING: >
+        "Wave 2 did not execute through the certified Hermes Foundation
+        architecture ... The certified execution path (EPCL→WAS→WEF) was
+        never invoked ... runtime behavior is that of a traditional coding
+        agent" — WAVE2_AUDIT_REPORT.md (2026-07-30)
+      (confidence: observed)
+
+  - number: 3
+    name: "Patient Identity & Authentication — Implementation"
+    stated_status: "Complete"
+    delivery_date: unknown
+    shipped: >
+      Identity Core v1 (16 modules: JWT, MFA, passwordless, credential
+      rotation, OAuth, session management, rate limiting, Zero Trust hooks,
+      audit); 514 tests; D1 migration 0002; Timeline Engine.
+    verification:
+      corroborated: true
+      notes: >
+        Commit evidence: "release: Wave 3 Timeline Engine production release"
+        (2026-08-01, sha 3774220). registerTimelineRoutes() confirmed wired
+        in workers/src/index.ts. Identity Core singletons confirmed wired.
+      (confidence: observed)
+
+  - number: 4
+    name: "Consent & Trust + Policy Engine — Architecture"
+    stated_status: "Complete"
+    delivery_date: unknown
+    shipped: >
+      Consent & Trust and Policy Engine architecture. Wave 4 preview deployment
+      step added for Care Companion (commit 12c5411, 2026-08-01).
+    verification:
+      corroborated: true
+      notes: >
+        ROADMAP.md and AI_PLATFORM_ROADMAP.md consistent. Commit evidence
+        for Wave 4 preview deployment.
+      (confidence: observed)
+
+  - number: 5
+    name: "Patient Workspace — Login, Dashboard, Profile, Security, Consent, Notifications, Timeline"
+    stated_status: "Complete"
+    delivery_date: "2026-08-01 (commit evidence)"
+    shipped: >
+      Patient workspace frontend (PatientLayout, AuthProvider, AuthGuard,
+      10 patient pages); AG Synergy Document Centre — patient document
+      management (commit d203e3f, wave5); Product Owner Report (commit
+      987561f).
+    verification:
+      corroborated: true
+      notes: >
+        Commits 987561f and d203e3f on 2026-08-01 carry wave5 prefix.
+        CHANGELOG v1.5.0-preview tag applied to d203e3f.
+      (confidence: observed)
+
+  - number: "5.1"
+    name: "Patient Workspace Activation & UX Polish"
+    stated_status: "Complete"
+    delivery_date: "2026-07-26"
+    shipped: >
+      'Patient Portal' header nav button; Journey Timeline production state;
+      Notification Center Coming Soon state; consent list API bug fix;
+      all 10 patient pages validated; v1.18.1 tagged.
+      558/558 tests at this sprint boundary.
+    verification:
+      corroborated: true
+      notes: >
+        docs/governance/CURRENT_SPRINT.md (Sprint S2.2.2) fully documents
+        this wave. (confidence: observed)
+
+  - number: 6
+    name: "Secure Document Upload & Consent Implementation"
+    stated_status: "Complete"
+    delivery_date: "2026-08-01"
+    shipped: >
+      Communication Centre; secure document platform (R2-backed, PHI/non-PHI
+      routing, AES encryption, consent gating, D1 audit). v1.6.0 released
+      to production (CHANGELOG, tag wave-6-rc1).
+    verification:
+      corroborated: true
+      notes: >
+        Commits 267211a (feat: Wave 6 Communication Centre) and ab14b10
+        (release: AGS Fertility v1.6.0 Wave 6 Production Promotion) on
+        2026-08-01–02. Tag wave-6-rc1 on 267211a. registerDocumentRoutes()
+        confirmed wired in index.ts.
+      (confidence: observed)
+
+  - number: 7
+    name: "Appointment Management & Messaging"
+    stated_status: "Complete"
+    delivery_date: "2026-08-02"
+    shipped: >
+      Appointment module (6 routes, in-memory engine, consent gating);
+      Messaging module (3 routes, in-memory engine); Notification &
+      Engagement Platform (D1-backed store, simulated delivery engine,
+      escalation, analytics). Also Notification & Engagement Platform
+      described as 'Wave 7' in commit 0e692e4.
+    verification:
+      corroborated: true
+      notes: >
+        Commit 0e692e4 (2026-08-02): "Wave 7: Notification & Engagement
+        Platform + Operational Fix 001". Routes registered in wave7.ts.
+        NOTE: delivery engine simulates FCM/SES/Twilio — no real external
+        calls in production code.
+      (confidence: observed)
+
+  - number: 8
+    name: "End-to-End Integration & Production Readiness / Workflow & Automation Engine"
+    stated_status: "Complete"
+    delivery_date: "2026-08-03 (reconciliation commit)"
+    shipped: >
+      Workflow & Automation Engine (IVF journey state machine, D1-backed
+      event sourcing, task orchestration, approval gates, timers/escalation,
+      30+ routes). Engineering reconciliation and knowledge-capture documents.
+      EPIC-015 back-integration.
+    verification:
+      corroborated: true
+      notes: >
+        Commits 8175ddd and 8c65571 (2026-08-03): "Wave 8: Workflow &
+        Automation Engine — Engineering Reconciliation" and knowledge
+        capture. buildWorkflowEngine() confirmed wired in wave7.ts.
+        Wave 8 completion/reconciliation docs in docs/wave8/.
+      (confidence: observed)
+
+  - number: "8.1"
+    name: "Production Hardening & Security Closure"
+    stated_status: "Complete"
+    delivery_date: unknown
+    shipped: >
+      Security hardening to v1.21.0. CHANGELOG tracks [1.21.0] as
+      Production Hardening entry (planned entries up to 1.21.0 in
+      CHANGELOG as of last read).
+    verification:
+      corroborated: partially
+      notes: >
+        ROADMAP.md lists Wave 8.1 as complete. CHANGELOG entries for
+        v1.21.0 appear in the planned section. Git tag v1.14.0 exists;
+        gap between v1.6.0 and v1.14.0 tags suggests selective tagging.
+        (confidence: inferred)
+
+  - number: 9
+    name: "Concierge Launch & Platform Activation"
+    stated_status: "Complete"
+    delivery_date: "2026-07-27 (ROADMAP.md claim)"
+    shipped: >
+      Four workstreams: (A) Patient Journey — Timeline, Care Plan, Tasks,
+      Milestones, Dashboard, Progress, APIs, Coordination, Notifications;
+      (B) Clinic Experience — Scheduling, Provider Workflows, Appointment
+      Coordination, Patient Status, Messaging Polish; (C) Launch Readiness —
+      Production validation, DNS, Secrets, Monitoring, Release Management,
+      PSER, WEF operational validation; (D) Business Activation — SEO,
+      Sitemap, Marketing, Analytics, Cookie Consent, Privacy, Accessibility.
+    stop_conditions_active:
+      - "Do NOT deploy Production"
+      - "Do NOT activate Bots"
+      - "Do NOT onboard Clinics"
+      - "Do NOT onboard Patients"
+      - "Do NOT change roadmap scope"
+      - "Do NOT introduce new Epics"
+      - "Do NOT activate future platform capabilities"
+    verification:
+      corroborated: partially
+      notes: >
+        CURRENT_SPRINT.md (root) declares all four workstreams complete.
+        However commit history on 2026-08-01–04 shows Wave 5–8 features
+        still being promoted to production after the claimed Wave 9
+        completion date of 2026-07-27. The reconciliation sequence
+        (Waves 5→6→7→8 promoted 2026-08-01–03) post-dates Wave 9's
+        stated completion, suggesting the delivery sequence was not
+        strictly linear. (confidence: inferred)
+
+# ─────────────────────────────────────────────
+# PLATFORM ROADMAP  (AI Platform — Phases A–K)
+# ─────────────────────────────────────────────
+platform_roadmap:
+  source: docs/platform/AI_PLATFORM_ROADMAP.md
+  last_updated: "2026-07-27"
+  governance_status: "FROZEN (feature complete — GOV-004)"
+  framework: "WEF v1.1"
+  phases:
+    - id: Phase_A
+      name: "Platform Foundation"
+      stated_status: "Complete — all capabilities live"
+      capabilities:
+        - name: "Execution Platform"
+          stated_status: complete
+          in_running_code: true
+          notes: >
+            Work Planner, Workforce Dispatcher, Execution Queue, Review
+            Pipeline — implemented in workers/src/platform/. (confidence: observed)
+        - name: "Provider Framework"
+          stated_status: complete
+          in_running_code: true
+          notes: >
+            InMemoryProviderRegistry singleton, provider health status.
+            No direct HTTP route. (confidence: observed)
+        - name: "Workforce Orchestration"
+          stated_status: complete
+          in_running_code: true
+          notes: >
+            Coordinator, 8 lifecycle states, human approval gates.
+            (confidence: observed)
+        - name: "Security Automation"
+          stated_status: complete
+          in_running_code: true
+          notes: >
+            Security Agent, Risk Engine, OSS scanner adapters.
+            (confidence: observed)
+        - name: "Persistence Layer"
+          stated_status: complete
+          in_running_code: partially
+          notes: >
+            D1-backed for Identity, Workflow, Documents, Notifications.
+            In-memory only for Appointments, Messaging, Timeline, Providers,
+            Credentials, Release Management. (confidence: observed)
+
+    - id: Phase_B
+      name: "Trust & Identity"
+      stated_status: "Wave 3 Implementation Complete"
+      capabilities:
+        - name: "Trust & Identity Architecture"
+          stated_status: complete
+          in_running_code: true
+          notes: "ADR-010; wired via registerTrustRuntimeRoutes(), 11 live routes. (confidence: observed)"
+        - name: "Identity Core v1"
+          stated_status: complete
+          in_running_code: true
+          notes: >
+            16 modules, D1-backed, JWT key registration at module init,
+            /identity/* catch-all wired. 514 tests claimed in AI_PLATFORM_ROADMAP.md.
+            (confidence: observed)
+        - name: "PHI Security Architecture"
+          stated_status: complete
+          in_running_code: true
+          notes: "PHI/non-PHI routing in document platform. (confidence: observed)"
+        - name: "Workforce Identity"
+          stated_status: complete
+          in_running_code: true
+          notes: "14 agent types implemented. (confidence: observed)"
+        - name: "Policy Engine — Implementation"
+          stated_status: "Wave 3+ (deferred)"
+          in_running_code: true
+          notes: >
+            Policy engine implemented as singleton with 11 live trust/policy
+            routes. CAVEAT: all trust factor scoreFn return hardcoded 0.5;
+            /api/v1/authorization/check and /api/v1/permissions throw at
+            runtime (AUTHORIZATION_ENGINE not wired). (confidence: observed)
+        - name: "Consent & Trust — Implementation"
+          stated_status: "Wave 3+ (deferred in AI_PLATFORM_ROADMAP.md)"
+          in_running_code: true
+          notes: >
+            Consent engine implemented with /consent/grant, /consent/revoke,
+            /consent/history routes. (confidence: observed)
+        - name: "Full D1 persistence backends"
+          stated_status: "Phase 2+ (deferred in AI_PLATFORM_ROADMAP.md)"
+          in_running_code: partially
+          notes: >
+            D1 used for Identity, Workflow, Documents, Notifications.
+            Appointments, Messaging, Timeline, Credentials, Release all
+            use in-memory only. (confidence: observed)
+
+    - id: Phase_C
+      name: "Governance"
+      stated_status: "Architecture Complete (Wave 2)"
+      capabilities:
+        - name: "Policy Engine — Architecture"
+          stated_status: complete
+          in_running_code: true
+          notes: "See Phase B Policy Engine note above. (confidence: observed)"
+        - name: "Consent & Trust — Architecture"
+          stated_status: complete
+          in_running_code: true
+          notes: "See Phase B Consent note above. (confidence: observed)"
+        - name: "Capability Registry"
+          stated_status: complete
+          in_running_code: true
+          notes: "11-capability inventory, ADR-011. (confidence: observed)"
+        - name: "Engineering Standards"
+          stated_status: complete
+          in_running_code: unknown
+          notes: >
+            110 standards, 19 categories defined in ADR-011. Enforcement
+            in running code not directly verified. (confidence: inferred)
+        - name: "Capability Maturity Model"
+          stated_status: complete
+          in_running_code: unknown
+          notes: "8 levels defined. Runtime enforcement not verified. (confidence: inferred)"
+        - name: "Policy Engine — Implementation"
+          stated_status: "Wave 3+ deferred"
+          in_running_code: true
+          notes: "Implemented but with static trust scores (0.5 hardcoded). (confidence: observed)"
+        - name: "Consent & Trust — Implementation"
+          stated_status: "Wave 3+ deferred"
+          in_running_code: true
+          notes: "Implemented. (confidence: observed)"
+        - name: "Workforce Identity — Implementation"
+          stated_status: "Wave 3+ deferred"
+          in_running_code: true
+          notes: "confidence: observed"
+
+    - id: Phase_D
+      name: "Core Runtime"
+      stated_status: "Planned — PSER architecture complete"
+      capabilities:
+        - name: "PSER — Architecture"
+          stated_status: complete
+          in_running_code: unknown
+          notes: >
+            11 interfaces, 26-table D1 schema designed (ADR-016).
+            Runtime implementation status not confirmed in code discovery.
+            (confidence: inferred)
+        - name: "PSER — Implementation (D1 schema + service layer)"
+          stated_status: "Wave 1 (planned)"
+          in_running_code: unknown
+          notes: "confidence: unknown"
+        - name: "Full D1 persistence backends"
+          stated_status: "Planned"
+          in_running_code: partially
+          notes: "See Phase B note. (confidence: observed)"
+        - name: "Runtime monitoring / Automated failover"
+          stated_status: "Planned"
+          in_running_code: false
+          notes: "No evidence in code discovery. (confidence: observed)"
+
+    - id: Phase_E
+      name: "Release Management"
+      stated_status: "Architecture Complete (Wave 1) — implementation deferred"
+      capabilities:
+        - name: "Release Management Architecture"
+          stated_status: complete
+          in_running_code: false
+          notes: >
+            InMemoryReleaseRegistry — no D1. No live HTTP route.
+            Architecture complete; implementation is in-memory only.
+            (confidence: observed)
+        - name: "Implementation — D1 schema + service layer"
+          stated_status: "Wave 2 (planned)"
+          in_running_code: false
+          notes: "confidence: observed"
+
+    - id: Phase_F
+      name: "Workforce Intelligence"
+      stated_status: "Planned"
+      capabilities:
+        all_planned: true
+      in_running_code: false
+      notes: "No implementation evidence. (confidence: observed)"
+
+    - id: Phase_G
+      name: "Memory"
+      stated_status: "Planned"
+      capabilities:
+        all_planned: true
+      in_running_code: false
+      notes: "No implementation evidence. (confidence: observed)"
+
+    - id: Phase_H
+      name: "Autonomous Planning"
+      stated_status: "Planned"
+      capabilities:
+        all_planned: true
+      in_running_code: false
+      notes: "No implementation evidence. (confidence: observed)"
+
+    - id: Phase_I
+      name: "Multi-product Portfolio"
+      stated_status: "Planned"
+      capabilities:
+        all_planned: true
+      in_running_code: false
+      notes: "No implementation evidence. (confidence: observed)"
+
+    - id: Phase_J
+      name: "Marketplace"
+      stated_status: "Planned"
+      capabilities:
+        all_planned: true
+      in_running_code: false
+      notes: "No implementation evidence. (confidence: observed)"
+
+    - id: Phase_K
+      name: "Enterprise Platform"
+      stated_status: "Planned"
+      capabilities:
+        all_planned: true
+      in_running_code: false
+      notes: "No implementation evidence. (confidence: observed)"
+
+  EPCL:
+    full_name: "Executive Planning & Control Layer"
+    adr: "ADR-018"
+    stated_status: "Partial — core services implemented, autonomous execution gated"
+    in_running_code: true
+    reachable_in_production: false
+    feature_flags_all_false: true
+    notes: >
+      All 6 EPCL feature flags default to false. requireExecutiveWorkflow()
+      throws if ENABLE_EXECUTIVE_WORKFLOW is off. No HTTP route imports or
+      triggers ExecutivePlanningWorkflow.execute(). System is implemented
+      but entirely unreachable in production without explicit flag enablement.
+      confidence: observed (workers/src/platform/epcl/)
+
+  WAS:
+    full_name: "Workforce Activation Service"
+    stated_status: "Partial — state machine implemented; WEF delegation is a stub"
+    in_running_code: true
+    reachable_in_production: false
+    feature_flags_all_false: true
+    notes: >
+      5 WAS feature flags all default to false. ENABLE_AUTONOMOUS_EXECUTION
+      is the master switch. WEFDelegator.delegate() contains explicit TODO:
+      'Replace with actual WEF delegation when WEF integration is available'
+      — returns simulated success only. D1 persistence interface defined but
+      disabled by default (enablePersistence: false). No HTTP route triggers
+      WorkforceActivationService.activate(). (confidence: observed)
+      (workers/src/platform/was/)
+
+  WEF:
+    full_name: "Workforce Execution Framework"
+    stated_status: "Scaffolding only — no execution engine"
+    in_running_code: true
+    reachable_in_production: false
+    notes: >
+      Only WefOperationalIntelligence exists (pre-deployment health reporting
+      wrapper). No execution engine, no batch executor, no task runner.
+      WAS WEFDelegator explicitly marks WEF integration as 'reserved'.
+      No live HTTP route calls WefOperationalIntelligence.
+      confidence: observed (workers/src/platform/wef/)
+
+  capability_maturity:
+    model: "8 levels — Concept → Architecture → Prototype → Development → Production Ready → Operational → Deprecated → Retired"
+    source: "ADR-011, AI_PLATFORM_ROADMAP.md Phase C"
+    enforcement_in_running_code: unknown
+    (confidence: inferred)
+
+# ─────────────────────────────────────────────
+# NOT YET STARTED
+# ─────────────────────────────────────────────
+not_yet_started:
+  - item: "Phase 3 — Clinic Collaboration Platform"
+    source: ROADMAP.md
+    notes: "Will be scoped after Phase 2 completion. (confidence: observed)"
+
+  - item: "Phase 4 — Healthcare Technology Ecosystem"
+    source: ROADMAP.md
+    notes: "Will be scoped after Phase 3. (confidence: observed)"
+
+  - item: "AI Platform Phases D (runtime) through K (enterprise)"
+    source: docs/platform/AI_PLATFORM_ROADMAP.md
+    notes: >
+      Phase D PSER implementation, Phases E–K: all Planned with no
+      implementation evidence in workers/src/platform/.
+      (confidence: observed)
+
+  - item: "D1 persistence for Appointments, Messaging, Timeline, Credentials, Release Management"
+    source: "discovery/C_platform_subsystems.md"
+    notes: >
+      All five subsystems use in-memory engines (globalThis or Maps).
+      D1 backing planned but not implemented. Data lost on Worker restart.
+      (confidence: observed)
+
+  - item: "Real external delivery for Notifications (FCM/APNs/SES/Twilio)"
+    source: "workers/src/platform/notifications/delivery-engine.ts"
+    notes: >
+      delivery-engine.ts contains explicit 'Simulate delivery' comment.
+      No real external service calls in production code.
+      (confidence: observed)
+
+  - item: "Cloudflare Access / Zero Trust full provisioning"
+    source: "commit history 2026-08-04"
+    notes: >
+      Scripting in progress (5 commits on 2026-08-04). Org rename from
+      'hermes-website' to 'AG Synergy' in Zero Trust is part of this work.
+      Not yet complete as of 2026-08-04. (confidence: observed)
+
+  - item: "EPIC-015 (referenced in Wave 8 reconciliation)"
+    source: "commit 8c65571 (2026-08-03)"
+    notes: >
+      Referenced as 'EPIC-015 back-integration'. Scope and completion status
+      unknown from available evidence. (confidence: unknown)
+
+  - item: "Concierge web dashboard (admin)"
+    source: ROADMAP.md Future Capabilities table
+    notes: "Deferred — Telegram bots cover Phase 1–2 needs. (confidence: observed)"
+
+  - item: "Multi-language i18n"
+    source: ROADMAP.md Future Capabilities table
+    notes: "Post-MVP. English-only for Phase 1–2. (confidence: observed)"
+
+  - item: "Mobile application"
+    source: ROADMAP.md Future Capabilities table
+    notes: "Post-MVP. Responsive web covers all current phases. (confidence: observed)"
+
+  - item: "AI Session Management"
+    source: ROADMAP.md Future Capabilities table
+    notes: "Planned — Hermes context monitoring, handoff notes, session restart. (confidence: observed)"
+
+  - item: "Payments"
+    source: ROADMAP.md Future Capabilities table
+    notes: "Post-MVP. Not in product scope until Phase 4. (confidence: observed)"
+
+# ─────────────────────────────────────────────
+# CONSOLIDATED CONFLICTS
+# ─────────────────────────────────────────────
+conflicts:
+  - id: C1
+    title: "TASKS.md EPIC-002-005 status vs ROADMAP.md Phase 1 completion"
+    claim_a:
+      source: TASKS.md
+      text: "EPIC-002-005 (Hermes Admin Bot) — ⬜ Not Started"
+    claim_b:
+      source: ROADMAP.md
+      text: "EPIC-002-005 completed 2026-07-25; Phase 1 100% complete"
+    analysis: >
+      TASKS.md is frozen at a Phase 1 in-progress snapshot. It has never
+      been updated to reflect subsequent wave-based work. ROADMAP.md is
+      more recent and treated as authoritative for phase completion.
+    (confidence: observed)
+
+  - id: C2
+    title: "Phase 2 completion date: PROJECT.md 2026-07-26 vs ROADMAP.md 2026-07-27"
+    claim_a:
+      source: PROJECT.md
+      text: "Phase 2 — Complete (2026-07-26)"
+    claim_b:
+      source: ROADMAP.md
+      text: "Phase 2 Wave 9 Complete — 2026-07-27"
+    analysis: >
+      Minor inconsistency. ROADMAP.md is treated as the authoritative
+      timeline document. One of these dates is incorrect.
+    (confidence: observed)
+
+  - id: C3
+    title: "CURRENT_SPRINT.md (root) all quality gates Passed vs WAVE2_AUDIT_REPORT.md certified pipeline never invoked"
+    claim_a:
+      source: CURRENT_SPRINT.md (root)
+      text: >
+        "Implementation ✅ Passed, QA Agent ✅ Passed, Security Agent ✅ Passed,
+        Governance synchronization ✅ Passed, Operational validation ✅ Passed"
+    claim_b:
+      source: WAVE2_AUDIT_REPORT.md
+      text: >
+        "Wave 2 did not execute through the certified Hermes Foundation
+        architecture. The certified EPCL→WAS→WEF execution path was never
+        invoked. Runtime behavior is that of a traditional coding agent."
+    analysis: >
+      Quality gates in CURRENT_SPRINT.md likely reflect human-reviewed checks
+      rather than automated EPCL/WAS/WEF pipeline execution. A reader of
+      CURRENT_SPRINT.md would assume certified autonomous pipeline was used;
+      WAVE2_AUDIT_REPORT.md explicitly shows it was not. Both claims are
+      factually true in their own frame but create a misleading composite
+      picture.
+    (confidence: observed)
+
+  - id: C4
+    title: "Two CURRENT_SPRINT.md files with different sprint content"
+    claim_a:
+      source: CURRENT_SPRINT.md (root)
+      text: "Sprint: Wave 9 — Concierge Launch & Platform Activation; Status: COMPLETE"
+    claim_b:
+      source: docs/governance/CURRENT_SPRINT.md
+      text: "Sprint: S2.2.2 — Patient Workspace Activation & UX Polish (Wave 5.1); Status: Complete"
+    analysis: >
+      Per ADR-015, docs/governance/CURRENT_SPRINT.md is the canonical version.
+      The root-level CURRENT_SPRINT.md is more recent (Wave 9) but was not
+      synced to the governance location. The governance version was last
+      updated 2026-07-26 (Wave 5.1) and is now stale relative to reality.
+    (confidence: observed)
+
+  - id: C5
+    title: "SECURITY.md claims 141 tests and Phase 2 auth planned; reality is 614 tests and auth complete"
+    claim_a:
+      source: SECURITY.md
+      text: "Last reviewed 2026-07-18. 141 tests. Phase 2 auth planned."
+    claim_b:
+      source: "SECURITY_CERTIFICATION_REPORT.md, SECURITY-REVIEW-v2.md"
+      text: "614/614 tests. 39 routes authenticated via withJwtAuth. CERTIFIED for production."
+    analysis: >
+      SECURITY.md was written at Phase 1 and never updated. It is de facto
+      superseded by the security certification documents but retains prominent
+      position in README links.
+    (confidence: observed)
+
+  - id: C6
+    title: "Wave delivery order in commits post-dates Wave 9 stated completion"
+    claim_a:
+      source: ROADMAP.md
+      text: "Wave 9 Complete — 2026-07-27"
+    claim_b:
+      source: "commit history 2026-08-01 to 2026-08-03"
+      text: >
+        Wave 5 (Document Centre), Wave 6 (Communication Centre, v1.6.0 prod
+        release), Wave 7 (Notifications + Engagement), Wave 8 (reconciliation)
+        all promoted to production 2026-08-01 to 2026-08-03 — after Wave 9's
+        stated completion date.
+    analysis: >
+      The roadmap records waves as complete in their logical sequence.
+      The git history shows production promotion events happening in a bulk
+      catch-up pattern after the fact. Waves were likely implemented before
+      2026-07-27 but formally released/promoted to production afterward.
+      The delivery was not strictly sequential.
+    (confidence: inferred)
+
+  - id: C7
+    title: "ADR-016 number collision across two ADR directories"
+    claim_a:
+      source: docs/decisions/ADR-016-communication-centre.md
+      text: "ADR-016 — Communication Centre"
+    claim_b:
+      source: docs/adr/ADR-016-project-state-execution-registry.md
+      text: "ADR-016 — Project State & Execution Registry (PSER)"
+    analysis: >
+      Two completely different architecture decisions share the same ADR
+      number across docs/decisions/ and docs/adr/. The adr/ directory
+      is the more recently active one (post ADR-012).
+    (confidence: observed)
+
+  - id: C8
+    title: "EPCL/WAS/WEF feature flags all false contradicts 'Wave 2 governance architecture complete'"
+    claim_a:
+      source: "ROADMAP.md, AI_PLATFORM_ROADMAP.md"
+      text: "Wave 2 AI Platform Governance Core complete. EPCL, WAS, WEF operational."
+    claim_b:
+      source: "workers/src/platform/epcl/types.ts, workers/src/platform/was/types.ts"
+      text: >
+        All 6 EPCL flags and all 5 WAS flags default to false. WEF has no
+        execution engine. No HTTP routes trigger EPCL, WAS, or WEF.
+        WAS WEFDelegator is an explicit stub.
+    analysis: >
+      The roadmap's 'complete' designation for EPCL/WAS/WEF refers to
+      architecture documents and service implementations being written —
+      not to the autonomous execution path being enabled in production.
+      The WAVE2_AUDIT_REPORT.md confirms the orchestration path was never
+      invoked. EPCL/WAS/WEF are present in the codebase but not reachable.
+    (confidence: observed)

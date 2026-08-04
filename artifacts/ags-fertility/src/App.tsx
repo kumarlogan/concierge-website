@@ -28,7 +28,7 @@ import { CookieConsentBanner } from '@/components/CookieConsentBanner';
 // Patient Workspace (Wave 5)
 import { AuthProvider } from '@/lib/auth-context';
 import { AuthGuard, ClinicGuard, GuestGuard } from '@/lib/auth-guard';
-import { PatientLayout } from '@/components/patient/PatientLayout';
+import PatientLayout from '@/components/patient/PatientLayout';
 import LoginPage from '@/pages/patient/LoginPage';
 import RegisterPage from '@/pages/patient/RegisterPage';
 import ForgotPasswordPage from '@/pages/patient/ForgotPasswordPage';

@@ -122,13 +122,15 @@ jobs:
             v.JWT_KID         = process.env.JWT_KID;
             v.PLATFORM_JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY;
             v.PLATFORM_JWT_KID        = process.env.JWT_KID;
+            v.TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY;
             fs.writeFileSync(f, JSON.stringify(json, null, 2) + "\n");
-            console.log("Injected JWT vars (private key length=" + process.env.JWT_PRIVATE_KEY.length + ")");
+            console.log("Injected JWT vars (private key length=" + (process.env.JWT_PRIVATE_KEY ? process.env.JWT_PRIVATE_KEY.length : 0) + ")");
           '
         env:
           JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
           JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
           JWT_KID: ${{ secrets.JWT_KID }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
 
       - name: Deploy API (agsynergy-api → api.agsynergy.ca)
         uses: cloudflare/wrangler-action@v4

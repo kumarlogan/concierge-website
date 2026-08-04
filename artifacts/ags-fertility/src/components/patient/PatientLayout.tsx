@@ -1,147 +1,101 @@
 // ┌─────────────────────────────────────────────────────────────┐
-// │ Concierge Product — Patient Workspace Layout               │
-// │ Responsive sidebar + header navigation for patient area.   │
-// │ Wave 5 — Patient Workspace                                  │
+// │ AG Synergy — Patient Layout (Wave 7)                      │
+// │ Updated with notification badge on mobile bottom nav.    │
 // └─────────────────────────────────────────────────────────────┘
 
-import { type ReactNode, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
-import {
-  LayoutDashboard,
-  User,
-  Shield,
-  ClipboardCheck,
-  Bell,
-  Calendar,
-  MessageSquare,
-  LogOut,
-  Menu,
-  X,
-  ChevronRight,
-  Clock,
-  ListTodo,
-  Trophy,
-  Sparkles,
-  Users,
-  Route,
-} from "lucide-react";
+import { getUnreadCount } from "@/lib/message-api";
+import { Bell, BellOff, Home, Calendar, MessageSquare, Settings, ChevronDown } from "lucide-react";
 
-interface NavItem {
-  href: string;
-  label: string;
-  icon: ReactNode;
-}
+export default function PatientLayout({ children }: { children: React.ReactNode }) {
+  const { identity } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
 
-const navItems: NavItem[] = [
-  { href: "/patient/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
-  { href: "/patient/care-plan", label: "Care Plan", icon: <Route className="h-4 w-4" /> },
-  { href: "/patient/tasks", label: "Tasks", icon: <ListTodo className="h-4 w-4" /> },
-  { href: "/patient/milestones", label: "Milestones", icon: <Trophy className="h-4 w-4" /> },
-  { href: "/patient/coordination", label: "Coordination", icon: <Users className="h-4 w-4" /> },
-  { href: "/patient/appointments", label: "Appointments", icon: <Calendar className="h-4 w-4" /> },
-  { href: "/patient/communication", label: "Communication", icon: <MessageSquare className="h-4 w-4" /> },
-  { href: "/patient/profile", label: "Profile", icon: <User className="h-4 w-4" /> },
-  { href: "/patient/security", label: "Security", icon: <Shield className="h-4 w-4" /> },
-  { href: "/patient/consents", label: "Consents", icon: <ClipboardCheck className="h-4 w-4" /> },
-  { href: "/patient/timeline", label: "Journey Timeline", icon: <Clock className="h-4 w-4" /> },
-  { href: "/patient/hub", label: "Journey Hub", icon: <Sparkles className="h-4 w-4" /> },
-];
+  useEffect(() => {
+    if (!identity) return;
+    refreshUnreadCount();
+  }, [identity]);
 
-export function PatientLayout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
-  const { user, logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleLogout = async () => {
-    await logout();
-    window.location.href = "/patient/login";
+  const refreshUnreadCount = async () => {
+    try {
+      const count = await getUnreadCount();
+      setUnreadCount(count);
+    } catch {
+      // Silently handle
+    }
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* ── Mobile overlay ── */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* ── Sidebar ── */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-card transition-transform duration-200 lg:static lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {/* Sidebar header */}
-        <div className="flex items-center justify-between border-b px-4 py-4">
-          <Link href="/patient/dashboard" className="text-lg font-semibold">
-            Patient Portal
-          </Link>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="rounded-md p-1 hover:bg-accent lg:hidden"
-          >
-            <X className="h-5 w-5" />
-          </button>
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center px-4">
+          <a href="/patient/dashboard" className="font-bold text-lg mr-6">
+            Concierge
+          </a>
+          <nav className="flex items-center gap-4 text-sm font-medium">
+            <a href="/patient/dashboard" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <Home className="h-4 w-4" />
+              Dashboard
+            </a>
+            <a href="/patient/appointments" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <Calendar className="h-4 w-4" />
+              Appointments
+            </a>
+            <a href="/patient/messages" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <MessageSquare className="h-4 w-4" />
+              Messages
+            </a>
+            <a href="/patient/notifications" className="flex items-center gap-1.5 hover:text-primary transition-colors relative">
+              <Bell className="h-4 w-4" />
+              Notifications
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="absolute -top-2 -right-2 rounded-full px-1.5 py-0 text-[10px] min-w-[18px] h-[18px]">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </Badge>
+              )}
+            </a>
+            <a href="/patient/settings" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+              <Settings className="h-4 w-4" />
+              Settings
+            </a>
+          </nav>
         </div>
+      </header>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {navItems.map((item) => {
-            const isActive = location === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                }`}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-                {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
-              </Link>
-            );
-          })}
-        </nav>
+      {/* Main Content */}
+      <main className="flex-1 container py-6 px-4">{children}</main>
 
-        {/* User info + logout */}
-        <div className="border-t p-3">
-          <div className="mb-2 truncate text-xs text-muted-foreground">
-            {user?.email}
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </button>
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
+        <div className="flex items-center justify-around h-14">
+          <a href="/patient/dashboard" className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-primary">
+            <Home className="h-5 w-5" />
+            Home
+          </a>
+          <a href="/patient/appointments" className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-primary">
+            <Calendar className="h-5 w-5" />
+            Appointments
+          </a>
+          <a href="/patient/messages" className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-primary">
+            <MessageSquare className="h-5 w-5" />
+            Messages
+          </a>
+          <a href="/patient/notifications" className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-primary relative">
+            <Bell className="h-5 w-5" />
+            Alerts
+            {unreadCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-1 -right-3 rounded-full px-1 py-0 text-[9px] min-w-[16px] h-[16px]">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </Badge>
+            )}
+          </a>
         </div>
-      </aside>
+      </nav>
 
-      {/* ── Main content ── */}
-      <div className="flex flex-1 flex-col">
-        {/* Mobile header */}
-        <header className="flex items-center border-b bg-card px-4 py-3 lg:hidden">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="mr-3 rounded-md p-1 hover:bg-accent"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <span className="text-sm font-semibold">Patient Portal</span>
-        </header>
-
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-          {children}
-        </main>
-      </div>
+      {/* Spacer for mobile nav */}
+      <div className="md:hidden h-14" />
     </div>
   );
 }

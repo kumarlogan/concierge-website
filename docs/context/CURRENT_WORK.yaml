@@ -1,0 +1,131 @@
+# CURRENT_WORK.yaml — machine-readable context
+# Generated 2026-08-04 by an external AI engineering session.
+# Evidence-based: entries cite repository paths.
+# Update obligations: see docs/context/CONTEXT_MAINTENANCE.md
+schema_version: 1
+generated: 2026-08-04
+repository: kumarlogan/concierge-website
+confidence_legend:
+  observed: directly read from repository files
+  inferred: reasoned from repository evidence
+  unknown: not determinable from the repository
+
+as_of: "2026-08-04"
+pending_context_updates: >
+  After PR #7 merges: update PROJECT_STATE.yaml to reflect consent and timeline as D1-backed; tighten known_gaps for PRG-006/009/010/011/014.
+  KNOWN_GAPS.yaml should mark PRG-008, PRG-004, PRG-022 as resolved after PR #6 merges.
+  PRG-011 blocked pending Hermes live consents schema verification.
+
+active_streams:
+  - id: stream_wave3b_d1_persistence
+    name: "Wave 3B — D1 Timeline and Consent Engines"
+    description: >
+      D1TimelineEngine + timeline schema migration, clinic portal real D1 patient queries,
+      D1ConsentEngine + consent schema reconciliation. Addressing PRG-006, PRG-009, PRG-010, PRG-011, PRG-014.
+    apparent_status: >
+      Branch eng/wave-3b-d1-persistence open as PR #7. Awaiting merge.
+    confidence: observed
+
+  - id: stream_wave3a_patient_journey
+    name: "Wave 3A implementation"
+    description: >
+      Document upload fix, email verification page, workflow D1 persistence.
+      Addressing PRG-004, PRG-008, PRG-022.
+    apparent_status: >
+      Branch eng/wave-3a-patient-journey open as PR #6. Awaiting CI and merge.
+    confidence: observed
+
+  - id: stream_wave2_critical_fixes
+    name: "Wave 2 — Critical Security and Operational Fixes"
+    description: >
+      Implementation of 6 high-priority fixes on branch eng/wave-2-critical-fixes.
+    apparent_status: >
+      Branch eng/wave-2-critical-fixes open as PR #5. Awaiting merge.
+    confidence: observed
+
+  - id: stream_wave1_authz_ci_gate
+    name: "Wave 1 — Authorization and CI Gate"
+    description: >
+      IDOR fixes and CI gate on branch eng/wave-1-authz-and-ci-gate.
+    apparent_status: >
+      Branch eng/wave-1-authz-and-ci-gate open as PR #4. Awaiting merge.
+    confidence: observed
+
+open_pull_requests:
+  - number: 7
+    title: "Wave 3B — D1 Timeline and Consent Engines"
+    branch: "eng/wave-3b-d1-persistence"
+    opened: "2026-08-04"
+    priority: HIGH
+    items: [PRG-006, PRG-009, PRG-010, PRG-011, PRG-014]
+    status: "Open — awaiting merge"
+
+  - number: 6
+    title: "Wave 3A — document upload, email verification, workflow persistence"
+    branch: "eng/wave-3a-patient-journey"
+    opened: "2026-08-04"
+    priority: HIGH
+    items: [PRG-008, PRG-004, PRG-022]
+    status: "Open — awaiting CI and merge"
+
+  - number: 5
+    title: "fix(security+ops): Wave 2 — critical fixes"
+    branch: "eng/wave-2-critical-fixes"
+    priority: HIGH
+    status: "Open — awaiting merge"
+
+  - number: 4
+    title: "fix(security+ci): Wave 1 — IDOR fixes and CI gate"
+    branch: "eng/wave-1-authz-and-ci-gate"
+    priority: HIGH
+    status: "Open — awaiting merge"
+
+immediate_known_blockers:
+  blockers:
+    - id: blocker_d1_timeline
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 7
+      description: "PRG-006: FIXED on PR #7 — D1TimelineEngine + timeline schema migration"
+
+    - id: blocker_clinic_portal_d1_queries
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 7
+      description: "PRG-009: FIXED on PR #7 — clinic portal uses real D1 patient queries (identities table)"
+
+    - id: blocker_clinic_portal_d1_identities
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 7
+      description: "PRG-010: FIXED on PR #7 — clinic portal D1 identities integration"
+
+    - id: blocker_d1_consent_engine
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 7
+      description: "PRG-011: FIXED on PR #7 — D1ConsentEngine + consent schema reconciliation"
+
+    - id: blocker_consent_schema_gap
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 7
+      description: "PRG-014: FIXED on PR #7 — consent schema reconciliation (also resolves schema gap)"
+
+    - id: blocker_document_upload_auth
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 6
+      description: "PRG-008: FIXED on PR #6 — document upload auth corrected"
+
+    - id: blocker_email_verification_landing
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 6
+      description: "PRG-004: FIXED on PR #6 — email verification landing page created"
+
+    - id: blocker_workflow_persistence
+      severity: HIGH
+      status: FIXED_ON_BRANCH
+      fix_pr: 6
+      description: "PRG-022: FIXED on PR #6 — workflow instance D1 persistence added"

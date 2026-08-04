@@ -1,0 +1,1206 @@
+# ARCHITECTURE.yaml — machine-readable system architecture
+# Generated 2026-08-04 by an external AI engineering session.
+# Evidence-based: entries cite repository paths. This file describes the system
+# AS BUILT, which in places differs from prose documentation elsewhere in the repo.
+# Update obligations: see docs/context/CONTEXT_MAINTENANCE.md
+schema_version: 1
+generated: 2026-08-04
+repository: kumarlogan/concierge-website
+confidence_legend:
+  observed: directly read from repository files
+  inferred: reasoned from repository evidence
+  unknown: not determinable from the repository
+
+# ---------------------------------------------------------------------------
+system:
+  name: AGS Fertility Concierge (Hermes Platform)
+  purpose: >
+    Patient-facing fertility concierge web application (AGS Fertility / AG Synergy),
+    with an AI workforce control plane (Hermes) and a multi-subsystem Cloudflare
+    Worker API backend.
+  public_brand: AG Synergy
+  domains:
+    - agsynergy.ca
+    - www.agsynergy.ca
+    - api.agsynergy.ca
+  hosting_platform: Cloudflare Workers + Cloudflare R2
+  development_platform: Replit (nodejs-24 runtime)
+  evidence: wrangler.jsonc, workers/wrangler.jsonc, .replit
+  confidence: observed
+
+# ---------------------------------------------------------------------------
+runtime_topology:
+  workers:
+    - name: hermes-website
+      wrangler_config: wrangler.jsonc  # repo root
+      source_dir: artifacts/ags-fertility/dist/public  # build output served as assets
+      domains:
+        - agsynergy.ca
+        - www.agsynergy.ca
+      routes:
+        - pattern: agsynergy.ca
+          custom_domain: true
+        - pattern: www.agsynergy.ca
+          custom_domain: true
+      purpose: >
+        Static-asset SPA worker. Serves the built React SPA with
+        single-page-application not_found_handling. No bindings, no business logic.
+      bindings: []
+      compatibility_date: "2026-07-17"
+      note: >
+        Worker name "hermes-website" is misleading — this worker serves the
+        ags-fertility React SPA, not a separate "hermes" frontend.
+      evidence: wrangler.jsonc
+      confidence: observed
+
+    - name: agsynergy-api
+      wrangler_config: workers/wrangler.jsonc
+      source_dir: workers/src
+      entrypoint: workers/src/index.ts
+      domains:
+        - api.agsynergy.ca  # production env route
+        - agsynergy-api.kumarlogan.workers.dev  # workers_dev fallback
+      routes:
+        production:
+          pattern: api.agsynergy.ca
+          custom_domain: true
+        preview:
+          pattern: null  # no route defined for preview env
+      purpose: >
+        Primary API backend. Cloudflare Worker implementing the full AGS platform:
+        patient identity, trust/consent/policy runtime, document management,
+        appointments, messaging, notifications, workflows, operations, and
+        two Telegram bot webhooks.
+      compatibility_date: "2026-07-17"
+      compatibility_flags:
+        - nodejs_compat
+      observability: enabled  # wrangler built-in observability
+      version: 1.1.0  # workers/src/version.ts
+      evidence: workers/wrangler.jsonc, workers/src/index.ts, workers/src/version.ts
+      confidence: observed
+
+  spa:
+    name: ags-fertility
+    package: "@workspace/ags-fertility"
+    source_dir: artifacts/ags-fertility
+    build_output: artifacts/ags-fertility/dist/public
+    deployed_via: hermes-website worker (static assets)
+    evidence: wrangler.jsonc (assets.directory), artifacts/ags-fertility/package.json
+    confidence: observed
+
+# ---------------------------------------------------------------------------
+bindings:
+  # All bindings are on the agsynergy-api worker (workers/wrangler.jsonc)
+  # hermes-website worker has zero bindings.
+
+  - binding: DB
+    type: d1
+    database_name: agsynergy-db
+    database_id: 45f52102-74e1-4ba2-86ca-f4d5f88e16c4
+    status: provisioned
+    purpose: Primary D1 database — 68 tables covering all platform data
+    evidence: workers/wrangler.jsonc
+    confidence: observed
+
+  - binding: NOTIFICATIONS
+    type: d1
+    database_name: agsynergy-notifications
+    database_id: ""  # EMPTY — not yet provisioned
+    status: unprovisioned
+    purpose: >
+      Intended separate D1 database for notification-specific tables. Currently
+      has an empty database_id, meaning this binding will fail at runtime if
+      accessed. The notification_* tables in migration 011 appear to target the
+      primary DB binding instead. Wiring is ambiguous.
+    risk: HIGH — deployment will likely fail or silently fall back if NOTIFICATIONS
+          binding is referenced by d1-notification-store.ts
+    evidence: workers/wrangler.jsonc
+    confidence: observed
+
+  - binding: DOCUMENT_STORAGE
+    type: r2
+    bucket_name: agsynergy-documents
+    preview_bucket_name: agsynergy-documents-preview
+    status: provisioned  # bucket names declared; assumed provisioned
+    purpose: Document binary storage (PHI and non-PHI). Single bucket binding.
+    note: >
+      PHI/non-PHI routing in code uses bucket-name prefixes in metadata but
+      both route to the single DOCUMENT_STORAGE binding — actual bucket
+      separation does not exist.
+    evidence: workers/wrangler.jsonc, workers/src/platform/documents/document-storage.ts
+    confidence: observed
+
+secrets_injected_at_deploy:
+  # Secrets NOT stored in wrangler.jsonc at rest; injected by CI before deploy
+  names:
+    - JWT_PRIVATE_KEY
+    - JWT_PUBLIC_KEY
+    - JWT_KID
+    - PLATFORM_JWT_PUBLIC_KEY  # same value as JWT_PUBLIC_KEY
+    - PLATFORM_JWT_KID         # same value as JWT_KID
+    - TURNSTILE_SECRET_KEY
+    - VITE_API_BASE            # frontend build-time secret (injected before vite build)
+  evidence: ".github/workflows/deploy.yml (step: Inject JWT config)"
+  confidence: observed
+
+absent_bindings:
+  kv_namespaces: none
+  durable_objects: none
+  queues: none
+  evidence: workers/wrangler.jsonc
+  confidence: observed
+
+# ---------------------------------------------------------------------------
+code_areas:
+  - path: workers/
+    package: "@workspace/workers"
+    purpose: >
+      Cloudflare Worker API backend. All HTTP endpoints, middleware, platform
+      subsystem wiring, and Telegram bot webhooks. This is the deployed API.
+    language: TypeScript
+    stack: Cloudflare Workers, Wrangler, Vitest (@cloudflare/vitest-pool-workers)
+    approximate_file_count: "130+ TS source files in workers/src/"
+    status: active
+    consumers: [deployed as agsynergy-api worker]
+    evidence: workers/src/index.ts, workers/wrangler.jsonc
+    confidence: observed
+
+  - path: hermes/
+    package: not-a-pnpm-package  # consumed via @hermes/* path alias
+    purpose: >
+      The Hermes Platform — an AI workforce control plane. Contains identity
+      resolution, RBAC permissions middleware, audit, agent registry, service
+      orchestration, admin BFF layer, persistence adapters, and 200+ files of
+      platform services. Extracted from workers/src/auth/ in EPIC-002-006B.
+      "Hermes owns no application business logic."
+    language: TypeScript
+    approximate_file_count: "222+ TS files across ~15 subdirectories"
+    status: active
+    sub_areas:
+      - hermes/identity/      # identity resolution and principal building
+      - hermes/permissions/   # RBAC middleware (has own package.json: @hermes/permissions)
+      - hermes/audit/         # non-blocking audit event writer
+      - hermes/agents/        # agent registry and lifecycle state machine
+      - hermes/contracts/     # internal Hermes API contracts
+      - hermes/services/      # ~12 sub-services (registry, discovery, lifecycle, execution, etc.)
+      - hermes/admin/         # admin BFF layer and console
+      - hermes/workforce/     # workforce event definitions and API
+      - hermes/persistence/   # D1-backed persistence adapters (some in-memory only)
+    consumers: [workers/ via @hermes/* path aliases]
+    known_risk: >
+      hermes/EPIC-007-plan.md describes hermes/services/execution/ depending on
+      workers/src/platform/epcl/ and workers/src/platform/was/ — if implemented,
+      this creates a circular dependency (workers→hermes AND hermes→workers).
+    evidence: hermes/README.md, workers/tsconfig.json, workers/wrangler.jsonc
+    confidence: observed
+
+  - path: lib/api-spec/
+    package: "@workspace/api-spec"
+    purpose: >
+      OpenAPI spec (openapi.yaml) and Orval code-generation config. Dev-tooling
+      only — not imported at runtime. Drives code generation into lib/api-client-react
+      and lib/api-zod. The spec covers only 3 paths (GET /health, POST /consultations,
+      GET /consultations/count) — a small subset of the actual API surface.
+    language: TypeScript (config) + YAML (spec)
+    status: active  # as dev tooling
+    consumers: [lib/api-client-react (generated output), lib/api-zod (generated output)]
+    evidence: lib/api-spec/package.json, lib/api-spec/openapi.yaml, lib/api-spec/orval.config.ts
+    confidence: observed
+
+  - path: lib/api-client-react/
+    package: "@workspace/api-client-react"
+    purpose: >
+      React + TanStack Query API client. Generated hooks (useHealthCheck,
+      useSubmitConsultation, useGetConsultationCount) plus a custom-fetch wrapper
+      with base URL override, bearer auth token getter, and typed errors.
+      This is the only active lib/ package in production.
+    language: TypeScript
+    status: active
+    consumers: [artifacts/ags-fertility]
+    evidence: lib/api-client-react/package.json, lib/api-client-react/src/index.ts
+    confidence: observed
+
+  - path: lib/api-zod/
+    package: "@workspace/api-zod"
+    purpose: >
+      Zod schemas generated from the same OpenAPI spec. Used only by the
+      legacy artifacts/api-server prototype. Marked @deprecated LEGACY PROTOTYPE
+      — REFERENCE ONLY in src/index.ts.
+    language: TypeScript
+    status: deprecated
+    consumers: [artifacts/api-server (undeployed legacy)]
+    evidence: lib/api-zod/LEGACY.md, lib/api-zod/src/index.ts
+    confidence: observed
+
+  - path: lib/db/
+    package: "@workspace/db"
+    purpose: >
+      Drizzle ORM schema for a legacy PostgreSQL database from the Phase-1
+      Express prototype. Exports db (Drizzle client), pool (pg.Pool), and schema
+      tables. Self-declared deprecated.
+    language: TypeScript
+    stack: Drizzle ORM, pg (PostgreSQL)
+    status: deprecated
+    consumers: [artifacts/api-server (undeployed legacy)]
+    evidence: lib/db/LEGACY.md, lib/db/package.json
+    confidence: observed
+
+  - path: shared/
+    package: not-a-pnpm-package  # consumed via @shared/* path alias
+    purpose: >
+      Provider-neutral contracts and interface abstractions. Contains:
+      contracts/ (ResourceKind, AgentLifecycleState, lifecycle transition guards),
+      interfaces/ (10 provider abstractions: identity, permission, audit,
+      datastore, object-storage, queue, notification, scheduler, secret, logging).
+      No provider-specific implementations. No application business logic.
+    language: TypeScript
+    status: active
+    consumers:
+      - hermes/ (relative imports: ../../shared/contracts/*)
+      - workers/ (via @shared/* alias; actual usage sparse — only 1 test file confirmed)
+    evidence: shared/README.md, hermes/contracts/platform-api.ts, workers/tsconfig.json
+    confidence: observed
+
+  - path: artifacts/ags-fertility/
+    package: "@workspace/ags-fertility"
+    purpose: >
+      Production React SPA. The canonical frontend. Serves the public AGS Fertility
+      Concierge website plus auth-guarded patient workspace and clinic workspace.
+      This is the ACTUAL frontend of the system.
+    language: TypeScript + TSX
+    stack: React 18, Vite, Tailwind CSS v4, Wouter, TanStack Query, shadcn/ui (Radix UI)
+    approximate_file_count: "40+ pages, 40+ UI components"
+    status: active
+    consumers: [deployed via hermes-website worker as static assets]
+    evidence: artifacts/ags-fertility/package.json, artifacts/ags-fertility/src/App.tsx
+    confidence: observed
+
+  - path: hermes-website/
+    package: null  # no package.json
+    purpose: >
+      MISNAMED DIRECTORY — this is NOT a frontend. Contains only backend
+      TypeScript integration test scripts and shell scripts for workforce
+      activation testing. No HTML, no React code, no package.json.
+      Files: test-activation-workflow.sh, test-workforce-integration.ts,
+      hermes/services/workforce/activation-workflow.ts, and two .md summary files.
+    language: TypeScript + Shell
+    status: misnamed
+    consumers: []  # not imported by any active code path
+    evidence: D_frontend.md (D.9 — Stubs, Placeholders, and Unfinished Work)
+    confidence: observed
+
+  - path: artifacts/api-server/
+    package: unknown  # package.json not read
+    purpose: >
+      Legacy Express API server from Phase-1 prototype. Not deployed. Consumes
+      the deprecated @workspace/api-zod and @workspace/db packages.
+    language: TypeScript
+    status: deprecated
+    consumers: []
+    evidence: F_shared_libraries.md (lib dependency graph)
+    confidence: inferred
+
+  - path: artifacts/mockup-sandbox/
+    package: unknown
+    purpose: >
+      Design prototype / static mockup workspace. React + Vite + Tailwind v4
+      + Radix UI, but without wouter or the API client. Has chokidar + fast-glob
+      suggesting a file-watching component generator. Not deployed.
+    language: TypeScript + TSX
+    status: prototype
+    consumers: []
+    evidence: D_frontend.md (section 8)
+    confidence: observed
+
+  - path: scripts/
+    package: "@workspace/scripts"
+    purpose: >
+      CI/developer helper scripts. Most significant: import-integrity-check.py
+      (~500 lines) — a static import graph checker used as a CI gate. Also
+      contains repo-integrity-check.sh, required-files-check.sh, extract-version.sh,
+      post-merge.sh, and others.
+    language: Python + Shell + TypeScript
+    status: active
+    consumers: [CI pipeline via .github/workflows/deploy.yml]
+    evidence: scripts/package.json, .github/workflows/deploy.yml
+    confidence: observed
+
+  - path: .hermes/
+    package: null
+    purpose: >
+      AI agent governance state store — two files only. Contains an unimplemented
+      EPIC plan (epic-002-005-plan.md, status "Plan only — do NOT implement") and
+      a repository reconciliation report (reconciliation-report.md). These are
+      AI coding agent session artifacts, not runtime configuration or code.
+    language: Markdown
+    status: artifact-store
+    consumers: []
+    evidence: F_shared_libraries.md (section 3)
+    confidence: inferred
+
+# ---------------------------------------------------------------------------
+dependency_direction:
+  rule: workers/ imports from hermes/ (NOT the reverse)
+  allowed:
+    - from: workers/
+      to: hermes/
+      mechanism: "@hermes/* path alias (tsconfig + wrangler aliases)"
+    - from: workers/
+      to: shared/
+      mechanism: "@shared/* path alias (tsconfig alias)"
+    - from: hermes/
+      to: shared/
+      mechanism: "relative imports (../../shared/contracts/*)"
+    - from: artifacts/ags-fertility/
+      to: lib/api-client-react/
+      mechanism: "pnpm workspace: @workspace/api-client-react"
+
+  path_aliases:
+    - alias: "@hermes/*"
+      target: hermes/*
+      defined_in:
+        - workers/tsconfig.json  # TypeScript resolution
+        - workers/wrangler.jsonc  # Wrangler bundler (explicit .js→.ts remapping)
+      note: >
+        Wrangler aliases use explicit .js→.ts remapping for ESM convention.
+        @hermes/permissions/middleware.js is NOT explicitly listed in wrangler.jsonc
+        aliases — covered only by the directory-level @hermes alias, which may
+        cause bundler resolution issues.
+      evidence: workers/tsconfig.json, workers/wrangler.jsonc
+      confidence: observed
+
+    - alias: "@shared/*"
+      target: shared/*
+      defined_in:
+        - workers/tsconfig.json
+        - workers/wrangler.jsonc
+      note: >
+        Actual @shared/* usage in workers/ source is sparse — only 1 test file
+        confirmed (workers/tests/epic-004-tenant-boundary.test.ts). hermes/ uses
+        relative imports (../../shared/*) instead of the alias.
+      evidence: workers/tsconfig.json, F_shared_libraries.md (section 5)
+      confidence: observed
+
+    - alias: "@workspace/*"
+      target: pnpm workspace packages
+      mechanism: pnpm workspace protocol (workspace:*)
+      defined_in: each package's package.json dependencies
+      evidence: artifacts/ags-fertility/package.json
+      confidence: observed
+
+  known_risks:
+    - id: EPIC-007-circular-dependency
+      description: >
+        hermes/EPIC-007-plan.md describes hermes/services/execution/ as depending
+        on workers/src/platform/epcl/ and workers/src/platform/was/. If this
+        dependency is implemented, hermes/ → workers/ imports would coexist with
+        workers/ → hermes/ imports, creating a circular dependency. The import
+        integrity check (scripts/import-integrity-check.py) runs in CI but excludes
+        workers/tests directories — it is unclear whether a hermes→workers import
+        would be detected. As of 2026-08-04 the actual import code has not been
+        confirmed (plan exists, implementation status unknown).
+      severity: HIGH
+      evidence: hermes/EPIC-007-plan.md, F_shared_libraries.md (section 6)
+      confidence: inferred
+
+# ---------------------------------------------------------------------------
+request_lifecycle:
+  worker: agsynergy-api
+  source: workers/src/index.ts
+  ordered_steps:
+    - step: 1
+      name: createSafeD1
+      file: workers/src/platform/d1.ts
+      description: Wraps env.DB in a Proxy that coerces undefined→null on .bind() calls. P0 production fix.
+
+    - step: 2
+      name: wirePlatformEngines
+      file: workers/src/index.ts (inline)
+      description: >
+        Injects ConsentEngine, TrustEngine, PolicyEngine, RiskEngine,
+        DelegationEngine, DecisionEngine, EventBus, DocumentService as
+        module-level singletons into env. Constructed once per Worker isolate.
+
+    - step: 3
+      name: request.start log
+      file: workers/src/middleware/logger.ts
+      description: Structured JSON log of {method, path}.
+
+    - step: 4
+      name: rateLimit
+      file: workers/src/middleware/rateLimit.ts
+      description: >
+        Per-IP sliding window (default 60 req/60s). State in module-level Map
+        — per-isolate only, not globally distributed. On exceed: 429 + Retry-After.
+
+    - step: 5
+      name: CORS preflight
+      file: workers/src/index.ts (inline)
+      description: >
+        OPTIONS → 204 with CORS headers. Allowed origins: agsynergy.ca,
+        www.agsynergy.ca, localhost:5173, localhost:23815.
+
+    - step: 6
+      name: router.fetch
+      file: workers/src/router/index.ts
+      description: >
+        Custom zero-dependency URLPattern router. First match wins. Wraps each
+        handler in try/catch (500 on unhandled error). Unmatched → 404 JSON.
+
+    - step: 7
+      name: CORS response headers
+      file: workers/src/index.ts (inline)
+      description: Appends Access-Control-Allow-Origin, Vary:Origin, method/header allow lists.
+
+    - step: 8
+      name: rate-limit response headers
+      file: workers/src/index.ts (inline)
+      description: Appends X-RateLimit-Limit, X-RateLimit-Remaining, Retry-After.
+
+    - step: 9
+      name: applySecurityHeaders
+      file: workers/src/middleware/security-headers.ts
+      description: >
+        HSTS (max-age=31536000 + includeSubDomains + preload), CSP, X-Frame-Options
+        (DENY), X-Content-Type-Options (nosniff), Referrer-Policy, Permissions-Policy,
+        Cache-Control (no-store). Strips Server and X-Powered-By.
+
+    - step: 10
+      name: request.complete log
+      file: workers/src/middleware/logger.ts
+      description: Structured JSON log of {method, path, status, latencyMs}.
+
+  route_level_middleware:
+    - name: requirePermission
+      file: "@hermes/permissions/middleware"
+      applied_to: All /api/v1/ops/* routes; Telegram and admin bot command dispatch
+      returns: "{authorized, principal:{userId,roleName,permissions}, response}"
+
+    - name: withJwtAuth
+      file: workers/src/middleware/jwt-auth.ts
+      applied_to: >
+        All /api/v1/timeline/*, /api/v1/documents/*, /api/v1/caregiver/*,
+        /api/v1/appointments/*, /api/v1/messages/*, /api/v1/notifications/*,
+        /api/v1/workflows/*, /api/v1/tasks/*, /api/v1/queue/*, /api/v1/trust/*,
+        /api/v1/consent/*, /api/v1/policy/*, /api/v1/delegation/*,
+        /api/v1/authorization/*, /api/v1/policies, /api/v1/permissions,
+        /api/v1/clinic/*, /api/v1/coordination/*
+      algorithm: RS256
+      issuers: ["ai-platform:identity-core", "ai-platform:concierge"]
+      public_key_env: PLATFORM_JWT_PUBLIC_KEY
+
+    - name: verifyTurnstile
+      file: workers/src/middleware/turnstile.ts
+      applied_to: POST /api/v1/consultations only
+      note: Skipped if TURNSTILE_SECRET_KEY is absent (dev mode)
+
+  evidence: workers/src/index.ts, B_worker_api_layer.md (section 3)
+  confidence: observed
+
+# ---------------------------------------------------------------------------
+auth_model:
+  paths:
+    - id: A
+      name: JWT Bearer (RS256)
+      mechanism: >
+        Authorization: Bearer <token> header. Verified via JwtManager.verify()
+        using env.PLATFORM_JWT_PUBLIC_KEY. Claims: sub (identityId), identity_type,
+        session_id, email, mfa_level, trust_score. On success: identity attached
+        to request via x-authenticated-* headers.
+      issuers:
+        - ai-platform:identity-core
+        - ai-platform:concierge
+      where_enforced: >
+        withJwtAuth() wrapper applied to ~90+ JWT-protected routes (all Wave 3+
+        protected endpoints). Fails closed on any error; returns typed 401 codes.
+      file: workers/src/middleware/jwt-auth.ts
+      evidence: B_worker_api_layer.md (section 4.1A)
+      confidence: observed
+
+    - id: B
+      name: Data-driven RBAC (Hermes permissions)
+      mechanism: >
+        requirePermission(db, request, permission) resolves identity from
+        X-Telegram-Chat-Id / X-Telegram-Display-Name headers (Telegram bots)
+        or from JWT (HTTP API). Returns OpsPrincipal (userId + roleName) attached
+        to request via Symbol.for("agsynergy.principal").
+      issuers: [hermes identity provider registry]
+      where_enforced: All /api/v1/ops/* routes; Telegram and admin bot command dispatch
+      permissions:
+        ops_api: [leads.read, leads.update, leads.assign]
+        admin_bot: [hermes:admin:read, hermes:admin:audit-read]
+      file: "@hermes/permissions/middleware"
+      evidence: B_worker_api_layer.md (section 4.1B, 4.2)
+      confidence: observed
+
+    - id: C
+      name: Identity Platform (self-wiring)
+      mechanism: >
+        All /identity/* paths dispatched to IdentityRouter.route() which
+        self-wires IdentityService, SessionManager, JwtManager, MagicLinkManager,
+        OAuthService (Google/OIDC/SAML), MFAManager (TOTP). Handles registration,
+        login, magic-link, OAuth, MFA, token refresh, credential rotation.
+        JWT private key registered from env.JWT_PRIVATE_KEY at module init.
+      issuers: [internal — issues ai-platform:identity-core tokens]
+      where_enforced: GET and POST /identity/* catch-all routes in workers/src/index.ts
+      backing_store: D1 (env.DB) via IdentityRepository
+      file: workers/src/platform/identity/IdentityRouter  # (from platform/identity/)
+      evidence: B_worker_api_layer.md (section 4.1C), C_platform_subsystems.md (section 5)
+      confidence: observed
+
+  bot_auth:
+    description: >
+      Both Telegram webhooks check X-Telegram-Bot-Api-Secret-Token header
+      against env.TELEGRAM_BOT_TOKEN (ops bot) or env.ADMIN_BOT_TOKEN (admin bot).
+      If the env var is absent, the check is skipped (dev mode).
+    evidence: workers/src/routes/telegram.ts, workers/src/routes/adminBot.ts
+    confidence: observed
+
+  known_defect:
+    description: >
+      AUTHORIZATION_ENGINE is declared in workers/src/types/env.ts and called
+      by POST /api/v1/authorization/check and GET /api/v1/permissions, but is
+      NEVER injected in wirePlatformEngines(). These two endpoints will throw
+      TypeError at runtime. Documented in workers/src/index.ts as a known gap.
+    affected_endpoints:
+      - POST /api/v1/authorization/check
+      - GET /api/v1/permissions
+    evidence: workers/src/index.ts (lines ~130-140), B_worker_api_layer.md (section 8.1)
+    confidence: observed
+
+# ---------------------------------------------------------------------------
+platform_subsystems:
+  # All subsystems are under workers/src/platform/
+  # Maturity values: production | partial | dormant | stub
+  # http_exposed: whether live HTTP routes exist for this subsystem
+
+  - name: Identity
+    acronym: null
+    purpose: >
+      Full-stack authentication: registration, login, JWT issuance/verification,
+      OAuth/OIDC/SAML SSO, MFA (TOTP), magic links, email verification,
+      password reset, session management, refresh token rotation, credential rotation.
+    maturity: production
+    http_exposed: true
+    routes: GET and POST /identity/* (catch-all)
+    persistence: d1  # IdentityRepository writes to env.DB
+    evidence: workers/src/platform/identity/IdentityRouter, C_platform_subsystems.md (section 5)
+    confidence: observed
+
+  - name: Trust
+    acronym: Trust Runtime
+    purpose: >
+      Multi-engine authorization runtime: 6 singletons (TrustEngine, ConsentEngine,
+      PolicyEngine, RiskEngine, DelegationEngine, DecisionEngine) plus EventBus.
+      All trust factor scoreFns return hardcoded 0.5 (TrustLevel.MEDIUM) unless
+      overridden. ConsentEngine and DelegationEngine use in-memory Maps despite
+      D1 tables existing — data is lost on isolate restart.
+    maturity: partial
+    http_exposed: true
+    routes: 11 routes via registerTrustRuntimeRoutes() (trust, consent, policy, delegation)
+    persistence: in_memory  # engines use Maps; D1 tables exist but engines do not read/write them
+    known_defects:
+      - ConsentEngine uses Map despite consents D1 table — data lost on restart (CRITICAL)
+      - DelegationEngine uses Maps despite delegations D1 table — data lost on restart (CRITICAL)
+      - AUTHORIZATION_ENGINE not wired — /api/v1/authorization/check and /api/v1/permissions throw
+      - All 10 trust factor scoreFns return hardcoded 0.5
+    evidence: workers/src/platform/trust/, C_platform_subsystems.md (section 4)
+    confidence: observed
+
+  - name: Workflow
+    acronym: Workflow and Automation Engine
+    purpose: >
+      Wave 8 IVF patient journey workflow engine: BPMN-like state machine over
+      15+ JourneyState values, D1-backed event sourcing, task orchestration,
+      approval gates, timer/escalation service, cron scheduler.
+    maturity: production
+    http_exposed: true
+    routes: "30+ routes via registerWorkflowRoutes() in wave7.ts"
+    persistence: d1  # EventStore, TaskOrchestrator, ApprovalGateService, etc. use env.DB
+    evidence: workers/src/platform/workflow/, C_platform_subsystems.md (section 6)
+    confidence: observed
+
+  - name: Documents
+    acronym: Secure Document Upload
+    purpose: >
+      Wave 6. PHI/non-PHI document storage with AES encryption, consent gating,
+      DocumentAction RBAC, D1 audit trail. Document metadata tracked in-memory
+      within the DocumentService singleton (cross-request persistence within one
+      Worker isolate only — lost on isolate swap).
+    maturity: production
+    http_exposed: true
+    routes: "registerDocumentRoutes() — 16 routes including caregiver endpoints"
+    persistence: d1  # document metadata + audit; R2 for file binaries
+    r2_bucket: DOCUMENT_STORAGE
+    note: DocumentService metadata registry is an in-memory Map within the singleton
+    evidence: workers/src/platform/documents/, C_platform_subsystems.md (section 7)
+    confidence: observed
+
+  - name: Notifications
+    acronym: Notification and Engagement Platform
+    purpose: >
+      Wave 7. Multi-channel notification system (in-app, SMS, email, push).
+      D1-backed store (D1NotificationStore) and in-memory store coexist.
+      Actual delivery is simulated — no real FCM, SES, or Twilio calls exist.
+      SSE stream endpoint returns a single "connected" event and then stalls.
+    maturity: partial
+    http_exposed: true
+    routes: "11 notification routes in wave7.ts"
+    persistence: d1  # D1NotificationStore writes to notification_delivery table; NOTIFICATIONS binding unprovisioned
+    known_defects:
+      - Delivery is simulated (no real FCM/APNs/SES/Twilio)
+      - SSE stream is a stub (single event, no real push)
+      - NOTIFICATIONS D1 binding has empty database_id (unprovisioned)
+      - Notification data seeded from fake sample data on first access
+    evidence: workers/src/platform/notifications/, C_platform_subsystems.md (section 8)
+    confidence: observed
+
+  - name: Appointments
+    acronym: Appointments Module
+    purpose: >
+      Appointment CRUD with slot conflict checking, consent gating via Trust
+      engine (real ConsentEngine called), audit. Backed by InMemoryAppointmentEngine —
+      all data lost on Worker restart.
+    maturity: partial
+    http_exposed: true
+    routes: "6 routes in wave7.ts"
+    persistence: in_memory  # globalThis.__appointmentEngine — no D1 backing
+    evidence: workers/src/platform/appointments/, C_platform_subsystems.md (section 9)
+    confidence: observed
+
+  - name: Messaging
+    acronym: Messaging Module
+    purpose: >
+      Threaded messaging with consent gating, message policy, audit.
+      Backed by InMemoryMessageEngine — all data lost on Worker restart.
+    maturity: partial
+    http_exposed: true
+    routes: "3 routes in wave7.ts"
+    persistence: in_memory  # globalThis.__messageEngine — no D1 backing
+    evidence: workers/src/platform/messaging/, C_platform_subsystems.md (section 10)
+    confidence: observed
+
+  - name: Timeline
+    acronym: Patient Journey Timeline
+    purpose: >
+      Wave 3. IVF stage/milestone tracking (stimulation, retrieval, fertilization,
+      transfer, etc.), progress summary, expected date calculation.
+      InMemoryTimelineEngine only — new instance created per request; no D1 backing.
+    maturity: partial
+    http_exposed: true
+    routes: "registerTimelineRoutes() — 10 routes"
+    persistence: in_memory  # new InMemoryTimelineEngine() per request
+    evidence: workers/src/platform/timeline/, C_platform_subsystems.md (section 11)
+    confidence: observed
+
+  - name: Providers
+    acronym: Provider Registry
+    purpose: >
+      Registry of external provider integrations (Cloudflare, GitHub, Telegram,
+      OpenRouter, etc.) with health status, capabilities, credential links.
+      InMemoryProviderRegistry singleton.
+    maturity: partial
+    http_exposed: false
+    routes: null  # used internally by WEF and deployment subsystem
+    persistence: in_memory
+    evidence: C_platform_subsystems.md (section 12)
+    confidence: observed
+
+  - name: Credentials
+    acronym: Credential and Secrets Management
+    purpose: >
+      EPIC-PLATFORM-001. Credential registry, resolver, health checker, rotation
+      service, audit log for all provider API keys. Full lifecycle implemented
+      but entirely in-memory — credentials lost on restart.
+    maturity: partial
+    http_exposed: false
+    routes: null  # used internally via WEF operational intelligence
+    persistence: in_memory
+    evidence: workers/src/platform/credentials/, C_platform_subsystems.md (section 13)
+    confidence: observed
+
+  - name: Release
+    acronym: Release Management Runtime
+    purpose: >
+      EPIC-PLATFORM-005. Release registry, environment resolution (preview vs
+      production), deployment services, rollback tracking, deployment history.
+      All in-memory (InMemoryReleaseRegistry). No actual Cloudflare deployment calls.
+    maturity: partial
+    http_exposed: false
+    routes: null  # indirectly via deploymentResolutionEngine in wef-operational-intelligence.ts
+    persistence: in_memory
+    evidence: C_platform_subsystems.md (section 14)
+    confidence: observed
+
+  - name: EPCL
+    acronym: Executive Planning and Control Layer
+    purpose: >
+      AI roadmap ingestion → deterministic 12-stage planning workflow → WAS
+      delegation. A pure PLANNING layer; never executes work directly.
+      Services (RoadmapEngine, ExecutionPlanner, etc.) are implemented but the
+      entire system is unreachable in production because all 6 feature flags
+      default to false.
+    maturity: dormant
+    http_exposed: false
+    routes: null  # no HTTP route calls ExecutivePlanningWorkflow.execute()
+    persistence: in_memory  # RecoveryManager / ExecutionPlanner use in-memory Maps
+    feature_flags_default: all false
+    evidence: workers/src/platform/epcl/, C_platform_subsystems.md (section 1)
+    confidence: observed
+
+  - name: WAS
+    acronym: Workforce Activation Service
+    purpose: >
+      Activation boundary between EPCL (planning) and WEF (execution). Full
+      7-state machine (PENDING→VALIDATING→ACTIVATING→ACTIVE→DEACTIVATING→
+      DEACTIVATED, or FAILED/REJECTED) with observability and duplicate
+      protection. WEF delegation is an explicit stub with TODO comment.
+      All 5 feature flags default to false.
+    maturity: dormant
+    http_exposed: false
+    routes: null  # no HTTP route triggers WorkforceActivationService.activate()
+    persistence: in_memory  # enablePersistence: false in DEFAULT_WAS_CONFIG
+    note: >
+      was_activation_state D1 table exists (migration 0009) and WASPersistenceBackend
+      interface is defined, but persistence is disabled by default.
+    feature_flags_default: all false
+    evidence: workers/src/platform/was/, C_platform_subsystems.md (section 2)
+    confidence: observed
+
+  - name: WEF
+    acronym: Workforce Execution Framework
+    purpose: >
+      Pre-deployment health reporting only (WefOperationalIntelligence class).
+      No execution engine present. WAS's WEFDelegator explicitly stubs out
+      delegation with a TODO comment.
+    maturity: stub
+    http_exposed: false
+    routes: null
+    persistence: none  # WefOperationalIntelligence only wraps deployment health checks
+    evidence: workers/src/platform/wef/, C_platform_subsystems.md (section 3)
+    confidence: observed
+
+  - name: d1_safe_wrapper
+    acronym: D1 Safe Wrapper
+    purpose: >
+      Production P0 defect fix. Proxy around D1Database that coerces undefined→null
+      on all .bind() calls. Applied at request boundary in index.ts. Fixes live 500
+      errors (D1_TYPE_ERROR) caused by real Cloudflare D1 rejecting undefined values
+      (local in-memory test stub did not enforce this, hiding the defect).
+    maturity: production
+    http_exposed: false  # infrastructure only
+    persistence: none
+    evidence: workers/src/platform/d1.ts, C_platform_subsystems.md (section 15)
+    confidence: observed
+
+# ---------------------------------------------------------------------------
+data_layer:
+  mechanism: Forward-only SQL migration files (no rollback migrations)
+  migration_directory: workers/migrations/
+  migration_count: 12  # 0001 through 011 (two files named 0002_*, one file named 011_ missing leading zero)
+  table_count: 68  # total distinct tables across all migrations
+  application_method: >
+    wrangler d1 migrations apply (Wrangler CLI standard). Wrangler manages
+    migration state internally via d1_migrations meta-table. No CI/CD migration
+    pipeline found — assumed manual: wrangler d1 migrations apply agsynergy-db --env production.
+  primary_database: "DB (agsynergy-db, id: 45f52102-74e1-4ba2-86ca-f4d5f88e16c4)"
+  secondary_database: "NOTIFICATIONS (agsynergy-notifications, unprovisioned — database_id empty)"
+
+  schema_issues:
+    - issue: Duplicate 0002_ prefix
+      detail: Both 0002_identity_core.sql and 0002_rbac_foundation.sql exist; application order is undefined
+      severity: HIGH
+      evidence: workers/migrations/
+
+    - issue: consents table defined twice with incompatible schemas
+      detail: >
+        0006_trust_runtime.sql and 0008_consent_engine.sql both issue
+        CREATE TABLE IF NOT EXISTS consents with different columns. Second
+        definition is silently skipped (IF NOT EXISTS). 0008 adds patient_identity_id,
+        status, resource_type, resource_id, revoked_by, revoke_reason, updated_at —
+        these columns are absent from the live table if 0006 ran first.
+      severity: CRITICAL
+      evidence: E_data_layer.md (section 1, migration 0008 note)
+
+    - issue: "011_notifications.sql filename missing leading zero"
+      detail: Breaks the 0NNN_ naming scheme; sorting ambiguity
+      severity: MEDIUM
+
+    - issue: Workflow engine timestamps use INTEGER (epoch ms) not TEXT ISO-8601
+      detail: Inconsistent with all prior migrations which use TEXT ISO-8601
+      severity: LOW
+      evidence: workers/migrations/0010_workflow_engine.sql
+
+  source_of_truth: workers/migrations/  # Do not enumerate all 68 tables here; read migration files directly
+
+  table_groups:
+    core_crm:
+      table_count: 6
+      migration: 0001_initial_schema.sql
+      purpose: leads, contacts, clinics, consultations, services, faqs (CRM foundation)
+      note: faqs and services tables have no confirmed TS code consumers — likely dead schema
+
+    identity_core:
+      table_count: 12
+      migration: 0002_identity_core.sql
+      purpose: >
+        Platform-wide identity: identities, identity_sessions, identity_credentials,
+        refresh_tokens, email_verifications, password_resets, oauth_accounts,
+        identity_providers, identity_events, identity_audit, trust_snapshots, consent_snapshots
+
+    rbac_foundation:
+      table_count: 5  # + 1 from migration 0004
+      migrations: [0002_rbac_foundation.sql, 0004_role_permissions_seed.sql]
+      purpose: roles, permissions, users, user_permissions, audit_logs, role_permissions
+      note: >
+        users (ops staff) and identities (platform auth) are DISTINCT tables serving
+        different purposes.
+
+    workforce_and_internal_workflow:
+      table_count: 9
+      migration: 0005_workforce_persistence.sql
+      purpose: >
+        workforce_agents, agent_activation_requests, agent_audit_events,
+        workforce_metrics, workflows, workflow_tasks, workflow_approvals,
+        workflow_granted_approvals, workforce_workflow_metrics
+
+    trust_runtime:
+      table_count: 13
+      migration: 0006_trust_runtime.sql
+      purpose: >
+        policies, policy_versions, consents (schema conflict with 0008),
+        consent_versions, trust_scores, trust_history, delegations,
+        authorization_decisions, decision_audit, risk_events,
+        policy_registry, consent_registry, trust_registry
+      note: ConsentEngine and DelegationEngine do NOT read/write these tables — use in-memory Maps
+
+    documents:
+      table_count: 5
+      migration: 0007_document_upload.sql
+      purpose: documents, document_shares, document_access_log, document_encryption_keys, caregiver_authorizations
+
+    consent_engine:
+      table_count: 1  # consents is a no-op due to schema conflict; consent_history is new
+      migration: 0008_consent_engine.sql
+      purpose: consent_history (consents CREATE IF NOT EXISTS is silently skipped if 0006 ran first)
+
+    was_activation:
+      table_count: 1
+      migration: 0009_was_activation_state_persistence.sql
+      purpose: was_activation_state (WAS state machine persistence — disabled by default in code)
+
+    workflow_engine:
+      table_count: 11
+      migration: 0010_workflow_engine.sql
+      purpose: >
+        workflow_instances, task_instances, approval_gates, workflow_timers,
+        workflow_events, task_queue, workflow_dlq, workflow_templates,
+        workflow_analytics_daily, workflow_analytics_weekly, workflow_overrides
+
+    notifications:
+      table_count: 5
+      migration: 011_notifications.sql
+      purpose: notifications, notification_delivery, notification_escalation, notification_analytics, notification_preferences
+
+  evidence: E_data_layer.md (sections 1-3)
+  confidence: observed
+
+# ---------------------------------------------------------------------------
+frontend:
+  package: "@workspace/ags-fertility"
+  source_dir: artifacts/ags-fertility/
+  build_output: artifacts/ags-fertility/dist/public/
+  stack:
+    framework: React 18
+    build_tool: Vite (with @vitejs/plugin-react)
+    language: TypeScript + TSX
+    styling: Tailwind CSS v4 (via @tailwindcss/vite plugin; no tailwind.config.js)
+    component_system: shadcn/ui pattern (40+ Radix UI primitives wrapped in src/components/ui/)
+    icons: lucide-react, react-icons
+    animation: framer-motion, tw-animate-css
+    charts: recharts
+    date_picker: react-day-picker
+    carousel: embla-carousel-react
+    theme: next-themes (dark/light mode)
+    toast: sonner
+  router:
+    library: wouter v3
+    base_path: import.meta.env.BASE_URL (configurable via BASE_PATH env var at build time)
+    pattern: SPA with not_found_handling=single-page-application on the worker
+  state_management:
+    server_state: "@tanstack/react-query (QueryClient initialized in App.tsx)"
+    auth_state: Custom React context (AuthProvider/useAuth in lib/auth-context.tsx)
+    global_client_state: none  # no Redux, Zustand, or Jotai observed
+    form_handling: react-hook-form + @hookform/resolvers + zod
+  page_count: "~40 pages (16 public/marketing + 18 auth-guarded patient + 6 clinic)"
+  auth_token_storage:
+    mechanism: localStorage
+    keys:
+      access_token: ags_patient_access_token
+      refresh_token: ags_patient_refresh_token
+    risk: >
+      Tokens in localStorage are vulnerable to XSS. No HttpOnly cookie approach
+      observed. Refresh triggered on 401 via tryRefreshToken() in auth-context.
+    evidence: artifacts/ags-fertility/src/lib/patient-api.ts
+    confidence: observed
+  api_base:
+    patient_api: "import.meta.env.VITE_API_BASE || 'https://api.agsynergy.ca'"
+    document_api: "/api/v1 (hardcoded relative)"
+    appointment_api: "import.meta.env.VITE_API_BASE ?? '' (falls back to relative)"
+    note: >
+      Inconsistent API base URL handling across API client files. document-api.ts
+      uses hardcoded relative path; appointment-api.ts falls back to empty string.
+      The 2026-07-28 incident: missing VITE_API_BASE silently posted to SPA origin.
+    evidence: artifacts/ags-fertility/src/lib/patient-api.ts, D_frontend.md (section 4)
+    confidence: observed
+  dev_proxy:
+    paths: [/identity, /api]
+    target: "http://localhost:8787 (local Wrangler dev port)"
+    evidence: artifacts/ags-fertility/vite.config.ts
+    confidence: observed
+  clinic_auth_gap:
+    description: >
+      All /clinic/* routes use ClinicLayout but have NO AuthGuard wrapper.
+      Patient workspace routes all have AuthGuard. Clinic workspace is
+      unauthenticated at the router level.
+    severity: HIGH
+    evidence: artifacts/ags-fertility/src/App.tsx, D_frontend.md (section 2)
+    confidence: observed
+  tests: none  # zero test files in artifacts/ags-fertility/
+
+# ---------------------------------------------------------------------------
+build_and_deploy:
+  package_manager: pnpm 11.13.1 (pinned via packageManager field)
+  node_versions:
+    ci_and_pinfile: "22 (.node-version file, deploy.yml NODE_VERSION: 22)"
+    replit_runtime: "24 (.replit modules: nodejs-24)"
+    mismatch_risk: >
+      CI builds with Node 22; Replit dev environment uses Node 24. Behavior
+      differences (e.g. built-in fetch, crypto APIs) could cause issues that
+      only surface in one environment.
+    evidence: .node-version, .replit, .github/workflows/deploy.yml
+    confidence: observed
+
+  build_commands:
+    typecheck_all: "pnpm run typecheck"
+    build_spa: "pnpm --filter @workspace/ags-fertility run build"
+    build_root: "pnpm run build  # runs typecheck then SPA build"
+    deploy_api: "pnpm --filter @workspace/workers run deploy  # runs extract-version.sh then wrangler deploy"
+
+  deploy_trigger: push to main branch OR workflow_dispatch
+  deploy_workflow: .github/workflows/deploy.yml
+  deploy_environments:
+    production_api: "wrangler deploy --env production (agsynergy-api)"
+    frontend: "wrangler deploy (hermes-website, root wrangler.jsonc)"
+    preview_api: "Only on workflow_dispatch on main; deploys --env preview"
+  auto_deploy: true  # no manual approval gate; merge to main immediately deploys both workers
+
+  pre_deploy_checks_that_exist:
+    - name: Repo Integrity
+      script: scripts/repo-integrity-check.sh
+      what: Checks clean working tree, correct branch, synced with remote
+
+    - name: Required Files
+      script: scripts/required-files-check.sh
+      what: Verifies required deployment files exist
+
+    - name: Import Resolution
+      script: "python3 scripts/import-integrity-check.py"
+      what: >
+        Static import graph analysis. Excludes: artifacts/, lib/, hermes-website/,
+        __tests__, workers/tests-epic0059/, workers/tests/. Resolves @hermes/* and
+        @shared/* aliases. Detects unresolvable imports.
+
+    - name: Production Bundle Guard
+      step: CI step 9 in deploy.yml
+      what: >
+        Fails if built JS references kumarlogan.workers.dev or localhost:*.
+        Also fails if VITE_API_BASE host is NOT present in bundle (regression
+        guard added 2026-07-28 after incident where missing var caused silent
+        origin fallback).
+
+  gates_that_do_not_exist:
+    - tests: "No vitest step in deploy.yml — tests are NOT run as part of deploy pipeline"
+    - typecheck: "No tsc step in deploy.yml — TypeScript errors do not block deployment"
+    - lint: "No ESLint or Prettier-check step in any workflow"
+    - dependabot: "No dependabot.yml — no automated dependency updates"
+    - branch_protection: "No CODEOWNERS file; branch protection rules unknown (configured at GitHub repo settings level)"
+
+  evidence: .github/workflows/deploy.yml, A_build_cicd_testing.md (sections 3-4)
+  confidence: observed
+
+# ---------------------------------------------------------------------------
+testing:
+  framework: Vitest
+  config_files:
+    - path: vitest.config.ts  # repo root
+      scope: All workspaces (**/*.test.ts)
+      environment: node
+      aliases: "@hermes -> ./hermes, @shared -> ./shared"
+      excludes_custom_runners:
+        - hermes/services/workforce/d1-backend.test.ts
+        - hermes/services/execution/gateway/__tests__/approval.regression.test.ts
+        - hermes/services/providers/trust/__tests__/trust.regression.test.ts
+        - hermes/services/activation/providers/deployment/__tests__/epic007.launch.test.ts
+      excludes_cf_pool:
+        - workers/tests/auth/engine.integration.test.ts
+        - workers/tests/integration/api.test.ts
+        - workers/tests/ops/ops.integration.test.ts
+        - workers/tests/telegram/bot.integration.test.ts
+
+    - path: workers/vitest.config.ts
+      scope: workers/tests/**/*.test.ts
+      pool: "@cloudflare/vitest-pool-workers (Miniflare — runs inside Workers runtime)"
+      global_setup: workers/tests/globalSetup.ts  # applies D1 migrations before tests
+      d1_persistence: .wrangler/state/v3/d1
+      excludes:
+        - tests/workforce-persistence.test.ts  # uses renameSync, fails under CF pool
+        - tests/workforce-activation.test.ts   # same reason
+        - tests-epic0059/p1-smoke.test.ts      # custom runner
+        - tests/launch/smoke-tests.test.ts     # requires live deployment (SMOKE_TEST_URL)
+
+    - path: workers/vitest.epic005.config.ts
+      scope: >
+        hermes/services/providers/**/*.test.ts,
+        hermes/services/activation/**/*.test.ts,
+        hermes/services/execution/**/*.test.ts,
+        hermes/audit/**/*.test.ts
+      pool: threads
+      environment: node
+      purpose: Pure Node unit tests for EPIC-005.9 regression suite
+
+  test_file_count: 68  # total .test.ts files found
+  distribution:
+    workers_tests_flat: 30  # directly in workers/tests/
+    workers_tests_subdirs: "~20 (admin/, auth/, consultation/, health/, integration/, launch/, ops/, platform/, runtime/, telegram/)"
+    workers_src_colocated: 5  # workers/src/platform/notifications/ and workflow/
+    hermes_services: "~14 (providers/__tests__/, execution/gateway/__tests__/, activation/...)"
+    workers_tests_epic0059: 1
+
+  what_is_covered:
+    - Cloudflare Worker API endpoints (HTTP integration tests)
+    - D1 store operations (with Miniflare D1)
+    - Workforce / agent orchestration
+    - Security hardening
+    - Admin APIs
+    - Platform APIs (notification, workflow, identity, consultation, documents, appointments)
+    - Hermes service unit tests (EPIC-003 through EPIC-007)
+
+  what_is_not_covered:
+    - Frontend (artifacts/ags-fertility) has ZERO test files
+    - No coverage thresholds configured in any vitest config
+    - Tests are NOT run in the deploy pipeline (CI deploys without running vitest)
+    - No E2E tests (smoke-tests.test.ts requires live SMOKE_TEST_URL — excluded from CI)
+
+  coverage:
+    script: "pnpm --filter @workspace/workers run test:coverage  # vitest run --coverage"
+    thresholds: none  # not enforced
+    ci_enforced: false
+
+  evidence: A_build_cicd_testing.md (section 5)
+  confidence: observed
+
+# ---------------------------------------------------------------------------
+external_integrations:
+  - name: Telegram Operations Bot
+    type: telegram_bot
+    endpoint: POST /telegram/webhook
+    auth: X-Telegram-Bot-Api-Secret-Token header (optional; skipped if env var absent)
+    env_var: TELEGRAM_BOT_TOKEN
+    commands: [/start, /help, /dashboard, /leads, /lead <id>]
+    status: implemented
+    note: >
+      Bot responds inline via JSON (sendMessage method) rather than calling
+      Bot API separately. Identity established via X-Telegram-Chat-Id header.
+    evidence: workers/src/routes/telegram.ts, B_worker_api_layer.md (section 6.1)
+    confidence: observed
+
+  - name: Hermes Admin Bot
+    type: telegram_bot
+    endpoint: POST /admin/webhook
+    auth: X-Telegram-Bot-Api-Secret-Token header (optional)
+    env_var: ADMIN_BOT_TOKEN
+    commands: [/start, /help, /health, /status, /version, /workforce, /agents, /workflows, /providers, /security, /approvals, /deploy]
+    status: implemented
+    permissions_required: [hermes:admin:read, hermes:admin:audit-read]
+    evidence: workers/src/routes/adminBot.ts, B_worker_api_layer.md (section 6.2)
+    confidence: observed
+
+  - name: Cloudflare Access / Zero Trust
+    type: cloudflare_access
+    workflow: .github/workflows/secure-access.yml
+    trigger: workflow_dispatch (manual one-shot setup)
+    purpose: >
+      Configures Cloudflare Zero Trust Access for agsynergy.ca — allows only
+      kumarlogan@gmail.com, blocks everyone else. Suggests the production site
+      may be gated behind Cloudflare Access (invite-only).
+    status: provisioned  # workflow exists and is runnable
+    evidence: .github/workflows/secure-access.yml, A_build_cicd_testing.md (section 4.3)
+    confidence: observed
+
+  - name: Cloudflare R2
+    type: object_storage
+    binding: DOCUMENT_STORAGE
+    bucket: agsynergy-documents
+    preview_bucket: agsynergy-documents-preview
+    status: provisioned
+    purpose: Document binary storage for PHI and non-PHI files
+    evidence: workers/wrangler.jsonc, workers/src/platform/documents/document-storage.ts
+    confidence: observed
+
+  - name: Cloudflare Turnstile
+    type: bot_protection
+    env_var: TURNSTILE_SECRET_KEY
+    applied_to: POST /api/v1/consultations
+    status: partially configured
+    note: >
+      Secret key is empty string in wrangler.jsonc; real key injected at deploy
+      time from GitHub secret. If absent, verification is skipped (dev mode).
+    evidence: workers/wrangler.jsonc, workers/src/middleware/turnstile.ts
+    confidence: observed
+
+  - name: OAuth Providers (Google, Microsoft, GitHub, Apple, OIDC, SAML)
+    type: oauth_oidc_saml
+    status: implemented_but_unconfigured
+    note: >
+      Providers are implemented in platform/identity/ (GoogleOAuthProvider,
+      OIDCProvider, SAMLProvider, createMicrosoftProvider, createGitHubProvider,
+      createAppleProvider). Actual provider config (client_id, client_secret,
+      issuer_url) is stored in the identity_providers D1 table (enabled=0 by default).
+      No provider credentials are visible in wrangler.jsonc or GitHub secrets.
+    evidence: C_platform_subsystems.md (section 5), workers/migrations/0002_identity_core.sql
+    confidence: inferred
+
+  - name: Replit Platform
+    type: development_environment
+    status: active_development_environment
+    node_version: 24  # conflicts with CI pin of 22
+    deployment_target: autoscale  # separate from Cloudflare deployment
+    post_merge_hook: scripts/post-merge.sh (runs pnpm install + pnpm --filter db push)
+    agent_stack: "PNPM_WORKSPACE with expertMode: true"
+    evidence: .replit, A_build_cicd_testing.md (section 7)
+    confidence: observed
+
+  - name: Gitleaks (Secret Scanning)
+    type: security_scanning
+    workflow: .github/workflows/security.yml
+    trigger: push to main OR pull_request targeting main
+    tool: gitleaks v2 (default ruleset)
+    known_issue: >
+      GITLEAKS_CONFIG is set to "" in CI, which causes gitleaks to use its
+      built-in default ruleset and IGNORE the .gitleaks.toml file in the repo.
+      The custom Cloudflare API token regex rule (cfat_[A-Za-z0-9]{20,}) in
+      .gitleaks.toml is NOT active in CI scans — only effective for local use.
+    evidence: .github/workflows/security.yml, .gitleaks.toml, A_build_cicd_testing.md (section 6)
+    confidence: observed
+
+  # Planned / referenced but not integrated:
+  - name: FCM / APNs / SES / Twilio
+    type: notification_delivery
+    status: not_integrated
+    note: >
+      delivery-engine.ts comment: "Simulate delivery — in production this calls
+      external services (FCM/APNs for push, SES/SMTP for email, Twilio for SMS)".
+      No real calls exist in the codebase.
+    evidence: workers/src/platform/notifications/delivery-engine.ts
+    confidence: observed

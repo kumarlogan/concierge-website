@@ -27,8 +27,21 @@
   "vars": {
     "ENVIRONMENT": "development",
     "RATE_LIMIT_WINDOW_MS": "60000",
-    "RATE_LIMIT_LIMIT": "60"
+    "RATE_LIMIT_LIMIT": "60",
+    "TURNSTILE_SECRET_KEY": ""
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "agsynergy-db",
+      "database_id": "45f52102-74e1-4ba2-86ca-f4d5f88e16c4"
+    },
+    {
+      "binding": "NOTIFICATIONS",
+      "database_name": "agsynergy-notifications",
+      "database_id": ""
+    }
+  ],
   "env": {
     "production": {
       "routes": [
@@ -50,8 +63,21 @@
       "vars": {
         "ENVIRONMENT": "production",
         "RATE_LIMIT_WINDOW_MS": "60000",
-        "RATE_LIMIT_LIMIT": "60"
-      }
+        "RATE_LIMIT_LIMIT": "60",
+        "TURNSTILE_SECRET_KEY": ""
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "agsynergy-db",
+          "database_id": "45f52102-74e1-4ba2-86ca-f4d5f88e16c4"
+        },
+        {
+          "binding": "NOTIFICATIONS",
+          "database_name": "agsynergy-notifications",
+          "database_id": ""
+        }
+      ]
     },
     "preview": {
       "d1_databases": [
@@ -67,8 +93,21 @@
       "vars": {
         "ENVIRONMENT": "preview",
         "RATE_LIMIT_WINDOW_MS": "60000",
-        "RATE_LIMIT_LIMIT": "60"
-      }
+        "RATE_LIMIT_LIMIT": "60",
+        "TURNSTILE_SECRET_KEY": ""
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "agsynergy-db",
+          "database_id": "45f52102-74e1-4ba2-86ca-f4d5f88e16c4"
+        },
+        {
+          "binding": "NOTIFICATIONS",
+          "database_name": "agsynergy-notifications",
+          "database_id": ""
+        }
+      ]
     }
   },
   "workers_dev": true,
