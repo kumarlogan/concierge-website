@@ -107,7 +107,7 @@ export default function CommunicationPage() {
 
     try {
       const source = new EventSource(`${import.meta.env.VITE_API_BASE || ""}/api/v1/notifications/stream`, {
-        headers: { Authorization: *** ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       source.onopen = () => setSseConnected(true);
