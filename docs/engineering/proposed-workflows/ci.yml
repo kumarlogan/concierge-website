@@ -1,0 +1,102 @@
+name: CI
+
+# ─────────────────────────────────────────────────────────────
+# Quality gate for pull requests and non-main branches.
+#
+# WHY: deploy.yml fires on every push to main and deploys BOTH workers to
+# production with no test and no typecheck step. Until this workflow exists,
+# the only thing standing between a broken commit and agsynergy.ca is the
+# author's own diligence. (Assessment reference: PRG-002 / GAP-004.)
+#
+# This workflow does not deploy anything. It runs the checks that deploy.yml
+# does not, so a defect is caught on the pull request rather than in
+# production.
+# ─────────────────────────────────────────────────────────────
+
+on:
+  pull_request:
+  push:
+    # main is handled by deploy.yml; avoid duplicate runs on the same commit.
+    branches-ignore: [main]
+  workflow_dispatch:
+
+env:
+  # Matches deploy.yml. Note: local/Replit development runs Node 24 — that
+  # mismatch is tracked as PRG-019 and should be resolved by aligning both.
+  NODE_VERSION: 22
+
+  # TypeScript error ratchet baselines.
+  #
+  # The repository carries pre-existing TypeScript errors (EPIC-015). These
+  # numbers are CEILINGS, not targets: the count may fall but must never rise.
+  # They are set deliberately loose on introduction so the gate can land
+  # without a large remediation first; tighten them to the actual count
+  # reported in the job log below, then keep tightening.
+  TYPECHECK_BASELINE_WORKERS: 250
+  TYPECHECK_BASELINE_REPO: 250
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ═══════════════════════════════════════════════════════════
+  #  Tests — BLOCKING. A failing test must not reach main.
+  # ═══════════════════════════════════════════════════════════
+  test:
+    name: Tests (workers)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Run worker test suite
+        run: pnpm --filter @workspace/workers run test
+
+  # ═══════════════════════════════════════════════════════════
+  #  Typecheck — RATCHET. Errors may fall, never rise.
+  # ═══════════════════════════════════════════════════════════
+  typecheck:
+    name: Typecheck (ratchet)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      # The workers package is NOT covered by the root `pnpm run typecheck`
+      # script, so the API worker has never been typechecked in CI at all.
+      - name: Typecheck — workers (API)
+        run: |
+          chmod +x scripts/typecheck-ratchet.sh
+          scripts/typecheck-ratchet.sh \
+            "workers" "${TYPECHECK_BASELINE_WORKERS}" "workers" \
+            npx tsc --noEmit
+
+      - name: Typecheck — libs and artifacts
+        run: |
+          chmod +x scripts/typecheck-ratchet.sh
+          scripts/typecheck-ratchet.sh \
+            "repo" "${TYPECHECK_BASELINE_REPO}" "." \
+            pnpm run typecheck
