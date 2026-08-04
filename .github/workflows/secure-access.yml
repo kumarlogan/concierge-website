@@ -29,7 +29,6 @@ jobs:
               "type": "self_hosted",
               "session_duration": "24h",
               "auto_redirect_to_identity": false,
-              "allowed_idps": ["all"],
               "app_launcher_visible": false,
               "cors_headers": {
                 "allowed_origins": ["https://agsynergy.ca", "https://api.agsynergy.ca"],
