@@ -36,7 +36,7 @@ import type {
   ListPermissionsRequest,
   ListPermissionsResponse,
 } from "../platform/trust/types.js";
-import { withJwtAuth } from "../middleware/jwt-auth.js";
+import { withJwtAuth, getIdentityId } from "../middleware/jwt-auth.js";
 
 // ════════════════════════════════════════════════
 // Trust Evaluation API
@@ -201,6 +201,15 @@ export async function consentHistory(
       { error: "identityId query parameter is required" },
       400,
     );
+  }
+
+  // Ownership check: a patient may only view their own consent history.
+  const STAFF_TYPES_TR = ["clinic", "staff", "administrator"] as const;
+  const callerIdentityType = request.headers.get("x-authenticated-identity-type") || "patient";
+  const callerIdentityId = request.headers.get("x-authenticated-identity-id");
+  const isTrStaff = STAFF_TYPES_TR.includes(callerIdentityType as any);
+  if (!isTrStaff && callerIdentityId && callerIdentityId !== identityId) {
+    return jsonResponse({ error: "Not authorized to view consent history for another identity" }, 403);
   }
 
   const result = await env.CONSENT_ENGINE.getHistory({
@@ -405,6 +414,14 @@ export async function listPermissions(
       { error: "identityId query parameter is required" },
       400,
     );
+  }
+
+  // Ownership check: a patient may only list their own permissions.
+  const callerIdForPerm = request.headers.get("x-authenticated-identity-id");
+  const callerTypePerm = request.headers.get("x-authenticated-identity-type") || "patient";
+  const isTrStaffPerm = ["clinic", "staff", "administrator"].includes(callerTypePerm);
+  if (!isTrStaffPerm && callerIdForPerm && callerIdForPerm !== identityId) {
+    return jsonResponse({ error: "Not authorized to view permissions for another identity" }, 403);
   }
 
   // Check all known action/resource combinations

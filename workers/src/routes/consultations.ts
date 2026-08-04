@@ -106,6 +106,9 @@ export const createConsultation: RouteHandler = async (request, env, _params) =>
 
   // ── Translate to HTTP response ─────────────────────────────
   if (result.success) {
+    // Fire-and-forget: write to audit_logs so new consultations appear in the
+    // ops timeline immediately. Non-critical — any failure is swallowed.
+    writeConsultationAuditLog(env.DB, result.lead_id, data).catch(() => {/* non-critical */});
     return new Response(
       JSON.stringify({
         success: true,
@@ -133,3 +136,23 @@ export const createConsultation: RouteHandler = async (request, env, _params) =>
     },
   );
 };
+
+// ── Consultation audit log ───────────────────────────────────────────────────
+// Writes a record to audit_logs so the new consultation appears in the ops
+// activity timeline. Fire-and-forget; never blocks the HTTP response.
+async function writeConsultationAuditLog(
+  db: any,
+  leadId: string,
+  data: Record<string, unknown>,
+): Promise<void> {
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const email = typeof data.email === "string" ? data.email : "unknown";
+  await db
+    .prepare(
+      `INSERT INTO audit_logs (id, actor_id, action, target_type, target_id, decision, created_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
+    )
+    .bind(id, null, `new_consultation:${email}`, "lead", leadId, "ALLOW", now)
+    .run();
+}

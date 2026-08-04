@@ -221,11 +221,8 @@ function getIdentityRouter(env: Env): IdentityRouter {
 // and mutate the Env object in place so every downstream route sees a live
 // instance.
 //
-// NOTE: AUTHORIZATION_ENGINE is intentionally NOT wired here. The
-// /api/v1/check-authorization route calls env.AUTHORIZATION_ENGINE.check(),
-// but no such engine class exists in the codebase (only AuthorizationMiddleware,
-// a request-oriented middleware). That is a SEPARATE pre-existing defect and is
-// flagged as a known gap rather than faked.
+// AUTHORIZATION_ENGINE is now wired via a thin adapter inside wirePlatformEngines()
+// using the existing decisionEngine singleton (PRG-013 / GAP-001 resolved).
 //
 // DocumentService maintains an in-memory registry of document metadata
 // (this.documents). To make documents visible across requests it MUST be a
@@ -274,6 +271,39 @@ function wirePlatformEngines(env: Env): void {
   target.DECISION_ENGINE = decisionEngine;
   target.EVENT_BUS = eventBus;
   target.DOCUMENT_SERVICE = documentService;
+
+  // Wire AUTHORIZATION_ENGINE via a thin adapter over DecisionEngine (PRG-013 / GAP-001).
+  // Previously flagged as intentionally missing; now implemented.
+  target.AUTHORIZATION_ENGINE = {
+    async check(body: { identityId: string; identityType: string; action: string; resource: string; context?: Record<string, unknown> }) {
+      return decisionEngine.authorize({
+        identityId: body.identityId,
+        identityType: body.identityType || "patient",
+        action: body.action,
+        resource: body.resource,
+        context: (body.context ?? {}) as any,
+        correlationId: crypto.randomUUID(),
+      });
+    },
+    async listPermissions({ identityId: _identityId, identityType }: { identityId: string; identityType: string }) {
+      // Type-based derivation. Record-level scope is enforced at handler level via authz.ts.
+      const isStaff = ["clinic", "staff", "administrator"].includes(identityType);
+      const base = [
+        "read:appointments", "write:appointments",
+        "read:documents",    "write:documents",
+        "read:messages",     "write:messages",
+        "read:notifications","write:notifications",
+        "read:consents",     "write:consents",
+        "read:profile",      "write:profile",
+      ];
+      const staffExtra = [
+        "read:leads", "write:leads", "assign:leads",
+        "read:workflows", "write:workflows",
+        "read:all_patients",
+      ];
+      return isStaff ? [...base, ...staffExtra] : base;
+    },
+  };
 }
 
 async function handleIdentityRequest(request: Request, env: Env): Promise<Response> {

@@ -30,7 +30,7 @@ const RULE_CHECKS = [
   { key: "upper", label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
   { key: "lower", label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
   { key: "digit", label: "One number", test: (p: string) => /\d/.test(p) },
-  { key: "special", label: "One special character", test: (p: string) => /[!@#$%^&*()_+\-=[\]{}|;':",./<>?`~]/.test(p) },
+  { key: "special", label: "One special character", test: (p: string) => /[!@#$%^&*()_+\-=[\]{}|;':\",./<>?`~]/.test(p) },
 ] as const;
 
 function validatePassword(password: string): string | null {
@@ -46,7 +46,7 @@ function validatePassword(password: string): string | null {
   if (PASSWORD_RULES.requireDigit && !/\d/.test(password)) {
     return "Password must contain a digit";
   }
-  if (PASSWORD_RULES.requireSpecialChar && !/[!@#$%^&*()_+\-=[\]{}|;':",./<>?`~]/.test(password)) {
+  if (PASSWORD_RULES.requireSpecialChar && !/[!@#$%^&*()_+\-=[\]{}|;':\",./<>?`~]/.test(password)) {
     return "Password must contain a special character";
   }
   return null;
@@ -96,15 +96,16 @@ export default function RegisterPage() {
 
     try {
       const result = await register(email, password, displayName || undefined);
-      // Step 2: auto-verify email (dev mode — in production the user would
-      // click a link from their email).
+      // Request the verification email. The patient must click the link in
+      // their email to complete verification — auto-verify was removed as
+      // it bypassed the entire identity-confirmation security control (PRG-003).
       setStep("verifying");
       const identityId = result.id;
-      const verifyResult = await patientAuth.requestEmailVerification(identityId, email);
-      // Complete the verification immediately
-      await patientAuth.completeEmailVerification(verifyResult.token);
+      await patientAuth.requestEmailVerification(identityId, email);
       setStep("done");
-      toast.success("Email verified! You can now log in.");
+      toast.success(
+        "Account created. Please check your email to verify your address before signing in.",
+      );
       navigate("/patient/login");
     } catch (err) {
       if (err instanceof ApiError && err.code === "CONFLICT") {

@@ -32,6 +32,7 @@ import PatientLayout from '@/components/patient/PatientLayout';
 import LoginPage from '@/pages/patient/LoginPage';
 import RegisterPage from '@/pages/patient/RegisterPage';
 import ForgotPasswordPage from '@/pages/patient/ForgotPasswordPage';
+import MfaVerifyPage from '@/pages/patient/MfaVerifyPage';
 import DashboardPage from '@/pages/patient/DashboardPage';
 import ProfilePage from '@/pages/patient/ProfilePage';
 import SecuritySettingsPage from '@/pages/patient/SecuritySettingsPage';
@@ -72,14 +73,14 @@ function Router() {
       <Route path="/partner-hospitals" component={PartnerHospitalsPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/faq" component={FAQPage} />
-      
+
       {/* Workstream D — Business Activation Pages */}
       <Route path="/services" component={ServicesPage} />
       <Route path="/fertility-treatments" component={FertilityTreatmentsPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/privacy" component={PrivacyPolicyPage} />
       <Route path="/terms" component={TermsPage} />
-      
+
       {/* Shell Pages for Phase 1 */}
       <Route path="/ivf-bangalore">
         {() => <GenericShellPage title="IVF in Bangalore" description="Why Bangalore has become a premier destination for world-class, affordable fertility care." />}
@@ -113,6 +114,9 @@ function Router() {
             <ForgotPasswordPage />
           </GuestGuard>
         )}
+      </Route>
+      <Route path="/patient/mfa">
+        {() => <MfaVerifyPage />}
       </Route>
 
       {/* Protected patient pages (with sidebar) */}
