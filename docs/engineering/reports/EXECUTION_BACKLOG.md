@@ -11,6 +11,17 @@ Hermes AI platform (EPCL / WAS / WEF) is out of scope and appears nowhere in thi
 
 ---
 
+## Wave Status
+
+| Wave | Branch | PR | Items | Status |
+|---|---|---|---|---|
+| Wave 1 | eng/wave-1-authz-and-ci-gate | PR #4 | PRG-001, PRG-002, PRG-015..022, PRG-031..034 | Open — awaiting merge |
+| Wave 2 | eng/wave-2-critical-fixes | PR #5 | PRG-003, PRG-005, PRG-013, PRG-020, PRG-021, PRG-033 | Open — awaiting merge |
+
+Items remain in the backlog below until their PR is merged and verified.
+
+---
+
 ## How to read this
 
 Items are grouped into four priority tiers, then sequenced. **The sequence matters more than the tier** — several Critical items are cheap and unblock expensive ones, so they are ordered first regardless of size.
@@ -33,6 +44,8 @@ Items are grouped into four priority tiers, then sequenced. **The sequence matte
 | Medium | 8 | 45–100 |
 | Low | 2 | 11–23 |
 | **Total** | **52** | **182–346** |
+
+> **Note (2026-08-04):** 15 items are currently in progress across Wave 1 (PR #4) and Wave 2 (PR #5) and will be removed from the backlog once those PRs are merged and verified. Wave 1 addresses PRG-001, PRG-002, PRG-015/016/017/018/031/032 (9 items). Wave 2 addresses PRG-003, PRG-005, PRG-013, PRG-020, PRG-021, PRG-033 (6 items). These items are not yet resolved — PRs remain open.
 
 ---
 
@@ -65,20 +78,20 @@ Blocks GA absolutely. No real patient should be onboarded until every item here 
 | 5 | PRG-019 | IDOR: clinic messaging permits sender impersonation | clinic-messages handler | PRG-001 | 1–2 |
 | 6 | PRG-018 | IDOR: workflow and task search have no identity filter | `workers/src/routes/wave7.ts` | — | 2–3 |
 | 7 | PRG-002 | No CI test or typecheck gate — broken code auto-deploys | `.github/workflows/deploy.yml` | — | 1–3 |
-| 8 | PRG-013 | `AUTHORIZATION_ENGINE` never constructed — 2 endpoints throw | `workers/src/types/env.ts`, `routes/trustRuntime.ts` | — | 3–5 |
+| 8 | PRG-013 | `AUTHORIZATION_ENGINE` never constructed — 2 endpoints throw *(Wave 2: fixed on branch, PR #5)* | `workers/src/types/env.ts`, `routes/trustRuntime.ts` | — | 3–5 |
 | 9 | PRG-012 | No disaster recovery — no backup or restore for patient data | absent | — | 5–8 |
 | 10 | PRG-014 | `consents` table defined twice with incompatible schemas | `migrations/0006_`, `0008_` | PRG-012 | 2–4 |
 | 11 | PRG-011 | Consent grants in-memory — compliance records evaporate | `platform/trust/consent-engine.ts` | PRG-014 | 3–5 |
 | 12 | PRG-006 | Timeline in-memory per request — IVF journey data discarded | `platform/timeline/` | PRG-012 | 4–7 |
-| 13 | PRG-003 | Registration auto-verifies email — identity never confirmed | registration handler (`// dev mode`) | — | 2–3 |
+| 13 | PRG-003 | Registration auto-verifies email — identity never confirmed *(Wave 2: fixed on branch, PR #5)* | registration handler (`// dev mode`) | — | 2–3 |
 | 14 | PRG-004 | No email verification landing route exists | SPA router | PRG-003, PRG-026 | 1–2 |
-| 15 | PRG-005 | MFA-enrolled patients 404 after login — permanent lockout | `LoginPage.tsx` → `/patient/mfa` | — | 1–2 |
+| 15 | PRG-005 | MFA-enrolled patients 404 after login — permanent lockout *(Wave 2: fixed on branch, PR #5)* | `LoginPage.tsx` → `/patient/mfa` | — | 1–2 |
 | 16 | PRG-007 | Care Plan and Tasks pages 404 — backend routes absent | `/api/v1/timeline/phases`, `/tasks` | PRG-006 | 3–5 |
 | 17 | PRG-008 | Document upload calls `fetchDocuments()` instead of `initiateUpload()` | upload dialog component | — | 0.5–1 |
 | 18 | PRG-009 | Clinic portal shows 8 hardcoded mock patients | `workers/src/routes/clinic.ts` | PRG-001 | 3–5 |
 | 19 | PRG-010 | Triage queue and conversations return hardcoded mocks | `routes/clinic-messages.ts` | PRG-009 | 3–5 |
-| 20 | PRG-020 | Consultation submission notifies nobody | `routes/consultations.ts` | PRG-026 | 2–3 |
-| 21 | PRG-021 | Lead status changes write no audit log | lead handlers | — | 2–3 |
+| 20 | PRG-020 | Consultation submission notifies nobody *(Wave 2: fixed on branch, PR #5)* | `routes/consultations.ts` | PRG-026 | 2–3 |
+| 21 | PRG-021 | Lead status changes write no audit log *(Wave 2: fixed on branch, PR #5)* | lead handlers | — | 2–3 |
 | 22 | PRG-022 | Workflow dashboard JOIN always NULL — instances never inserted | `platform/workflow/` | — | 3–5 |
 
 **Wave A subset (do first, ~7–14 days):** items 1–8. These are the live exposures and the gate that stops new ones appearing.
@@ -95,9 +108,9 @@ Blocks GA at scale or represents unacceptable operational risk.
 | 24 | PRG-024 | Messages stored in-memory — no `messages` table exists | PRG-012 | 4–7 |
 | 25 | PRG-025 | `NOTIFICATIONS` D1 binding unprovisioned (empty `database_id`) | — | 1–2 |
 | 26 | PRG-026 | Notification delivery simulated — no real email/SMS/push | PRG-025 | 6–10 |
-| 27 | PRG-031 | IDOR: `?patientId=` overrides JWT binding on appointments | PRG-015 | 1–2 |
-| 28 | PRG-032 | IDOR: `?participantId=` overrides JWT binding on threads | PRG-017 | 1–2 |
-| 29 | PRG-033 | IDOR: consent history accepts arbitrary `identityId` | — | 1–2 |
+| 27 | PRG-031 | IDOR: `?patientId=` overrides JWT binding on appointments *(Wave 1: fixed on branch, PR #4)* | PRG-015 | 1–2 |
+| 28 | PRG-032 | IDOR: `?participantId=` overrides JWT binding on threads *(Wave 1: fixed on branch, PR #4)* | PRG-017 | 1–2 |
+| 29 | PRG-033 | IDOR: consent history accepts arbitrary `identityId` *(Wave 2: fixed on branch, PR #5)* | — | 1–2 |
 | 30 | PRG-034 | Document share revocation has no ownership check | — | 0.5–1 |
 | 31 | PRG-029 | No account lockout — credential stuffing undefended | PRG-030 | 3–5 |
 | 32 | PRG-030 | Per-isolate rate limiting gives no global protection | — | 3–5 |
