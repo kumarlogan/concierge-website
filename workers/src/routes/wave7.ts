@@ -377,7 +377,7 @@ async function _getNotifications(request: Request, env: Env, _params: Record<str
   const store = getNotificationStore(env);
   const identityId = getIdentityId(request);
   const url = new URL(request.url);
-  
+
   const unreadOnly = url.searchParams.get("unreadOnly") === "true";
   const type = url.searchParams.get("type") || undefined;
   const limit = url.searchParams.get("limit");
@@ -549,6 +549,7 @@ function buildWorkflowEventStore(env: Env): EventStore {
 function buildWorkflowEngine(env: Env): WorkflowEngine {
   const eventStore = buildWorkflowEventStore(env);
   return new WorkflowEngine({
+    db: env.DB,           // PRG-022: explicit DI so engine can persist to workflow_instances
     eventStore,
     taskOrchestrator: new TaskOrchestrator({ db: env.DB, eventStore }),
     approvalGate: new ApprovalGateService({ db: env.DB, eventStore }),
