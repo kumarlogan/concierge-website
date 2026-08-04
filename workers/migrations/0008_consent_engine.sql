@@ -39,13 +39,15 @@ CREATE TABLE IF NOT EXISTS consents (
 
 -- Indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_consents_identity ON consents(identity_id);
-CREATE INDEX IF NOT EXISTS idx_consents_patient ON consents(patient_identity_id);
 CREATE INDEX IF NOT EXISTS idx_consents_type ON consents(consent_type);
 CREATE INDEX IF NOT EXISTS idx_consents_status ON consents(status);
 CREATE INDEX IF NOT EXISTS idx_consents_active ON consents(identity_id, consent_type)
     WHERE status = 'active';
 CREATE INDEX IF NOT EXISTS idx_consents_expiry ON consents(expires_at)
     WHERE expires_at IS NOT NULL AND status = 'active';
+-- NOTE: idx_consents_patient on patient_identity_id was removed because
+-- that column belongs to the superseded 0008 design iteration. See 0012
+-- and the DECLARATION.md for the schema reconciliation rationale.
 
 -- ── Consent History Table ─────────────────────────────────────
 -- Append-only audit trail for all consent state changes.
@@ -75,7 +77,8 @@ CREATE TABLE IF NOT EXISTS consent_history (
 
 -- Indexes for history queries
 CREATE INDEX IF NOT EXISTS idx_consent_history_identity ON consent_history(identity_id);
-CREATE INDEX IF NOT EXISTS idx_consent_history_patient ON consent_history(patient_identity_id);
 CREATE INDEX IF NOT EXISTS idx_consent_history_consent ON consent_history(consent_id);
 CREATE INDEX IF NOT EXISTS idx_consent_history_type ON consent_history(consent_type);
 CREATE INDEX IF NOT EXISTS idx_consent_history_created ON consent_history(created_at);
+-- NOTE: idx_consent_history_patient on patient_identity_id was removed because
+-- that column belongs to the superseded 0008 design iteration.
