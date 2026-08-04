@@ -27,7 +27,8 @@ function build(): Build {
   const taskOrchestrator = new TaskOrchestrator({ db: db as unknown as D1Database, eventStore });
   const approvalGate = new ApprovalGateService({ db: db as unknown as D1Database, eventStore });
   const timerService = new TimerService({ db: db as unknown as D1Database, eventStore });
-  const engine = new WorkflowEngine({ eventStore, taskOrchestrator, approvalGate, timerService });
+  // PRG-022 fix: WorkflowEngineConfig now requires db: D1Database for instance persistence.
+  const engine = new WorkflowEngine({ db: db as unknown as D1Database, eventStore, taskOrchestrator, approvalGate, timerService });
   return { db, eventStore, taskOrchestrator, engine };
 }
 
