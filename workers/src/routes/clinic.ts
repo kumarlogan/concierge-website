@@ -8,7 +8,8 @@ import type { Env, RouteHandler } from "../types/env.js";
 import { InMemoryAppointmentEngine } from "../platform/appointments/in-memory-appointment-engine.js";
 import type { AppointmentFilters } from "../platform/appointments/appointment-types.js";
 import { AppointmentStatus, AppointmentType } from "../platform/appointments/appointment-types.js";
-import { withJwtAuth, getIdentityId } from "../middleware/jwt-auth.js";
+import { staffRoute } from "../middleware/authz.js";
+import { getIdentityId } from "../middleware/jwt-auth.js";
 
 // ── Shared engine instances ──────────────────────────────────
 
@@ -204,11 +205,11 @@ export function registerClinicRoutes(router: {
   patch: (path: string, handler: RouteHandler) => void;
 }): void {
   // Patient management
-  router.get("/api/v1/clinic/patients", withJwtAuth(_listPatients as RouteHandler));
-  router.get("/api/v1/clinic/patients/:id", withJwtAuth(_getPatient as RouteHandler));
+  router.get("/api/v1/clinic/patients", staffRoute(_listPatients as RouteHandler));
+  router.get("/api/v1/clinic/patients/:id", staffRoute(_getPatient as RouteHandler));
 
   // Schedule management
-  router.get("/api/v1/clinic/schedule", withJwtAuth(_getClinicSchedule as RouteHandler));
-  router.get("/api/v1/clinic/schedule/today", withJwtAuth(_getTodaySchedule as RouteHandler));
-  router.patch("/api/v1/clinic/appointments/:id/confirm", withJwtAuth(_confirmAppointment as RouteHandler));
+  router.get("/api/v1/clinic/schedule", staffRoute(_getClinicSchedule as RouteHandler));
+  router.get("/api/v1/clinic/schedule/today", staffRoute(_getTodaySchedule as RouteHandler));
+  router.patch("/api/v1/clinic/appointments/:id/confirm", staffRoute(_confirmAppointment as RouteHandler));
 }

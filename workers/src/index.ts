@@ -130,6 +130,10 @@ router.post("/admin/webhook", (request, env, _params) =>
 
 registerTrustRuntimeRoutes(router);
 
+// ── EPCL Activation API (GAP-005 fix) ──────────────
+import { registerEPCLRoutes } from "./routes/epcl.js";
+registerEPCLRoutes(router);
+
 // ── Document Upload API routes (Wave 6 — Secure Document Upload) ────────
 import { registerDocumentRoutes } from "./routes/documents.js";
 registerDocumentRoutes(router);
