@@ -129,3 +129,40 @@ immediate_known_blockers:
       status: FIXED_ON_BRANCH
       fix_pr: 6
       description: "PRG-022: FIXED on PR #6 — workflow instance D1 persistence added"
+
+  resolved_gaps:
+    - id: GAP-001
+      description: "AUTHORIZATION_ENGINE never constructed — routes would throw TypeError"
+      resolution: "Wired via thin adapter over DecisionEngine in wirePlatformEngines() (PRG-013)"
+      commit: "2fbb3c4"
+      status: RESOLVED
+
+    - id: GAP-003
+      description: "Clinic routes use withJwtAuth instead of staffRoute — any authenticated user can access clinic console"
+      resolution: "Changed all clinic routes from withJwtAuth to staffRoute"
+      commit: "2fbb3c4"
+      status: RESOLVED
+
+    - id: GAP-005
+      description: "EPCL->WAS->WEF pipeline completely dormant — no HTTP route, all feature flags false"
+      resolution: "Added /api/v1/epcl/activate HTTP endpoint and /api/v1/epcl/health. Pipeline now reachable via HTTP."
+      commit: "2fbb3c4"
+      status: RESOLVED
+
+  new_known_gaps:
+    - id: GAP-006
+      severity: MEDIUM
+      description: "In-memory singletons (InMemoryAppointmentEngine, in-memory consent cache) shadow D1 tables — data loss on cold start"
+      status: OPEN
+      mitigation: "D1-backed implementations exist; in-memory used as testing fallback"
+
+    - id: GAP-009
+      severity: MEDIUM
+      description: "Frontend stores JWTs in localStorage (XSS risk with patient PHI)"
+      status: OPEN
+      mitigation: "HttpOnly cookie storage recommended for production"
+
+    - id: GAP-010
+      severity: LOW
+      description: "Frontend has zero tests"
+      status: OPEN

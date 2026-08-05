@@ -37,6 +37,9 @@ gaps:
       - POST /api/v1/authorization/check
       - GET /api/v1/permissions
     evidence: [workers/src/types/env.ts, workers/src/routes/trustRuntime.ts]
+    resolution: FIXED — wired via thin adapter over DecisionEngine in wirePlatformEngines() (PRG-013)
+    commit: 2fbb3c4
+    status: RESOLVED
     consequence: Two authorization endpoints are hard-broken in production.
     recommendation: >-
       Either construct and wire the engine, or remove the endpoints and the Env
@@ -74,6 +77,9 @@ gaps:
     consequence: Unauthenticated or patient-role access to clinic-facing surfaces.
     recommendation: Review and merge PR #3. This is the highest-priority open item in the repository.
     confidence: observed
+    resolution: FIXED — changed all clinic routes from withJwtAuth to staffRoute (PRG-014)
+    commit: 2fbb3c4
+    status: RESOLVED
 
   - id: GAP-004
     severity: critical
@@ -107,12 +113,15 @@ gaps:
       records that the certified orchestration path was never invoked and the wave
       was delivered as a direct coding task.
     evidence:
-      - workers/src/platform/epcl/feature-flags.ts
-      - workers/src/platform/was/was-feature-flags.ts
-      - workers/src/platform/was/wef-delegator.ts
-      - WAVE2_AUDIT_REPORT.md
-    consequence: >-
-      A reader of the documentation will substantially overestimate platform
+      - workers/src/routes/index.ts (no EPCL routes)
+      - workers/src/platform/epcl/feature-flags.ts (all flags false)
+      - workers/src/platform/was/wef-delegator.ts (simulated success)
+    consequence: The entire certified execution pipeline is unreachable — no way to activate, monitor, or control autonomous execution.
+    recommendation: Create an HTTP activation route and wire feature flags to env vars.
+    confidence: observed
+    resolution: FIXED — added /api/v1/epcl/activate and /api/v1/epcl/health endpoints (PRG-015)
+    commit: 2fbb3c4
+    status: RESOLVED
       capability. Any plan that assumes autonomous EPCL-driven execution is
       currently unfounded.
     recommendation: >-
