@@ -5,11 +5,6 @@ on:
     # Manual trigger. Runs the literal cross-patient consent attack matrix
     # against the LIVE production API using the production signing key
     # (injected as a secret — never committed to the repo).
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/phase-l-prod-replay.yml"
-      - "workers/tests/prod-replay/**"
 
 permissions:
   contents: read
@@ -29,8 +24,7 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
+        # No version pin: uses package.json "packageManager" (pnpm@11.13.1).
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
