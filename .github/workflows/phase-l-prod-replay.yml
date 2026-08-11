@@ -34,12 +34,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile=false
 
-      - name: Debug — secret availability (length only, value never printed)
-        working-directory: workers
-        run: |
-          if [ -z "$PROD_JWT_PRIVATE_KEY" ]; then echo "PROD_JWT_PRIVATE_KEY: EMPTY"; else echo "PROD_JWT_PRIVATE_KEY: len=${#PROD_JWT_PRIVATE_KEY}"; fi
-          if [ -z "$PROD_JWT_KID" ]; then echo "PROD_JWT_KID: EMPTY"; else echo "PROD_JWT_KID: len=${#PROD_JWT_KID}"; fi
-
       - name: Run Phase L production replay (literal A→B attack on live API)
         working-directory: workers
-        run: npx vitest run tests/prod-replay/phaseL-prod-replay.test.ts --reporter=verbose
+        run: npx vitest run --config vitest.replay.config.ts --reporter=verbose
