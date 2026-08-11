@@ -1,0 +1,45 @@
+name: Phase L Production Replay
+
+on:
+  workflow_dispatch:
+    # Manual trigger. Runs the literal cross-patient consent attack matrix
+    # against the LIVE production API using the production signing key
+    # (injected as a secret — never committed to the repo).
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/phase-l-prod-replay.yml"
+      - "workers/tests/prod-replay/**"
+
+permissions:
+  contents: read
+
+jobs:
+  prod-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PROD_JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
+      PROD_JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
+      PROD_JWT_KID: ${{ secrets.JWT_KID }}
+      PROD_API_BASE: https://api.agsynergy.ca
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Run Phase L production replay (literal A→B attack on live API)
+        working-directory: workers
+        run: npx vitest run tests/prod-replay/phaseL-prod-replay.test.ts --reporter=verbose
