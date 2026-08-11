@@ -13,6 +13,8 @@ import { OAuthService } from "../oauth-provider.js";
 import { MFAManager } from "../mfa.js";
 import { JwtManager } from "../jwt-manager.js";
 import { IdentityProviderRegistry } from "../identity-provider-registry.js";
+import { EmailService } from "../../email/email-service.js";
+import { renderTemplate } from "../../email/template-registry.js";
 
 // ── Worker environment type (keeps this file self-contained) ──
 interface Env {
@@ -51,6 +53,8 @@ export class IdentityRouter {
     private readonly mfa: MFAManager,
     private readonly jwt: JwtManager,
     private readonly providerRegistry: IdentityProviderRegistry,
+    private readonly emailService?: EmailService,
+    private readonly appUrl?: string,
   ) {}
 
   /**
@@ -175,7 +179,33 @@ export class IdentityRouter {
   }
 
   private async handlePasswordResetRequest(body: Record<string, unknown>): Promise<ApiResponse> {
-    await this.passwordReset.requestReset(body.email as string);
+    const email = body.email as string;
+
+    // Send password reset email if email service is configured.
+    // Phase 4 — EPIC-017: password resets are sent from support@agsynergy.ca
+    // via SendGrid (root domain). The EmailService routing map handles
+    // dispatching to the correct provider based on the `from` address.
+    if (this.emailService) {
+      const token = await this.passwordReset.requestReset(email);
+      const resetUrl = `${this.getBaseUrl()}/identity/password/reset?token=${token}`;
+      const { html, text, subject } = renderTemplate("password-reset", {
+        resetUrl,
+        patientName: email.split("@")[0],
+      });
+      await this.emailService.sendEmail({
+        from: "support@agsynergy.ca",
+        to: email,
+        subject,
+        html,
+        text,
+        templateName: "password-reset",
+        referenceId: email,
+      });
+    } else {
+      // Fallback when email service is not configured
+      await this.passwordReset.requestReset(email);
+    }
+
     // Token is not returned to the client — in production it would be emailed.
     // Returning tokens in API responses is a security finding (HIGH #10).
     return ok({ message: "If the email exists, a reset link has been sent" });
@@ -210,12 +240,31 @@ export class IdentityRouter {
   }
 
   private async handleEmailVerification(body: Record<string, unknown>): Promise<ApiResponse> {
-    await this.emailVerification.createVerification(
-      body.identityId as string,
-      body.email as string,
-    );
-    // Token is not returned to the client — would be emailed in production.
+    const identityId = body.identityId as string;
+    const email = body.email as string;
+    const token = await this.emailVerification.createVerification(identityId, email);
+
+    // Send verification email if email service is configured
+    if (this.emailService) {
+      const verificationUrl = `${this.getBaseUrl()}/identity/email/verify?token=${token}`;
+      const { html, text, subject } = renderTemplate("verification", {
+        verificationUrl,
+        patientName: email.split("@")[0],
+      });
+      await this.emailService.sendEmail({
+        to: email,
+        subject,
+        html,
+        text,
+        templateName: "verification",
+        referenceId: identityId,
+      });
+    }
     return ok({ message: "Verification email sent" });
+  }
+
+  private getBaseUrl(): string {
+    return this.appUrl ?? "https://www.agsynergy.ca";
   }
 
   private async handleEmailVerificationComplete(body: Record<string, unknown>): Promise<ApiResponse> {
