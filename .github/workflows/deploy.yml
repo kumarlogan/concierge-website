@@ -95,15 +95,20 @@ jobs:
       #  DEPLOY
       # ═══════════════════════════════════════════════════════════════
 
-      # ── 9. Inject JWT + Deploy API Worker ───────────────────────────
+      # ── 9. Inject JWT + Email config + Deploy API Worker ─────────────────
       # FIX (Phase 2 Stabilization): the previous pipeline only
       # deployed the frontend worker (hermes-website) from the repo
       # root and never deployed the API worker. The API lives in
       # /workers and its production route (api.agsynergy.ca) is
       # defined under env.production, so it REQUIRES --env production.
-      # Inject JWT signing secrets into the API worker config at deploy time.
-      # Private key stays in GitHub Secrets — NEVER committed to the repo.
-      - name: Inject JWT config (API worker)
+      # Inject JWT signing secrets and email config into the API worker
+      # config at deploy time. Private keys stay in GitHub Secrets —
+      # NEVER committed to the repo. Vars are injected here (not stored
+      # in wrangler.jsonc) to ensure deterministic, repeatable deployments.
+      # Subsequent manual `wrangler secret put` or local deploys that
+      # skip this injection step will wipe these vars — always redeploy
+      # through CI to preserve them.
+      - name: Inject JWT + email config (API worker)
         working-directory: workers
         run: |
           node -e '
@@ -123,14 +128,18 @@ jobs:
             v.PLATFORM_JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY;
             v.PLATFORM_JWT_KID        = process.env.JWT_KID;
             v.TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY;
+            v.EMAIL_FROM = process.env.EMAIL_FROM;
+            v.APP_URL    = process.env.APP_URL;
             fs.writeFileSync(f, JSON.stringify(json, null, 2) + "\n");
-            console.log("Injected JWT vars (private key length=" + (process.env.JWT_PRIVATE_KEY ? process.env.JWT_PRIVATE_KEY.length : 0) + ")");
+            console.log("Injected JWT + email config vars (private key length=" + (process.env.JWT_PRIVATE_KEY ? process.env.JWT_PRIVATE_KEY.length : 0) + ")");
           '
         env:
           JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
           JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
           JWT_KID: ${{ secrets.JWT_KID }}
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          APP_URL: ${{ secrets.APP_URL }}
 
       - name: Deploy API (agsynergy-api → api.agsynergy.ca)
         uses: cloudflare/wrangler-action@v4
