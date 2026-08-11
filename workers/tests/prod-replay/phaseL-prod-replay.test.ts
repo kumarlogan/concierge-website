@@ -148,20 +148,4 @@ describe("Phase L - LITERAL PRODUCTION REPLAY (Patient A to Patient B)", () => {
     });
     expect(rev.status).toBe(200);
   }, 20000);
-
-  it("DIAG - capture full grant response (status/headers/body)", async () => {
-    if (!hasKey) return;
-    const res = await fetch(API_BASE + "/api/v1/consent/grant", {
-      method: "POST",
-      headers: mkHdr(ctx.ja),
-      body: JSON.stringify({ consentType: "privacy", scope: [], purpose: "diag" }),
-    });
-    const txt = await res.text();
-    const hdrs = {};
-    res.headers.forEach((v, k) => (hdrs[k] = v));
-    console.log("DIAG_GRANT_STATUS=" + res.status);
-    console.log("DIAG_GRANT_HEADERS=" + JSON.stringify(hdrs));
-    console.log("DIAG_GRANT_BODY=" + txt);
-    expect(true).toBe(true);
-  }, 20000);
 });
