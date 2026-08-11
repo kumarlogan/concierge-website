@@ -15,13 +15,16 @@
 
 import type {
   ConsentGrantRequest,
+  ConsentGrantPayload,
   ConsentRevokeRequest,
   ConsentHistoryEntry,
   ConsentSnapshot,
   ConsentEvaluationResult,
   ConsentType,
-  ConsentSource,
 } from "./types.js";
+import { ConsentSource } from "./types.js";
+
+import { AuthzError, isStaffIdentity } from "../../middleware/authz.js";
 
 // ── D1 row shapes ─────────────────────────────────────────────
 
@@ -170,6 +173,63 @@ export class D1ConsentEngine {
       .run();
 
     return { id: consentId, granted: true, versionToken, createdAt: now };
+  }
+
+  // ── Grant (authorized identity) ─────────────────────────────
+  // Ownership-aware entry point for patient self-service. The acting patient
+  // identity is the AUTHORITATIVE owner — it comes from the verified JWT and is
+  // passed in explicitly. The payload carries NO identityId, so a client-supplied
+  // identifier can never become the record owner (Phase L IDOR remediation).
+  async grantConsent(
+    actingIdentityId: string,
+    payload: ConsentGrantPayload,
+  ): Promise<{ id: string; granted: boolean; versionToken: string; createdAt: string }> {
+    return this.grant({
+      identityId: actingIdentityId,
+      consentType: payload.consentType,
+      scope: payload.scope,
+      purpose: payload.purpose,
+      source: payload.source ?? ConsentSource.EXPLICIT,
+      expiresAt: payload.expiresAt,
+      delegatorId: payload.delegatorId,
+      metadata: payload.metadata,
+    });
+  }
+
+  // ── Revoke (ownership verified) ─────────────────────────────
+  // A patient may only revoke their OWN consent. The consent record is resolved
+  // and ownership verified BEFORE any mutation. Staff may revoke any consent.
+  // Non-staff are given an indistinguishable 403 whether the consent does not
+  // exist or is not theirs, so consent IDs cannot be probed/enumerated.
+  async revokeConsent(
+    authenticatedIdentityId: string,
+    identityType: string,
+    consentId: string,
+    reason: string,
+  ): Promise<{ consentId: string; revoked: boolean; revokedAt: string }> {
+    const existing = await this.db
+      .prepare(`SELECT * FROM consents WHERE id = ? LIMIT 1`)
+      .bind(consentId)
+      .first<ConsentRow>();
+
+    if (!existing) {
+      if (isStaffIdentity(identityType)) {
+        throw new AuthzError("Consent not found", "CONSENT_NOT_FOUND", 404);
+      }
+      throw new AuthzError("Not authorized to revoke this consent", "CONSENT_NOT_OWNED", 403);
+    }
+
+    if (!isStaffIdentity(identityType) && existing.identity_id !== authenticatedIdentityId) {
+      throw new AuthzError("Not authorized to revoke this consent", "CONSENT_NOT_OWNED", 403);
+    }
+
+    // Ownership established — safe to mutate. revokedBy records the caller
+    // (which is identical to the owner for a patient self-service revoke).
+    return this.withdraw({
+      consentId,
+      reason,
+      revokedBy: authenticatedIdentityId,
+    });
   }
 
   // ── Withdraw ───────────────────────────────────────────────

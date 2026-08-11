@@ -338,6 +338,23 @@ export interface ConsentGrantRequest {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Consent grant payload for patient self-service, deliberately WITHOUT an
+ * identityId field. The acting patient identity is supplied separately by the
+ * ownership-aware engine entrypoint (grantConsent(authenticatedIdentityId,
+ * payload)), so a client-supplied identifier can never become the record owner.
+ * This is the authorized-identity model required by Phase L IDOR remediation.
+ */
+export interface ConsentGrantPayload {
+  consentType: ConsentType;
+  scope: string[];
+  purpose: string;
+  source: ConsentSource;
+  expiresAt?: string;
+  delegatorId?: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface ConsentRevokeRequest {
   consentId: string;
   reason: string;
@@ -809,7 +826,10 @@ export interface GrantConsentRequest {
   consentType: ConsentType;
   scope: string[];
   purpose: string;
+  source?: ConsentSource;
   expiresAt?: string;
+  delegatorId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface GrantConsentResponse {

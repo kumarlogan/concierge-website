@@ -37,6 +37,12 @@ import type {
   ListPermissionsResponse,
 } from "../platform/trust/types.js";
 import { withJwtAuth, getIdentityId } from "../middleware/jwt-auth.js";
+import {
+  identityOf,
+  resolveScopedIdentityId,
+  withAuthzErrors,
+  protectedRoute,
+} from "../middleware/authz.js";
 
 // ════════════════════════════════════════════════
 // Trust Evaluation API
@@ -119,16 +125,41 @@ export async function consentGrant(
   env: Env,
   _params: Record<string, string>,
 ): Promise<Response> {
+  const identity = identityOf(request);
   const body = await request.json<GrantConsentRequest>();
 
-  if (!body.identityId || !body.consentType) {
+  if (!body.consentType) {
     return jsonResponse(
-      { error: "identityId and consentType are required" },
+      { error: "consentType is required" },
       400,
     );
   }
 
-  const result = await env.CONSENT_ENGINE.grant(body);
+  // Authoritative-identity model (Phase L IDOR remediation):
+  // The acting patient identity is derived from the verified JWT — NEVER from
+  // the client. Any client-supplied identityId (body OR query) is checked
+  // against the caller's own identity; a patient cannot act for another
+  // identity. resolveScopedIdentityId throws AuthzError (→ 403) on a mismatch.
+  const url = new URL(request.url);
+  const queryIdentityId = url.searchParams.get("identityId");
+  const suppliedIds = [body.identityId, queryIdentityId].filter((id): id is string => !!id);
+  const resolvedIds = suppliedIds.map((id) => resolveScopedIdentityId(identity, id));
+  if (new Set(resolvedIds).size > 1) {
+    return jsonResponse({ error: "Conflicting identity identifiers supplied" }, 400);
+  }
+  const actingIdentityId = resolvedIds[0] ?? identity.identityId;
+
+  // The engine writes identity_id = actingIdentityId (JWT-derived) and ignores
+  // any client-supplied identifier; the payload carries no identityId at all.
+  const result = await env.CONSENT_ENGINE.grantConsent(actingIdentityId, {
+    consentType: body.consentType,
+    scope: Array.isArray(body.scope) ? body.scope : [],
+    purpose: body.purpose ?? "",
+    source: body.source,
+    expiresAt: body.expiresAt,
+    delegatorId: body.delegatorId,
+    metadata: body.metadata,
+  });
 
   const response: GrantConsentResponse = {
     consentId: result.id,
@@ -139,7 +170,7 @@ export async function consentGrant(
 
   // Publish event
   await env.EVENT_BUS.publish("consent.granted", {
-    identityId: body.identityId,
+    identityId: actingIdentityId,
     consentType: body.consentType,
     granted: true,
     version: 1,
@@ -161,6 +192,7 @@ export async function consentRevoke(
   env: Env,
   _params: Record<string, string>,
 ): Promise<Response> {
+  const identity = identityOf(request);
   const body = await request.json<RevokeConsentRequest>();
 
   if (!body.consentId || !body.reason) {
@@ -170,7 +202,15 @@ export async function consentRevoke(
     );
   }
 
-  const result = await env.CONSENT_ENGINE.withdraw(body);
+  // Ownership is verified inside the engine BEFORE any mutation. A patient may
+  // only revoke their OWN consent; a consent ID alone can never establish
+  // authorization. Unauthorized revokes throw AuthzError (→ 403), never 500.
+  const result = await env.CONSENT_ENGINE.revokeConsent(
+    identity.identityId,
+    identity.identityType,
+    body.consentId,
+    body.reason,
+  );
 
   const response: RevokeConsentResponse = {
     consentId: result.consentId,
@@ -446,8 +486,8 @@ export async function listPermissions(
 export function registerTrustRuntimeRoutes(router: Router): void {
   router.post("/api/v1/trust/evaluate", withJwtAuth(trustEvaluate));
   router.post("/api/v1/policy/evaluate", withJwtAuth(policyEvaluate));
-  router.post("/api/v1/consent/grant", withJwtAuth(consentGrant));
-  router.post("/api/v1/consent/revoke", withJwtAuth(consentRevoke));
+  router.post("/api/v1/consent/grant", protectedRoute(consentGrant));
+  router.post("/api/v1/consent/revoke", protectedRoute(consentRevoke));
   router.get("/api/v1/consent/history", withJwtAuth(consentHistory));
   router.get("/api/v1/trust/score", withJwtAuth(getTrustScore));
   router.post("/api/v1/delegation/create", withJwtAuth(createDelegation));
