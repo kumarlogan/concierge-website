@@ -1,8 +1,19 @@
 # Phase M: Cloudflare WAF Skip Rule Configuration (Manual Dashboard Steps)
 
+> **Operational status (2026-08-12):** ⚠️ This skip rule could **not** be applied via the
+> Rulesets API on the agsynergy.ca zone's **Free plan**. The Free plan only accepts the
+> `waf` skip product, which does **NOT** exempt Bot Fight Mode / Managed Challenge (requests
+> still return `403 error 1010` with it active). The `botManagement` product required to
+> bypass Bot Fight Mode is **Business/Enterprise-only**. **No exemption rule is active.**
+> See `PHASE-M-CERTIFICATION-REPORT.md`.
+
+The instructions below are retained for reference **if/when the zone is upgraded to a plan
+that exposes the `botManagement` skip product** (Business+), at which point they become
+operable.
+
 ## Prerequisites
 - Cloudflare Dashboard access for agsynergy.ca zone
-- WAF Rules permissions
+- WAF Rules permissions AND a zone/Business plan that exposes the `botManagement` skip product
 
 ## Configuration
 

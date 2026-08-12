@@ -1,21 +1,36 @@
-status: in_progress
+status: conditional
 phase: certification
-objective: certify first external pilot patient journey
+objective: certify first external pilot patient journey (Phase M token & session security)
 
 current_status:
   infrastructure: green
   email_delivery: green
   services: healthy
   secrets_detected: false
+  worker_auth_prod: verified   # clean-IP probes: 401 MISSING_AUTH_HEADER / VERIFICATION_FAILED / INVALID_AUTH_FORMAT correct
+  worker_consent_isolation: verified  # local 44-suite + Phase L replay GREEN
+  phase_m_ci_replay: edge_blocked   # Free-plan Bot Fight Mode challenges GitHub runner IP; no narrow exemption possible via API
+
+phase_m:
+  status: CONDITIONAL
+  blocker: Cloudflare Free plan cannot narrowly exempt Bot Fight Mode (1010/Managed Challenge). 'waf' skip product does NOT cover that layer; 'botManagement' is Business/Enterprise-only. GitHub runner IPs are dynamic datacenter ranges.
+  rule_applied: none
+  rule_status: rolled_back   # prior products=['waf'] attempt removed (204); only http_ratelimit default remains
+  park_files:
+    - docs/operations/PHASE-M-CERTIFICATION-REPORT.md
+  path_to_green:
+    - Business+ plan exposing botManagement skip (apply narrow consent+Bearer rule)
+    - OR self-hosted runner at clean egress IP (secrets stay in GH)
+    - OR brief Super Bot Fight Mode window during maintenance
 
 open_items:
   - complete_end_to_end_patient_journey_testing
   - validate_email_verification_flow
   - test_login_and_password_reset
-  - verify_cross_patient_authorization
   - perform_security_audit_for_phi_leakage
   - conduct_email_deliverability_testing
-  - finalize_certification_documents
+  - resolve_phase_m_edge_replay_blocker   # deferred to GREEN path above
+  - reconcile_phase_m_malformed_auth_assertion   # Worker returns VERIFICATION_FAILED for Bearer<garbage>, INVALID_AUTH_FORMAT for non-Bearer
 
 next_steps:
   - finalize_current_work_and_known_gaps_documents

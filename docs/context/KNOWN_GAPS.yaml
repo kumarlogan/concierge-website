@@ -341,3 +341,39 @@ gaps:
 #     only by the undeployed artifacts/api-server Express prototype.
 #   - The faqs and services D1 tables have no code consumers; the frontend uses static data.
 #   - hermes-website/ is not a frontend — it holds backend integration test scripts.
+#
+# ---------------------------------------------------------------------------
+# Phase M entry (2026-08-12): production replay edge blocker
+#   - id: PMGAP-001
+#     severity: medium
+#     category: edge_platform
+#     title: Cloudflare Free plan cannot narrowly exempt the governed CI replay from Bot Fight Mode
+#     detail: The literal Phase M/Phase L production replay (via GitHub hosted runner)
+#       is blocked at the edge by Cloudflare Bot Fight Mode Managed Challenge / 1010.
+#       The Rulesets API on this zone's Free plan only accepts the 'waf' skip product,
+#       which does NOT bypass Bot Fight Mode; the 'botManagement' product (which would)
+#       is Business/Enterprise-only. GitHub-hosted runner IPs are dynamic datacenter
+#       ranges, so IP allow-listing is impractical. Worker auth/authorization/consent
+#       are verified correct via clean-IP probes (401 MISSING_AUTH_HEADER /
+#       VERIFICATION_FAILED / INVALID_AUTH_FORMAT) and the local 44-suite + Phase L.
+#     evidence: [scripts/configure-cloudflare-waf-exemption.py, docs/operations/PHASE-M-CERTIFICATION-REPORT.md]
+#     consequence: Phase M is certified CONDITIONAL, not GREEN; CI replay deferred.
+#     recommendation: (1) Upgrade zone to a plan exposing botManagement skip, OR
+#       (2) run phase-m replay on a self-hosted runner at a clean egress IP (secrets
+#       stay in GH), OR (3) brief Super Bot Fight Mode off-window during maintenance.
+#     status: OPEN
+#     confidence: observed
+#   - id: PMGAP-002
+#     severity: low
+#     category: test_hygiene
+#     title: MALFORMED AUTH production-replay assertion is incorrect for its input
+#     detail: phaseM-prod-replay.test.ts expects INVALID_AUTH_FORMAT for a
+#       "Bearer <garbage>" header, but the Worker correctly returns VERIFICATION_FAILED
+#       (it parses the Bearer scheme and fails JWT verification). INVALID_AUTH_FORMAT is
+#       returned only for non-Bearer schemes (Token/Basic). Assertion fix needed.
+#     evidence: [workers/tests/prod-replay/phaseM-prod-replay.test.ts]
+#     consequence: False-negative test failure during replay.
+#     recommendation: Update assertion to expect VERIFICATION_FAILED, or send a
+#       non-Bearer scheme to test INVALID_AUTH_FORMAT.
+#     status: OPEN
+#     confidence: observed

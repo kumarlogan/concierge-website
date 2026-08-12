@@ -1,6 +1,38 @@
 # Phase M — Production Validation Execution Plan
 
-## Status Summary
+## Final Status (2026-08-12)
+
+### 🟡 CONDITIONAL — production replay edge-blocked by Cloudflare Free plan
+
+**Outcome:** The Worker's token/session/consent security is verified correct in production
+(clean-IP probes return the correct `401 MISSING_AUTH_HEADER` / `VERIFICATION_FAILED` /
+`INVALID_AUTH_FORMAT`; the local 44-test suite + Phase L are GREEN). However, the literal
+production replay via the GitHub-hosted runner could not complete, because Cloudflare Bot
+Fight Mode's Managed Challenge intercepts the GitHub datacenter egress IP and **this zone's
+Free plan does not permit a narrow exemption for that layer via the Rulesets API**:
+
+- The only accepted skip product on Free is `waf`, which does **NOT** bypass Bot Fight Mode
+  (verified live: request still returns `403 error 1010` with the rule active).
+- The `botManagement` skip product (which would bypass it) is Business/Enterprise-only.
+- GitHub hosted runner IPs are dynamic datacenter ranges, so IP allow-listing is not practical.
+
+**No exemption rule is currently applied.** A prior `products=['waf']` attempt was rolled
+back (token 204) as ineffective and broader-than-intended. Edge config is back to baseline
+(only the pre-existing `http_ratelimit` zone ruleset remains).
+
+See `docs/operations/PHASE-M-CERTIFICATION-REPORT.md` for the full report.
+
+### Paths to GREEN
+1. Upgrade the zone to a plan exposing the `botManagement` skip product, then apply the
+   narrow consent+Bearer skip rule; or
+2. Run the phase-m workflow on a **self-hosted runner** at a clean egress IP (production
+   JWT secrets remain in GitHub); or
+3. During a maintenance window, briefly disable Super Bot Fight Mode for the zone, run the
+   replay, and re-enable immediately.
+
+---
+
+## Status Summary (original)
 
 ### ✅ Completed (Code & Tests Ready)
 1. **Phase M Token/Session Security Matrix** - 44 tests passing in Miniflare (local)
