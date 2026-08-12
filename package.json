@@ -6,7 +6,7 @@
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm --filter @workspace/ags-fertility run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/ags-fertility\" --filter \"./artifacts/mockup-sandbox\" --filter \"./scripts\" --if-present run typecheck"
   },
   "packageManager": "pnpm@11.13.1",
   "private": true,
@@ -19,6 +19,6 @@
     "lightningcss-linux-arm64-gnu": "^1.32.0",
     "prettier": "^3.9.5",
     "typescript": "~5.9.3",
-    "wrangler": "^3.90.0"
+    "wrangler": "^4.0.0"
   }
 }

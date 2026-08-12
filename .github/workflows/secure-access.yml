@@ -10,8 +10,10 @@ jobs:
       - name: Get Account ID
         id: account
         shell: bash
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          RESP=$(curl -s -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+          RESP=$(curl -s -H "Authorization: Bearer $CF_API_TOKEN" \
             -H "Content-Type: application/json" \
             "https://api.cloudflare.com/client/v4/accounts")
           ACCT_ID=$(echo "$RESP" | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["result"][0]["id"])' 2>/dev/null || echo "")
@@ -23,10 +25,12 @@ jobs:
       - name: Find or Create Access Application
         id: app
         shell: bash
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           ACCOUNT_ID="${{ steps.account.outputs.id }}"
           echo "Using account: $ACCOUNT_ID"
-          EXISTING=$(curl -s -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+          EXISTING=$(curl -s -H "Authorization: Bearer $CF_API_TOKEN" \
             -H "Content-Type: application/json" \
             "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/access/apps" \
             | python3 -c 'import sys,json;d=json.load(sys.stdin);[print(a["id"]) for a in d.get("result",[]) if "agsynergy.ca" in str(a.get("self_hosted_domains",[]))]' 2>/dev/null)
@@ -36,7 +40,7 @@ jobs:
           else
             echo "Creating new app..."
             RESP=$(curl -s -X POST \
-              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Authorization: Bearer $CF_API_TOKEN" \
               -H "Content-Type: application/json" \
               "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/access/apps" \
               -d '{"name":"AG Synergy","domain":"agsynergy.ca","type":"self_hosted","session_duration":"24h","auto_redirect_to_identity":false,"app_launcher_visible":false}')
@@ -47,27 +51,33 @@ jobs:
 
       - name: Rename Zero Trust Org (fix tab title)
         shell: bash
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           curl -s -X PUT \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
             -H "Content-Type: application/json" \
             "https://api.cloudflare.com/client/v4/accounts/${{ steps.account.outputs.id }}/access/organizations" \
             -d '{"name":"AG Synergy","auth_domain":"kumarlogan.cloudflareaccess.com","is_ui_read_only":false,"user_seat_expiration_inactive_time":"720h"}'
 
       - name: Create Allow Policy (kumarlogan@gmail.com)
         shell: bash
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           curl -s -X POST \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
             -H "Content-Type: application/json" \
             "https://api.cloudflare.com/client/v4/accounts/${{ steps.account.outputs.id }}/access/apps/${{ steps.app.outputs.id }}/policies" \
             -d '{"name":"Allow KL","decision":"allow","precedence":1,"include":[{"email":{"email":"kumarlogan@gmail.com"}}],"require":[],"exclude":[]}'
 
       - name: Create Block Policy (everyone else)
         shell: bash
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           curl -s -X POST \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
             -H "Content-Type: application/json" \
             "https://api.cloudflare.com/client/v4/accounts/${{ steps.account.outputs.id }}/access/apps/${{ steps.app.outputs.id }}/policies" \
             -d '{"name":"Block All","decision":"block","precedence":2,"include":[{"everyone":{}}],"require":[],"exclude":[]}'

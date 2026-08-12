@@ -40,7 +40,7 @@ After saving, test with:
 # This should get 401 (reaches worker) - NOT blocked by challenge
 curl -X POST https://api.agsynergy.ca/api/v1/consent/grant \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer invalid.token" \
+  -H "Authorization: Bearer <TOKEN>" \
   -d '{"consentType":"privacy","scope":[],"purpose":"test"}'
 
 # This should be blocked by Cloudflare (no auth header)
