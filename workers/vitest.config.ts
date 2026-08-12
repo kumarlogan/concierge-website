@@ -6,6 +6,37 @@
 import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
 import { resolve } from "node:path";
+import { generateKeyPairSync } from "node:crypto";
+
+// ───────────────────────────────────────────────────────────────
+// Deterministic synthetic JWT keypair for the test pool.
+//
+// The Phase L/M security-attack harnesses sign real RS256 JWTs and
+// assert on the worker's real JWT verification path. They read the
+// key from env (JWT_PRIVATE_KEY / JWT_KID) and the worker verifies
+// with PLATFORM_JWT_PUBLIC_KEY. Locally these came from an untracked
+// workers/.dev.vars. In CI no .dev.vars exists, so the harnesses
+// crashed on `undefined`. Instead of relying on a hand-maintained
+// secret file, generate a fresh synthetic keypair here at pool load —
+// deterministic, self-contained, and present in BOTH the test env
+// and the worker env, so CI behaves identically to local.
+// ───────────────────────────────────────────────────────────────
+const KID = "test-pool-jwt-kid";
+const { privateKey, publicKey } = generateKeyPairSync("rsa", {
+  modulusLength: 2048,
+  publicExponent: 0x10001,
+  privateKeyEncoding: { type: "pkcs8", format: "pem" },
+  publicKeyEncoding: { type: "spki", format: "pem" },
+});
+// The worker verifies with PLATFORM_JWT_PUBLIC_KEY but issues with
+// JWT_PRIVATE_KEY (index.ts / jwt-auth.ts). Both must carry the keypair.
+const jwtBindings = {
+  JWT_PRIVATE_KEY: privateKey,
+  JWT_PUBLIC_KEY: publicKey,
+  JWT_KID: KID,
+  PLATFORM_JWT_PUBLIC_KEY: publicKey,
+  PLATFORM_JWT_KID: KID,
+};
 
 export default defineConfig({
   plugins: [
@@ -15,6 +46,9 @@ export default defineConfig({
         // Use the same D1 persistence directory as wrangler dev
         // so tests see the schema from applied migrations.
         d1Persist: "./.wrangler/state/v3/d1",
+        // Inject the synthetic JWT keypair so the security-attack
+        // harnesses can sign and the worker can verify — in CI and local.
+        bindings: jwtBindings,
       },
     }),
   ],
