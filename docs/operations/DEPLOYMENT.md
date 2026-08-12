@@ -18,7 +18,7 @@ Before deploying, verify:
 | Environment | CLI Flag | URL | D1 Database |
 |---|---|---|---|
 | **Preview** (staging) | `--env preview` | `https://agsynergy-api.<subdomain>.workers.dev` | Preview D1 instance |
-| **Production** | `--env production` | `https://agsynergy-api.kumarlogan.workers.dev` | `agsynergy-db` (`45f52102`) |
+| **Production** | `--env production` | `https://api.agsynergy.ca` | `agsynergy-db` (`45f52102`) |
 | **Local** | `--local` | `http://localhost:8787` | Miniflare D1 (in-memory) |
 
 ## Deploying the Worker
@@ -45,7 +45,7 @@ cd workers && wrangler deploy --env preview
 
 ```bash
 # Health check
-curl https://agsynergy-api.kumarlogan.workers.dev/api/v1/health
+curl https://api.agsynergy.ca/api/v1/health
 
 # Expected: {"status":"healthy","service":"agsynergy-api","version":"0.1.0","environment":"production","timestamp":"..."}
 ```
@@ -139,7 +139,7 @@ wrangler secret put SECRET_NAME --env production
 wrangler deploy --env production
 
 # 3. Verify with health endpoint
-curl https://agsynergy-api.kumarlogan.workers.dev/api/v1/health
+curl https://api.agsynergy.ca/api/v1/health
 ```
 
 ## Troubleshooting
@@ -175,33 +175,98 @@ cd workers && pnpm add -D wrangler@4
 
 ## CI/CD Integration
 
-Deployment can be automated via GitHub Actions. A sample workflow file:
+Production deployment is fully automated and gated through GitHub Actions.
+The authoritative deployment pipeline is **`.github/workflows/deploy.yml`**.
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy Worker
-on:
-  push:
-    branches: [main]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.13.1
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-          cache-dependency-path: workers/pnpm-lock.yaml
-      - run: cd workers && pnpm install --frozen-lockfile
-      - run: cd workers && pnpm test
-      - run: cd workers && pnpm run deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+> **Important:** This repository's CI/CD was hardened to eliminate recurring
+> failures (see [`CI-CD-CERTIFICATION.md`](../../CI-CD-CERTIFICATION.md)). The
+> older sample workflow below is intentionally removed because it bypassed the
+> required validation gates. The certified pipeline is described here.
+
+### Production deployment contract
+
+`deploy.yml` is the **authoritative production deployment workflow**. It is
+self-contained and self-gating: it carries its own `test`, `typecheck` and
+`secret-scan` jobs, and the `deploy` job **requires all three to succeed**.
+
 ```
+deploy.yml (push to main / workflow_dispatch)
+    │
+    ├── test         (workers test suite)         ── must PASS
+    ├── typecheck    (workers + repo ratchet)     ── must PASS
+    ├── secret-scan  (gitleaks, full history)     ── must PASS
+    │
+    └── deploy  ── requires ALL of the above  ──  ── runs only on success
+            ├── Build frontend (with production bundle guard)
+            ├── Deploy API worker    (agsynergy-api → api.agsynergy.ca)
+            └── Deploy frontend      (hermes-website → agsynergy.ca)
+```
+
+**Deployment can never bypass the gates:**
+
+```
+No passing test gate        → NO DEPLOY
+No passing typecheck        → NO DEPLOY
+No passing secret scan      → NO DEPLOY
+All gates PASS              → DEPLOY
+```
+
+**Why `deploy.yml` is self-contained (not `needs: [ci, security]`):**
+GitHub Actions `needs` can only reference jobs **in the same workflow file**.
+`ci` and `security` are separate files (CI, Secret Scan), so an earlier
+`needs: [ci, security]` caused every deploy run to fail at 0s with a
+workflow-file parse error — and, because `ci.yml` skipped `main`, the deploy
+path ran no validation at all. The corrected architecture gives `deploy.yml`
+its own gates so production deployment remains deterministic and cannot
+depend on jobs defined in another workflow file.
+
+### Pull-request validation (separate from production deployment)
+
+- **`ci.yml` (CI)** — runs **tests** and the **typecheck ratchet** on pull
+  requests and non-main pushes. It does not deploy.
+- **`security.yml` (Secret Scan)** — runs **gitleaks** on pull requests and
+  blocks merge until clean. It does not deploy.
+
+PR validation is intentionally separate from production deployment: a PR must
+pass CI + Secret Scan to merge, and merging to `main` then triggers the fully
+gated `deploy.yml` pipeline.
+
+### Deployment verification
+
+After a certified deployment, verify production health:
+
+```bash
+curl https://api.agsynergy.ca/api/v1/health
+# Expected at certification time (2026-08-12):
+# {"status":"healthy","service":"agsynergy-api","version":"1.1.0",
+#  "environment":"production","database":{"connected":true,"migrationVersion":17,"migrationCount":17}}
+```
+
+Frontend verification:
+
+```bash
+curl -sL -o /dev/null -w "%{http_code}\n" https://www.agsynergy.ca   # 200
+curl -sL -o /dev/null -w "%{http_code}\n" https://agsynergy.ca       # 200 after login
+```
+
+**Cloudflare Access (intentional):** the root `agsynergy.ca` domain is fronted
+by a Cloudflare Access login (email-OTP) gate, so an unauthenticated request is
+redirected to the Cloudflare Access login rather than returning the site
+directly. This is the intended hardened behavior for the root domain; the
+`www.agsynergy.ca` host serves the site directly. Do not treat the login
+redirect as a deployment failure.
+
+### Toolchain (certified)
+
+| Tool | Version | Notes |
+|------|---------|-------|
+| Node.js | 22 | `.node-version` / CI `NODE_VERSION` |
+| pnpm | 11.13.1 | package manager |
+| gitleaks | 8.24.3 | secret scan (CI-pinned) |
+
+Critical GitHub Actions (checkout, setup-node, pnpm/action-setup,
+wrangler-action, gitleaks-action) are pinned to **immutable commit SHAs** for
+deterministic CI.
 
 ## Monitoring
 
@@ -210,7 +275,7 @@ jobs:
 | Worker logs | Cloudflare Dashboard → Workers → agsynergy-api → Logs |
 | Error rates | Cloudflare Dashboard → Analytics |
 | D1 usage | Cloudflare Dashboard → D1 → agsynergy-db → Metrics |
-| Health endpoint | `curl https://agsynergy-api.kumarlogan.workers.dev/api/v1/health` |
+| Health endpoint | `curl https://api.agsynergy.ca/api/v1/health` |
 
 ## Emergency Contacts
 
