@@ -1,0 +1,25 @@
+status: in_progress
+phase: certification
+objective: certify first external pilot patient journey
+
+current_status:
+  infrastructure: green
+  email_delivery: green
+  services: healthy
+  secrets_detected: false
+
+open_items:
+  - complete_end_to_end_patient_journey_testing
+  - validate_email_verification_flow
+  - test_login_and_password_reset
+  - verify_cross_patient_authorization
+  - perform_security_audit_for_phi_leakage
+  - conduct_email_deliverability_testing
+  - finalize_certification_documents
+
+next_steps:
+  - finalize_current_work_and_known_gaps_documents
+  - produce_final_certification_report
+  - obtain_governance_signoff
+
+owner: current_user
