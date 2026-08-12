@@ -1,8 +1,16 @@
 name: Secret Scan
 
+# ─────────────────────────────────────────────────────────────
+# PR-time secret scanning gate.
+#
+# On pull requests this workflow scans for leaked secrets and blocks
+# merge until clean. On a push to main, the authoritative Deploy
+# workflow (deploy.yml) runs its own Secret Scan job as a deployment
+# gate — so this workflow is intentionally PR-only to avoid running
+# gitleaks twice on the same main commit (single source of truth).
+# ─────────────────────────────────────────────────────────────
+
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
