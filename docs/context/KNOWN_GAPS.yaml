@@ -363,6 +363,12 @@ gaps:
 #       stay in GH), OR (3) brief Super Bot Fight Mode off-window during maintenance.
 #     status: OPEN
 #     confidence: observed
+#   Update (2026-08-12): Self-hosted runner path assessed and DEFERRED. Only viable
+#     compute is the Hermes orchestration host (alphatan); installing a runner there would
+#     create an unacceptable security boundary (untrusted repo jobs vs Hermes infra). Its
+#     egress IP (155.248.217.155) is already clean vs Cloudflare (20/20 Worker reach, no
+#     Managed Challenge), but no separate isolated VM/VPS is provisioned. Re-enable when
+#     separate isolated infra exists. See docs/operations/PHASE-M-CERTIFICATION-REPORT.md §4b.
 #   - id: PMGAP-002
 #     severity: low
 #     category: test_hygiene

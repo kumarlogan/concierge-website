@@ -87,9 +87,43 @@ available `waf` skip product**. There is no API path on this plan to exempt them
 
 ---
 
+## 4b. Self-Hosted Runner Path — Assessed & Deferred (2026-08-12)
+
+A **self-hosted runner with a stable egress IP** is the preferred governed path to GREEN.
+
+**Discovery finding:** The only viable compute today is the Hermes orchestration host
+(`alphatan`, Ubuntu 22.04 arm64, 4 CPU / 23 GB). Its stable public egress IP
+**`155.248.217.155` is already clean** against Cloudflare — 20/20 requests reached the
+Worker with no Managed Challenge. That egress IP would require **no** Cloudflare exemption
+(trusted network path + existing Cloudflare + existing Worker security).
+
+**Decision (user direction, 2026-08-12):** **Held / deferred.** Installing a GitHub
+self-hosted runner on the Hermes orchestration host would create an unacceptable security
+boundary (untrusted repository jobs executing against Hermes infrastructure). No separate
+isolated infrastructure (separate VPS/VM at a stable IP) is currently provisioned or
+reachable. Per governance, Phase M remains 🟡 CONDITIONAL and the runner path is deferred
+until a separate, isolated compute resource is available.
+
+**Reactivation criteria (when separate infra exists):**
+1. Provision an isolated VM/VPS with a stable public IPv4 egress that Cloudflare does not
+   flag (verify: no Managed Challenge on the replay requests).
+2. Install the GitHub Actions **self-hosted runner** (repository-scoped, labels
+   `self-hosted, linux, agsynergy-production-validation`), dedicated non-root user,
+   hardened systemd sandbox, automatic restart, log rotation.
+3. Restrict `phase-m-prod-replay.yml` to `runs-on: [self-hosted, linux,
+   agsynergy-production-validation]`, triggered only by manual `workflow_dispatch` on
+   protected `main` (never PRs/untrusted branches).
+4. Production JWT material continues to come exclusively from **GitHub Secrets**; the runner
+   never persists signing keys after the job.
+5. Re-run the full Phase M replay → certify GREEN per Phase 15.
+
+---
+
 ## 5. Residual Risk & Deferred Work
 
 - **Deferred:** literal GitHub-runner production replay of the Phase M/Phase L attack matrix.
+- **Deferred:** self-hosted runner installation until separate isolated infrastructure is
+  provisioned (see §4b).
 - **Path to GREEN (any one):**
   1. Upgrade zone to a plan exposing `botManagement` skip (Business+), then apply the
      narrowly-scoped consent+Bearer skip rule; **or**

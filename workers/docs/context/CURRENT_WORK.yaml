@@ -18,9 +18,10 @@ phase_m:
   rule_status: rolled_back   # prior products=['waf'] attempt removed (204); only http_ratelimit default remains
   park_files:
     - docs/operations/PHASE-M-CERTIFICATION-REPORT.md
+  self_hosted_runner: deferred   # 2026-08-12 decision; Hermes host (alphatan) would create unacceptable boundary; its egress 155.248.217.155 is already clean vs Cloudflare but no separate isolated infra available
   path_to_green:
-    - Business+ plan exposing botManagement skip (apply narrow consent+Bearer rule)
-    - OR self-hosted runner at clean egress IP (secrets stay in GH)
+    - provision separate isolated VM/VPS with stable, non-flagged egress IP; install repo-scoped self-hosted runner (labels self-hosted/linux/agsynergy-production-validation); restrict phase-m-prod-replay.yml to it (manual dispatch on main only); run replay; certify GREEN
+    - OR Business+ plan exposing botManagement skip (apply narrow consent+Bearer rule)
     - OR brief Super Bot Fight Mode window during maintenance
 
 open_items:
