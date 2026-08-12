@@ -24,37 +24,41 @@ const hasKey = !!PRIVATE_KEY_PEM;
 
 // Scheme built dynamically: "B"+"earer" -> never a literal sensitive token prefix.
 const SCHEME = "B" + "earer";
-const mkHdr = (t) => ({ Authorization: SCHEME + " " + t, "Content-Type": "application/json" });
+const mkHdr = (t: string) => ({ Authorization: SCHEME *** " " + t, "Content-Type": "application/json" });
 
-function b64url(buf) {
+function b64url(buf: Uint8Array): string {
   return Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-async function importPrivateKey(pem) {
+function b64urlJson(obj: unknown): string {
+  return b64url(new TextEncoder().encode(JSON.stringify(obj)));
+}
+
+async function importPrivateKey(pem: string) {
   const b64 = pem.replace(/-----(BEGIN|END) PRIVATE KEY-----/g, "").replace(/\s/g, "");
   const der = Uint8Array.from(Buffer.from(b64, "base64"));
   return crypto.subtle.importKey("pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
 }
 
-async function mintPatientJwt(key, identityId) {
-  const header = { alg: "RS256", kid: KID, typ: "JWT" };
+async function mintPatientJwt(privateKey: CryptoKey, identityId: string): Promise<string> {
+  const header = b64urlJson({ alg: "RS256", kid: KID, typ: "JWT" });
   const now = Math.floor(Date.now() / 1000);
-  const payload = {
+  const payload = b64urlJson({
     sub: identityId,
-    iss: "ai-platform:concierge",
+    iss: "ai-platform:identity-core",
     identity_type: "patient",
-    iat: now - 5,
-    nbf: now - 10,
-    exp: now + 600,
-    jti: crypto.randomUUID(),
-  };
+    mfa_level: 0,
+    trust_score: 0.5,
+    iat: now,
+    exp: now + 60 * 30,
+  });
   const h = b64url(new TextEncoder().encode(JSON.stringify(header)));
   const p = b64url(new TextEncoder().encode(JSON.stringify(payload)));
-  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(h + "." + p));
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", privateKey, new TextEncoder().encode(h + "." + p));
   return h + "." + p + "." + b64url(new Uint8Array(sig));
 }
 
-async function getHistoryTotal(tok, identityId) {
+async function getHistoryTotal(tok: string, identityId: string) {
   const res = await fetch(
     API_BASE + "/api/v1/consent/history?identityId=" + encodeURIComponent(identityId),
     { headers: mkHdr(tok) },
@@ -69,15 +73,15 @@ async function getHistoryTotal(tok, identityId) {
 }
 
 describe("Phase L - LITERAL PRODUCTION REPLAY (Patient A to Patient B)", () => {
-  const ctx = { key: null, pA: "", pB: "", ja: "", jb: "" };
+  const ctx = { key: null as CryptoKey | null, pA: "", pB: "", ja: "", jb: "" };
 
   beforeAll(async () => {
     if (!hasKey) return;
     ctx.key = await importPrivateKey(PRIVATE_KEY_PEM);
     ctx.pA = "replay-patient-A-" + crypto.randomUUID();
     ctx.pB = "replay-patient-B-" + crypto.randomUUID();
-    ctx.ja = await mintPatientJwt(ctx.key, ctx.pA);
-    ctx.jb = await mintPatientJwt(ctx.key, ctx.pB);
+    ctx.ja = await mintPatientJwt(ctx.key!, ctx.pA);
+    ctx.jb = await mintPatientJwt(ctx.key!, ctx.pB);
   }, 20000);
 
   it("mints valid production Patient A/B JWTs", () => {
@@ -101,6 +105,7 @@ describe("Phase L - LITERAL PRODUCTION REPLAY (Patient A to Patient B)", () => {
 
   it("ATTACK 2 - A to B consent revoke: B's consent is NOT mutated (STOP CONDITION)", async () => {
     if (!hasKey) return;
+    // B legitimately grants a consent first
     const grant = await fetch(API_BASE + "/api/v1/consent/grant", {
       method: "POST",
       headers: mkHdr(ctx.jb),
@@ -110,6 +115,7 @@ describe("Phase L - LITERAL PRODUCTION REPLAY (Patient A to Patient B)", () => {
     expect(grant.status, "B legit grant status").toBe(201);
     const consentId = gbody.consentId;
     expect(consentId, "B consentId present").toBeTruthy();
+
     const before = await getHistoryTotal(ctx.jb, ctx.pB);
     const rev = await fetch(API_BASE + "/api/v1/consent/revoke", {
       method: "POST",
@@ -123,10 +129,9 @@ describe("Phase L - LITERAL PRODUCTION REPLAY (Patient A to Patient B)", () => {
 
   it("ENUMERATION - A cannot read B's consent history (HTTP 403)", async () => {
     if (!hasKey) return;
-    const res = await fetch(
-      API_BASE + "/api/v1/consent/history?identityId=" + encodeURIComponent(ctx.pB),
-      { headers: mkHdr(ctx.ja) },
-    );
+    const res = await fetch(API_BASE + "/api/v1/consent/history?identityId=" + encodeURIComponent(ctx.pB), {
+      headers: mkHdr(ctx.ja),
+    });
     expect(res.status).toBe(403);
   }, 20000);
 
@@ -135,12 +140,13 @@ describe("Phase L - LITERAL PRODUCTION REPLAY (Patient A to Patient B)", () => {
     const grant = await fetch(API_BASE + "/api/v1/consent/grant", {
       method: "POST",
       headers: mkHdr(ctx.ja),
-      body: JSON.stringify({ consentType: "privacy", scope: [], purpose: "legit" }),
+      body: JSON.stringify({ consentType: "privacy", scope: [], purpose: "legitimate A->A" }),
     });
     const gbody = await grant.json().catch(() => ({}));
-    expect(grant.status, "A legit grant status body=" + JSON.stringify(gbody)).toBe(201);
+    expect(grant.status, "A legit grant status").toBe(201);
     const consentId = gbody.consentId;
     expect(consentId, "A consentId present").toBeTruthy();
+
     const rev = await fetch(API_BASE + "/api/v1/consent/revoke", {
       method: "POST",
       headers: mkHdr(ctx.ja),

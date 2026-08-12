@@ -47,7 +47,7 @@ async function mintPatientJwt(key, identityId) {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: identityId,
-    iss: "ai-platform:concierge",
+    iss: "ai-platform:identity-core",
     identity_type: "patient",
     iat: now - 5,
     nbf: now - 10,
@@ -66,7 +66,7 @@ async function mintMalformedJwt(key, identityId) {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: identityId,
-    iss: "ai-platform:concierge",
+    iss: "ai-platform:identity-core",
     identity_type: "patient",
     iat: now - 5,
     nbf: now - 10,
@@ -84,7 +84,7 @@ async function mintExpiredJwt(key, identityId) {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: identityId,
-    iss: "ai-platform:concierge",
+    iss: "ai-platform:identity-core",
     identity_type: "patient",
     iat: now - 5,
     nbf: now - 10,
@@ -102,7 +102,7 @@ async function mintWrongKidJwt(key, identityId) {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: identityId,
-    iss: "ai-platform:concierge",
+    iss: "ai-platform:identity-core",
     identity_type: "patient",
     iat: now - 5,
     nbf: now - 10,
@@ -127,7 +127,7 @@ async function mintWrongKeyJwt(identityId) {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: identityId,
-    iss: "ai-platform:concierge",
+    iss: "ai-platform:identity-core",
     identity_type: "patient",
     iat: now - 5,
     nbf: now - 10,
@@ -145,7 +145,7 @@ async function mintAlgNoneJwt(identityId) {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: identityId,
-    iss: "ai-platform:concierge",
+    iss: "ai-platform:identity-core",
     identity_type: "patient",
     iat: now - 5,
     nbf: now - 10,
