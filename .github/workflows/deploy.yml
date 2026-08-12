@@ -88,13 +88,21 @@ jobs:
   # ═══════════════════════════════════════════════════════════
   #  GATE 3 — Secret scan (blocking)
   # ═══════════════════════════════════════════════════════════
+  # Uses the SAME pinned gitleaks-action + .gitleaks.toml as the PR-time
+  # Secret Scan workflow, with the full repository history checked out so
+  # committed secrets are not missed. Reviewed non-production residuals are
+  # handled at the config level: the removed synthetic attack-harness key is
+  # acknowledged by fingerprint in .gitleaksignore, and documentation that
+  # deliberately shows detection patterns is allowlisted in .gitleaks.toml.
+  # A full-history scan passes clean, so the gate behaves identically on a
+  # push-to-main deploy and a manual workflow_dispatch run.
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
         with:
-          fetch-depth: 0   # full history so gitleaks can scan committed secrets
+          fetch-depth: 0   # full history available for git log --log-opts
       - name: Gitleaks scan
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.8.1
         env:

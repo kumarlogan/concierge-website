@@ -22,5 +22,9 @@ paths = [
   # False positives: test code demonstrating secret detection patterns
   '''workers/src/platform/identity/jwt-manager\.ts''',
   '''workers/tests/hermes\.006h\.security-hardening\.test\.ts''',
+  # Operational runbook that deliberately shows the auth-header detection
+  # pattern to document the Cloudflare Managed-Challenge diagnosis.
+  # It demonstrates the pattern; it contains no real token.
+  '''docs/operations/PHASE-M-WAF-EXEMPTION-SETUP\.md''',
 ]
 # The literal token value itself must NEVER be allowed — only pattern references.

@@ -1,0 +1,22 @@
+# Gitleaks acknowledged findings.
+#
+# Each line is a specific gitleaks fingerprint of a finding that has been
+# REVIEWED and found NOT to be a live production secret. Adding a fingerprint
+# here does NOT weaken scanning — gitleaks still scans full history and
+# reports any NEW or different finding. Only this exact, evaluated finding
+# is acknowledged as a known residual.
+#
+# ─────────────────────────────────────────────────────────────────────────
+# 1) Synthetic Phase L attack-harness test key (synthetic, throwaway).
+#    commit 97cfa70 introduced workers/tests/.phase-l-attack-keys.json
+#    containing an RS256 keypair minted by scripts/phase-l-attack-keygen.mjs
+#    (file header: "Phase L — Attack key generation (LOCAL ONLY, NOT
+#    COMMITTED)"). It was used ONLY to sign local synthetic Patient A/B JWTs
+#    for the end-to-end IDOR/governance test harness. It is NOT a production
+#    credential, is not referenced by any test (tests generate their own
+#    keypair at vitest-config load), and has been removed from the working
+#    tree. A git history purge (filter-repo + force push) is deferred as a
+#    separately tracked hygiene item to avoid rewriting shared history; until
+#    then this fingerprint records that exposure was evaluated and is
+#    non-production.
+97cfa7046cf406c0dea754f7aa519880e82bfcd7:workers/tests/.phase-l-attack-keys.json:private-key:3
