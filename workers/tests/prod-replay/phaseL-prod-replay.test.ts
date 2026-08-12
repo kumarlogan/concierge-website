@@ -24,7 +24,7 @@ const hasKey = !!PRIVATE_KEY_PEM;
 
 // Scheme built dynamically: "B"+"earer" -> never a literal sensitive token prefix.
 const SCHEME = "B" + "earer";
-const mkHdr = (t: string) => ({ Authorization: SCHEME *** " " + t, "Content-Type": "application/json" });
+const mkHdr = (t: string) => ({ Authorization: `${SCHEME} ${t}`, "Content-Type": "application/json" });
 
 function b64url(buf: Uint8Array): string {
   return Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
