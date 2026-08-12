@@ -30,7 +30,8 @@ const hasKey = !!PRIVATE_KEY_PEM;
 
 // Scheme built dynamically: "B"+"earer" -> never a literal sensitive token prefix.
 const SCHEME = "B" + "earer";
-const mkHdr = (t: string) => ({ Authorization: "Bearer " + t, "Content-Type": "application/json" });
+const REPLAY_UA = "AGSynergy-ProductionReplay/1.0 (governed CI); +https://github.com/kumarlogan/concierge-website";
+const mkHdr = (t: string) => ({ Authorization: "Bearer " + t, "Content-Type": "application/json", "User-Agent": REPLAY_UA });
 
 function b64url(buf) {
   return Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -254,7 +255,9 @@ describe("Phase M - LITERAL PRODUCTION REPLAY (Token & Session Security)", () =>
 
   it("NO AUTH HEADER: request without Authorization → 401 MISSING_AUTH_HEADER", async () => {
     if (!hasKey) return;
-    const res = await fetch(API_BASE + "/api/v1/consent/history?identityId=" + encodeURIComponent(ctx.pA));
+    const res = await fetch(API_BASE + "/api/v1/consent/history?identityId=" + encodeURIComponent(ctx.pA), {
+      headers: { "User-Agent": REPLAY_UA },
+    });
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.code).toBe("MISSING_AUTH_HEADER");
@@ -263,7 +266,7 @@ describe("Phase M - LITERAL PRODUCTION REPLAY (Token & Session Security)", () =>
   it("MALFORMED AUTH: invalid Authorization format → 401 INVALID_AUTH_FORMAT", async () => {
     if (!hasKey) return;
     const res = await fetch(API_BASE + "/api/v1/consent/history?identityId=" + encodeURIComponent(ctx.pA), {
-      headers: { Authorization: "Bearer not.a.valid.token" },
+      headers: { Authorization: "Bearer not.a.valid.token", "User-Agent": REPLAY_UA },
     });
     expect(res.status).toBe(401);
     const body = await res.json();
