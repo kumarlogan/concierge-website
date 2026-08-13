@@ -45,6 +45,11 @@ export interface Env {
   PLATFORM_JWT_PUBLIC_KEY?: string;
   PLATFORM_JWT_KID?: string;
 
+  // Email provider secrets (EPIC-016/017) — required for EmailService
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
+  FRONTEND_URL?: string;
+
   // Trust Runtime bindings — Phase 2, Wave 4
   POLICY_ENGINE: any;
   CONSENT_ENGINE: any;

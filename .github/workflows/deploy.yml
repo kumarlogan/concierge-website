@@ -235,6 +235,7 @@ jobs:
             v.PLATFORM_JWT_KID        = process.env.JWT_KID;
             v.TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY;
             v.EMAIL_FROM = process.env.EMAIL_FROM;
+            v.RESEND_API_KEY = process.env.RESEND_API_KEY;
             v.APP_URL    = process.env.APP_URL;
             fs.writeFileSync(f, JSON.stringify(json, null, 2) + "\n");
             console.log("Injected JWT + email config vars (private key length=" + (process.env.JWT_PRIVATE_KEY ? process.env.JWT_PRIVATE_KEY.length : 0) + ")");

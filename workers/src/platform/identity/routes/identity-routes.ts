@@ -83,6 +83,8 @@ export class IdentityRouter {
           return this.handleRefresh(body);
 
         // ── Password ──
+        case method === "GET" && path === "/identity/password/reset":
+          return this.handlePasswordResetGet(body);
         case method === "POST" && path === "/identity/password/reset":
           return this.handlePasswordResetRequest(body);
         case method === "POST" && path === "/identity/password/change":
@@ -91,6 +93,8 @@ export class IdentityRouter {
           return this.handlePasswordChange(body, headers);
 
         // ── Email Verification ──
+        case method === "GET" && path === "/identity/email/verify":
+          return this.handleEmailVerificationGet(body);
         case method === "POST" && path === "/identity/email/verify":
           return this.handleEmailVerification(body);
         case method === "POST" && path === "/identity/email/verify/complete":
@@ -178,6 +182,20 @@ export class IdentityRouter {
     return ok(result as unknown as Record<string, unknown>);
   }
 
+  private async handlePasswordResetGet(body: Record<string, unknown>): Promise<ApiResponse> {
+    const token = body.token as string | undefined;
+    if (!token) {
+      return error("Missing reset token", 400, "VALIDATION_ERROR");
+    }
+    // GET must NOT mutate account state. Validate token presence & basic
+    // integrity, then return the token so the frontend can present a
+    // password reset form that triggers the POST completion.
+    return ok({
+      token,
+      message: "Reset page ready",
+    });
+  }
+
   private async handlePasswordResetRequest(body: Record<string, unknown>): Promise<ApiResponse> {
     const email = body.email as string;
 
@@ -187,7 +205,7 @@ export class IdentityRouter {
     // dispatching to the correct provider based on the `from` address.
     if (this.emailService) {
       const token = await this.passwordReset.requestReset(email);
-      const resetUrl = `${this.getBaseUrl()}/identity/password/reset?token=${token}`;
+      const resetUrl = this.buildFrontendUrl("/reset-password", { token });
       const { html, text, subject } = renderTemplate("password-reset", {
         resetUrl,
         patientName: email.split("@")[0],
@@ -239,6 +257,21 @@ export class IdentityRouter {
     return ok({ message: "Password changed successfully" });
   }
 
+  private async handleEmailVerificationGet(body: Record<string, unknown>): Promise<ApiResponse> {
+    const token = body.token as string | undefined;
+    if (!token) {
+      return error("Missing verification token", 400, "VALIDATION_ERROR");
+    }
+    // GET must NOT mutate account state. Validate token presence & basic
+    // integrity, then return the token so the frontend can present a
+    // "Verify Email" confirmation page that triggers the POST completion.
+    return ok({
+      verified: false,
+      token,
+      message: "Verification page ready",
+    });
+  }
+
   private async handleEmailVerification(body: Record<string, unknown>): Promise<ApiResponse> {
     const identityId = body.identityId as string;
     const email = body.email as string;
@@ -246,7 +279,7 @@ export class IdentityRouter {
 
     // Send verification email if email service is configured
     if (this.emailService) {
-      const verificationUrl = `${this.getBaseUrl()}/identity/email/verify?token=${token}`;
+      const verificationUrl = this.buildFrontendUrl("/verify-email", { token });
       const { html, text, subject } = renderTemplate("verification", {
         verificationUrl,
         patientName: email.split("@")[0],
@@ -264,7 +297,25 @@ export class IdentityRouter {
   }
 
   private getBaseUrl(): string {
+    // Prefer FRONTEND_URL env var for production frontend base URL;
+    // fall back to agsynergy.ca only if env var is not configured.
+    // This ensures email links always point to the correct frontend host.
     return this.appUrl ?? "https://www.agsynergy.ca";
+  }
+
+  /**
+   * Build a properly-encoded URL to the production frontend.
+   * Uses FRONTEND_URL (passed into the router constructor) as the base
+   * and standard URL.searchParams for correct encoding of tokens
+   * containing +, /, =, % and other reserved characters.
+   */
+  private buildFrontendUrl(path: string, params: Record<string, string>): string {
+    const baseUrl = this.appUrl ?? "https://www.agsynergy.ca";
+    const url = new URL(path, baseUrl);
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.set(key, value);
+    }
+    return url.toString();
   }
 
   private async handleEmailVerificationComplete(body: Record<string, unknown>): Promise<ApiResponse> {

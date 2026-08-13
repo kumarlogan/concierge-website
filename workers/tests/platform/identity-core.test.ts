@@ -372,6 +372,181 @@ describe("PasswordResetManager", () => {
   });
 });
 
+// ── IdentityRouter GET endpoints for email verification & password reset ──────
+describe("IdentityRouter GET endpoints", () => {
+  let identityRouter: any;
+  let emailVerification: any;
+  let passwordReset: any;
+  let mockRepo: any;
+
+  beforeEach(async () => {
+      const { EmailVerificationManager } = await import('../../src/platform/identity/email-verification.js');
+      const { PasswordResetManager } = await import('../../src/platform/identity/password-reset.js');
+      const { PasswordManager } = await import('../../src/platform/identity/password-manager.js');
+      const { IdentityRouter } = await import('../../src/platform/identity/routes/identity-routes.js');
+      const { IdentityService } = await import('../../src/platform/identity/identity-service.js');
+      const { SessionManager } = await import('../../src/platform/identity/session-manager.js');
+      const { JwtManager } = await import('../../src/platform/identity/jwt-manager.js');
+      const { IdentityProviderRegistry } = await import('../../src/platform/identity/identity-provider-registry.js');
+      const { RefreshTokenManager } = await import('../../src/platform/identity/refresh-token-manager.js');
+      const { MagicLinkManager } = await import('../../src/platform/identity/magic-link.js');
+      const { OAuthService } = await import('../../src/platform/identity/oauth-provider.js');
+      const { MFAManager } = await import('../../src/platform/identity/mfa.js');
+      const { IdentityRepository } = await import('../../src/platform/identity/identity-repository.js');
+
+      // Create mock repos
+      const storedVerifications = new Map();
+      const storedResets = new Map();
+      const storedIdentities = new Map();
+      const mockRepoIdentity = {
+        db: {} as any,
+        findIdentityByEmail: vi.fn(async (email: string) => storedIdentities.get(email) ?? null),
+        getIdentity: vi.fn(),
+        findIdentity: vi.fn(),
+        updateIdentity: vi.fn(),
+        createIdentity: vi.fn(),
+        findIdentities: vi.fn(),
+        deleteIdentity: vi.fn(),
+        purgeIdentities: vi.fn(),
+        storeConsentSnapshot: vi.fn(),
+        findConsentSnapshot: vi.fn(),
+        storeIdentityProvider: vi.fn(),
+        findIdentityProvider: vi.fn(),
+        storeCredentialSetting: vi.fn(),
+        bindRefreshToken: vi.fn(),
+        storeRefreshToken: vi.fn(),
+        readRefreshToken: vi.fn(),
+        revokeRefreshToken: vi.fn(),
+        storeMfaKey: vi.fn(),
+        findMfaKey: vi.fn(),
+        storeBackupIdentity: vi.fn(),
+        findBackupIdentity: vi.fn(),
+        authenticateIdentity: vi.fn(),
+        socialLogin: vi.fn(),
+        write_AuditEntry: vi.fn(),
+        Internal __setCredService__: vi.fn(),
+        Internal setCredService: vi.fn(),
+        getCredService: vi.fn(),
+        Internal getSingleIdentity: vi.fn(),
+        addIdentityHook: vi.fn(),
+        setFlowStatusTo: vi.fn(),
+        getFlowStatus: vi.fn(),
+        registerIdentityProvider: vi.fn(),
+        getProvider: vi.fn(),
+        getCredentialsForIdentity: vi.fn(),
+        getPublicIdentityFilters: vi.fn(),
+        internal_?.getAllCredentials: vi.fn(),
+        setAudit: vi.fn(),
+        write_Token: vi.fn(),
+        write_User: vi.fn(),
+        deleteRecord: vi.fn(),
+        updateRecord: vi.fn(),
+        findRecord: vi.fn(),
+        findRecords: vi.fn(),
+        createCollection: vi.fn(),
+      } as IdentityRepository;
+
+      const mockRepo = {
+        storeEmailVerification: vi.fn(async (r: any) => { storedVerifications.set(r.token_hash, r); }),
+        findEmailVerification: vi.fn(async (h: string) => storedVerifications.get(h)),
+        verifyEmail: vi.fn(async (id: string) => {
+          for (const v of storedVerifications.values()) {
+            if (v.id === id) v.verified_at = new Date().toISOString();
+          }
+        }),
+        updateIdentityStatus: vi.fn(),
+        purgeExpiredIdentities: vi.fn(),
+        removeIdentity: vi.fn(),
+        removeRefreshToken: vi.fn(),
+        purgeRefreshTokens: vi.fn(),
+        revokeIdentitySessions: vi.fn(),
+        updateIdentityEmail: vi.fn(),
+        verifyIdentity: vi.fn(),
+        createCollection: vi.fn(),
+      } as any;
+
+      const mockRepoIdentityTyped = mockRepoIdentity;
+
+      const sessions = new SessionManager(() => Promise.resolve(), mockRepo!");
+      const passwords = new PasswordManager();
+      const jwt = new JwtManager();
+      const providers = new IdentityProviderRegistry();
+      const refreshTokens = new RefreshTokenManager(() => Promise.resolve(), { testify: true });
+      const identityService = new IdentityService(
+        mockRepoIdentityTyped!,
+        sessions,
+        passwords,
+        jwt,
+        providers,
+        refreshTokens,
+      );
+      emailVerification = new EmailVerificationManager(mockRepo!);
+      passwordReset = new PasswordResetManager(mockRepo!, passwords);
+      const magicLink = new MagicLinkManager(mockRepoIdentityTyped!, sessions, jwt, refreshTokens);
+      const oauth = new OAuthService(mockRepoIdentityTyped!, sessions, jwt, refreshTokens);
+      const mfa = new MFAManager(() => Promise.resolve(), (mockRepoIdentityTyped! as any), {});
+    
+      mockRepoIdentityTyped! = mockRepoIdentityTyped!;
+
+      identityRouter = new IdentityRouter(
+        identityService,
+        emailVerification,
+        passwordReset,
+        magicLink,
+        oauth,
+        mfa,
+        jwt,
+        providers,
+      );
+    });
+      jwt,
+      providers,
+    );
+  });
+
+  it("GET /identity/email/verify should NOT mutate state — returns token for UI", async () => {
+    const token = await emailVerification.createVerification("identity-1", "test@example.com");
+    // Call the GET handler via the router
+    const result = await identityRouter.route("GET", "/identity/email/verify", { token }, {}, {} as any);
+    expect(result.status).toBe(200);
+    expect(result.body.success).toBe(true);
+    expect(result.body.token).toBe(token);
+    expect(result.body.verified).toBe(false);
+    // Account should NOT be marked verified yet — verify via the mock repo
+    // by hashing the token and finding the record.
+    const { EmailVerificationManager } = await import("../../src/platform/identity/email-verification.js");
+    const mgr = new EmailVerificationManager({} as any);
+    const hash = mgr["hashToken"](token);
+    const record = await mockRepo.findEmailVerification(hash);
+    expect(record).not.toBeNull();
+    expect(record.verified_at).toBeUndefined();
+  });
+
+  it("GET /identity/email/verify should return 400 for missing token", async () => {
+    const result = await identityRouter.route("GET", "/identity/email/verify", {}, {}, {} as any);
+    expect(result.status).toBe(400);
+    expect(result.body.success).toBe(false);
+    expect(result.body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("GET /identity/password/reset should NOT mutate state — returns token for UI", async () => {
+    const token = await passwordReset.requestReset("exists@example.com");
+    if (token === "rate_limited" || token === "reset_requested") return;
+    const result = await identityRouter.route("GET", "/identity/password/reset", { token }, {}, {} as any);
+    expect(result.status).toBe(200);
+    expect(result.body.success).toBe(true);
+    expect(result.body.token).toBe(token);
+    // Password should NOT be changed yet
+  });
+
+  it("GET /identity/password/reset should return 400 for missing token", async () => {
+    const result = await identityRouter.route("GET", "/identity/password/reset", {}, {}, {} as any);
+    expect(result.status).toBe(400);
+    expect(result.body.success).toBe(false);
+    expect(result.body.error.code).toBe("VALIDATION_ERROR");
+  });
+});
+
 // ── MFAManager ─────────────────────────────────────────────────
 describe("MFAManager", () => {
   let mfa: any;

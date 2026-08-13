@@ -163,6 +163,8 @@ registerClinicMessageRoutes(router);
 // the IdentityRouter.route() interface.
 // Each /identity/* path is handled by the IdentityRouter class.
 import { IdentityRouter, IdentityService, IdentityRepository, SessionManager, PasswordManager, JwtManager, IdentityProviderRegistry, RefreshTokenManager, EmailVerificationManager, PasswordResetManager, MagicLinkManager, OAuthService, MFAManager } from "./platform/identity/index.js";
+import { EmailService } from "./platform/email/email-service.js";
+import { ResendProvider } from "./platform/email/resend-provider.js";
 
 // Identity router instance — constructed once at module init
 let _identityRouter: IdentityRouter | null = null;
@@ -199,6 +201,20 @@ function getIdentityRouter(env: Env): IdentityRouter {
   const oauth = new OAuthService(repo, sessions, jwt, refreshTokens, providers);
   const mfa = new MFAManager(repo);
 
+  // ── Email service instantiation (EPIC-016/017) ───────────────
+  // Only instantiated when both RESEND_API_KEY and EMAIL_FROM (and
+  // FRONTEND_URL) are present in the Worker environment. This makes
+  // a broken/missing secret visible rather than silently skipping dispatch.
+  let emailService: EmailService | undefined;
+  if (env.RESEND_API_KEY && env.EMAIL_FROM) {
+    emailService = new EmailService(new ResendProvider(env.RESEND_API_KEY, env.EMAIL_FROM));
+  } else {
+    console.warn(
+      "[IdentityRouter] EmailService NOT instantiated — RESEND_API_KEY or EMAIL_FROM is missing. " +
+      "Email dispatch will be skipped. Verify production environment secrets.",
+    );
+  }
+
   _identityRouter = new IdentityRouter(
     identityService,
     emailVerification,
@@ -208,6 +224,8 @@ function getIdentityRouter(env: Env): IdentityRouter {
     mfa,
     jwt,
     providers,
+    emailService,
+    env.FRONTEND_URL,
   );
 
   return _identityRouter;
