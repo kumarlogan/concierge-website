@@ -24,10 +24,20 @@ phase_m:
     cheapest_option: oracle_cloud_always_free_a1   # ~$0/mo, requires new OCI account+VM (not authorized)
     fallback_option: low_cost_vps   # ~$3-6/mo smallest Ubuntu tier with stable IPv4
     provisioning_attempted: false  # stopped by mission rule: requires explicit financial/account authorization
+  hybrid_operator_execution:        # 2026-08-13 approved governed path — execution-plane separation
+    status: READY                   # package built, documented; awaiting operator execution
+    package: scripts/phase-m/operator-production-replay.mjs
+    runbook: scripts/phase-m/README.md
+    principle: Hermes = governance/orchestration/analysis; operator consumer device = execution plane; production HTTP requests never originate from Hermes host
+    operator_required:
+      - clean consumer/residential egress (not Hermes IP)
+      - Node >=18 on operator device
+      - test inbox for synthetic patient email verification (or two verified synthetic accounts)
+    reuse: reuses Phase M/Phase L contract against api.agsynergy.ca via production login (NO local JWT minting; NO private key)
   path_to_green:
-    - provision separate isolated VM/VPS with stable, non-flagged egress IP; install repo-scoped self-hosted runner (labels self-hosted/linux/agsynergy-production-validation); restrict phase-m-prod-replay.yml to it (manual dispatch on main only); run replay; certify GREEN
+    - hybrid operator execution: operator runs scripts/phase-m/operator-production-replay.mjs from consumer network, returns evidence to Hermes for certification (preferred; no infra, no CF change)
+    - OR provision separate isolated VM/VPS with stable non-flagged egress IP + repo-scoped self-hosted runner (restrict phase-m-prod-replay.yml); certify GREEN
     - OR Business+ plan exposing botManagement skip (apply narrow consent+Bearer rule)
-    - OR brief Super Bot Fight Mode window during maintenance
 
 open_items:
   - complete_end_to_end_patient_journey_testing

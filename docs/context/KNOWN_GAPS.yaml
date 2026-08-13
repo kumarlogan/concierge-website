@@ -375,6 +375,14 @@ gaps:
 #     iPhone). Cheapest option = Oracle Cloud Always Free Ampere A1 (~$0/mo) but requires a
 #     new OCI account+VM (not authorized). NOT provisioned; replay NOT executed; Phase M
 #     remains CONDITIONAL. See report §4c.
+#   Hybrid operator execution (2026-08-13): Approved governed path to remove the
+#     execution-substrate blocker WITHOUT weakening governance. Hermes = governance/
+#     orchestration/analysis/certification plane; operator consumer device = execution
+#     plane. Production HTTP requests originate ONLY from the operator's clean consumer
+#     network, never from the Hermes host. Package: scripts/phase-m/operator-production-replay.mjs
+#     (zero-dep Node ESM, production-login auth, NO private key, redacted artifacts).
+#     Runbook: scripts/phase-m/README.md. Awaiting operator execution + evidence return.
+#     See report §4d.
 #   - id: PMGAP-002
 #     severity: low
 #     category: test_hygiene

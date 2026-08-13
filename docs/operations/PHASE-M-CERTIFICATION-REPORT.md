@@ -155,19 +155,74 @@ Phase M remains 🟡 CONDITIONAL.
 
 ---
 
+## 4d. Hybrid Operator Execution — approved governed path (2026-08-13)
+
+### Stop-condition reconciliation
+
+- **"Do NOT use the Hermes orchestration host as the execution substrate"** — **unchanged
+  and still binding.** Hermes never issues a production HTTP request for this validation.
+- **"Hermes may prepare, validate, package, instruct, and analyze a production replay that
+  is executed by the operator on a separate trusted consumer device/network"** — the
+  **explicit, documented affordance** created by the Phase M hybrid model.
+
+**Hybrid operator execution is permitted because Hermes remains the control/governance
+plane while the production HTTP execution occurs entirely outside the Hermes host from a
+separately trusted consumer network.** This is an execution-plane separation, **not** a
+relaxation of security.
+
+### Execution-plane separation
+
+| Plane | Responsibility | Example |
+|-------|----------------|---------|
+| **Hermes** | Govern / orchestrate / validate / package / analyze / certify | prepares & validates the replay package; never makes prod HTTP calls |
+| **Operator device** | Execute production HTTP requests; legitimate email verification; supply no production signing keys; use ordinary consumer egress | runs `scripts/phase-m/operator-production-replay.mjs`, reaches `api.agsynergy.ca` |
+
+The operator's device is an **execution plane**, not a Hermes trust extension. Evidence must
+demonstrate the requests originated from the consumer network (public egress IP recorded in
+preflight), and Hermes remains the certification authority.
+
+### Package
+
+- `scripts/phase-m/operator-production-replay.mjs` — zero-dependency Node ESM script
+  (native fetch), runs **only** on the operator's consumer device.
+- `scripts/phase-m/README.md` — runbook including operator prerequisites and command.
+
+### Package security invariants
+
+- No `JWT_PRIVATE_KEY` / signing material used, read, exported, printed, or transferred.
+  Authentication uses the **real production login flow** (register → email verify → login).
+- No Authorization headers / JWTs / refresh tokens / passwords / verification tokens /
+  cookies printed; held in memory only; redacted in all artifacts.
+- No Cloudflare change, no WAF bypass, no Bot-Fight-Mode disable, no DNS/grey-cloud change.
+- No direct production D1 modification; zero-mutation proof via legitimate history/read
+  endpoints (before vs after attack fingerprint).
+- No Hermes filesystem/network dependency.
+
+### Notes
+
+The existing CI harnesses (`workers/tests/prod-replay/phaseM-prod-replay.test.ts` and the
+GitHub Actions workflow) mint JWTs locally with the production private key and are suited to
+**governed CI** execution. They are **not** the operator path (operator must not hold the
+private key). The operator package reuses the same Phase M/Phase L test contract against the
+same live endpoint, but authenticates through production login instead of local JWT minting.
+
+---
+
 ## 5. Residual Risk & Deferred Work
 
-- **Deferred:** literal GitHub-runner production replay of the Phase M/Phase L attack matrix.
+- **Deferred (primary path now):** operator-run literal production replay, pending operator
+  execution of `scripts/phase-m/operator-production-replay.mjs` from a clean consumer
+  network and return of evidence artifacts to Hermes for certification.
 - **Deferred:** self-hosted runner installation until separate isolated infrastructure is
-  provisioned (see §4b).
+  provisioned (see §4b) — no longer required if the hybrid operator path succeeds.
 - **Path to GREEN (any one):**
-  1. Upgrade zone to a plan exposing `botManagement` skip (Business+), then apply the
+  1. **Hybrid operator execution** — operator runs the governed package from a consumer
+     network, returns evidence to Hermes → Hermes certifies (preferred, no infra, no CF
+     change); **or**
+  2. Upgrade zone to a plan exposing `botManagement` skip (Business+), then apply the
      narrowly-scoped consent+Bearer skip rule; **or**
-  2. Run the phase-m workflow on a **self-hosted runner** at a clean egress IP (secrets stay
-     in GH); **or**
-  3. During a maintenance window, briefly toggle **Super Bot Fight Mode off** for the zone,
-     run the replay, and re-enable immediately (accepts a short window with that one layer
-     off for all traffic).
+  3. Run the phase-m workflow on a **self-hosted runner** at a clean egress IP (secrets stay
+     in GH).
 
 ---
 
