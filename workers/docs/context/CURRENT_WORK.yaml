@@ -19,6 +19,11 @@ phase_m:
   park_files:
     - docs/operations/PHASE-M-CERTIFICATION-REPORT.md
   self_hosted_runner: deferred   # 2026-08-12 decision; Hermes host (alphatan) would create unacceptable boundary; its egress 155.248.217.155 is already clean vs Cloudflare but no separate isolated infra available
+  infra_audit:                    # 2026-08-12 second pass: no isolated compute exists
+    isolated_compute: absent      # no cloud CLIs/creds; all compute Cloudflare-only; OCI/VPS/Docker absent; only Tailnet nodes are Hermes host + Windows desktop(offline) + iPhone
+    cheapest_option: oracle_cloud_always_free_a1   # ~$0/mo, requires new OCI account+VM (not authorized)
+    fallback_option: low_cost_vps   # ~$3-6/mo smallest Ubuntu tier with stable IPv4
+    provisioning_attempted: false  # stopped by mission rule: requires explicit financial/account authorization
   path_to_green:
     - provision separate isolated VM/VPS with stable, non-flagged egress IP; install repo-scoped self-hosted runner (labels self-hosted/linux/agsynergy-production-validation); restrict phase-m-prod-replay.yml to it (manual dispatch on main only); run replay; certify GREEN
     - OR Business+ plan exposing botManagement skip (apply narrow consent+Bearer rule)

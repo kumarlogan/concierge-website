@@ -369,6 +369,12 @@ gaps:
 #     egress IP (155.248.217.155) is already clean vs Cloudflare (20/20 Worker reach, no
 #     Managed Challenge), but no separate isolated VM/VPS is provisioned. Re-enable when
 #     separate isolated infra exists. See docs/operations/PHASE-M-CERTIFICATION-REPORT.md §4b.
+#   Audit (2026-08-12, 2nd pass): NO isolated compute exists anywhere (no cloud CLIs/creds;
+#     ALL infra is Cloudflare-only; OCI instance + Docker host absent per
+#     INFRASTRUCTURE_INVENTORY.md; Tailnet has only Hermes host + offline Windows desktop +
+#     iPhone). Cheapest option = Oracle Cloud Always Free Ampere A1 (~$0/mo) but requires a
+#     new OCI account+VM (not authorized). NOT provisioned; replay NOT executed; Phase M
+#     remains CONDITIONAL. See report §4c.
 #   - id: PMGAP-002
 #     severity: low
 #     category: test_hygiene

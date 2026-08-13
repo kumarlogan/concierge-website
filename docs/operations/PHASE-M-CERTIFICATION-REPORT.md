@@ -119,6 +119,42 @@ until a separate, isolated compute resource is available.
 
 ---
 
+## 4c. Infrastructure Audit — Isolated Runner Provisioning (2026-08-12)
+
+**Result: No pre-existing isolated compute; provisioning requires new account + payment — NOT executed.**
+
+Audited from the current Hermes environment (read-only):
+- **Cloud CLIs / credentials:** none present (`oci`, `az`, `gcloud`, `aws`, `doctl`,
+  `ibmcloud`, `linode-cli` all absent; no `~/.oci`, `~/.aws`, `~/.azure`, `~/.config/gcloud`
+  dirs; no cloud env vars).
+- **Tailnet:** only `alphatan` (Hermes host — excluded by final security decision), one
+  Windows desktop (offline, not a Linux runner), one iPhone. **No other Linux host.**
+- **Repo infra inventory** (`docs/organization/INFRASTRUCTURE_INVENTORY.md`): every current
+  resource is `provider=cloudflare`; **OCI Instance and Docker Host are explicitly "future /
+  absent."** No VM, VPS, or isolated Linux host exists anywhere in the registry.
+
+**Cheapest viable isolated option identified (for decision only, NOT provisioned):**
+- **Oracle Cloud Always Free — Ampere A1 (4 OCPU / 24 GB), ×1 small instance:** $0/mo. This
+  is the lowest-cost option and satisfies the runner's modest needs. Requires creating/
+  authorizing an Oracle Cloud account (OCI tenancy) and a new VM — a new financial-facing
+  account that is NOT currently authorized.
+- **Fallback low-cost VPS (if no OCI account is available):** a smallest-tier VPS at a
+  provider (e.g. ~$3–6/mo) with Ubuntu + a stable IPv4.
+
+**Security/isolation assessment (target runner):** separate machine, express
+repository-scoped runner with labels `self-hosted, linux, agsynergy-production-validation`,
+outbound HTTPS only, SSH restricted/disabled after setup, no Hermes filesystem/service
+access, no SSH trust into Hermes, ephemeral/disposable, secrets stay in GitHub Secrets,
+`JWT_PRIVATE_KEY` never written to disk. All 13 security requirements were carried forward
+from the mission and are satisfiable once isolated compute exists.
+
+**Decision:** Per the mission's stop condition ("If provisioning requires explicit
+financial/account authorization, STOP before spending and report the exact option and
+cost"), the runner was **NOT provisioned** and the production replay was **NOT executed.**
+Phase M remains 🟡 CONDITIONAL.
+
+---
+
 ## 5. Residual Risk & Deferred Work
 
 - **Deferred:** literal GitHub-runner production replay of the Phase M/Phase L attack matrix.
