@@ -380,7 +380,9 @@ export default function JourneyTimelinePage() {
 
   const { stages, milestones: allMilestones, events: allEvents } = timeline;
   const activeStage = stages.find((s) => s.status === "active");
+  const pendingStage = stages.find((s) => s.status === "pending");
   const completedCount = stages.filter((s) => s.status === "completed").length;
+  const allCompleted = completedCount === stages.length;
 
   return (
     <div className="space-y-6">
@@ -503,9 +505,13 @@ export default function JourneyTimelinePage() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              {activeStage
-                ? `You are currently in the ${activeStage.label} stage.`
-                : "Your journey has been completed. Congratulations!"}
+              {allCompleted
+                ? "Your journey has been completed. Congratulations!"
+                : activeStage
+                  ? `You are currently in the ${activeStage.label} stage.`
+                  : pendingStage
+                    ? `Your next stage is ${pendingStage.label}.`
+                    : "Your journey is in progress."}
             </div>
             {activeStage && (
               <Button

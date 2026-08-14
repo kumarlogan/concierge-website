@@ -162,20 +162,33 @@ export class D1TimelineEngine implements TimelineEngine {
       .first<{ cnt: number }>();
 
     if (countResult && countResult.cnt > 0) {
+      // Self-heal legacy rows: a journey with zero active stages but some
+      // pending stages is an invalid state (would falsely show "completed").
+      // Promote the first pending stage to active so there is a real current
+      // stage. (Registration may legitimately be the only stage for a freshly
+      // reset account — in that case leave it; the page handles that.)
+      await this.healActiveStage(identityId);
       return; // already seeded
     }
 
     const now = nowIso();
     const stmts: D1PreparedStatement[] = [];
 
-    // Insert all 8 stages
+    // Insert all 8 stages. Registration is completed on creation; the next
+    // stage (consultation) is the active stage so a new patient has a real
+    // "current stage" instead of a false "journey completed" state.
     for (const stage of STAGE_ORDER) {
       const isRegistration = stage === IvfStage.registration;
-      const status: StageStatusValue = isRegistration ? "completed" : "pending";
-      const enteredAt = isRegistration ? now : null;
+      const isFirstActive = stage === STAGE_ORDER[1]; // consultation
+      const status: StageStatusValue = isRegistration
+        ? "completed"
+        : isFirstActive
+          ? "active"
+          : "pending";
+      const enteredAt = isRegistration || isFirstActive ? now : null;
       const completedAt = isRegistration ? now : null;
       const expectedDurationDays = DEFAULT_STAGE_DURATIONS[stage];
-      const expectedCompletionDate = isRegistration
+      const expectedCompletionDate = isRegistration || isFirstActive
         ? addDays(now, expectedDurationDays)
         : null;
       const actualDurationDays = isRegistration ? 0 : null;
@@ -259,6 +272,39 @@ export class D1TimelineEngine implements TimelineEngine {
     );
 
     await this.db.batch(stmts);
+  }
+
+  /**
+   * Self-heal: if a journey has no active stage but has pending stages,
+   * promote the earliest pending stage to active. This corrects the legacy
+   * seed where every new patient had registration=completed and all others
+   * =pending (no active), which made the UI falsely report "journey completed".
+   * If there are zero pending stages (e.g. a genuinely finished journey, or a
+   * freshly-reset account with only registration), this is a no-op.
+   */
+  private async healActiveStage(identityId: string): Promise<void> {
+    const { results } = await this.db
+      .prepare(
+        "SELECT * FROM patient_stages WHERE identity_id = ? ORDER BY rowid ASC",
+      )
+      .bind(identityId)
+      .all<StageRow>();
+
+    const hasActive = results.some((r) => r.status === "active");
+    if (hasActive) return;
+
+    const pending = results.find((r) => r.status === "pending");
+    if (!pending) return; // nothing to promote
+
+    const now = nowIso();
+    await this.db
+      .prepare(
+        `UPDATE patient_stages
+           SET status = 'active', entered_at = ?, updated_at = ?
+           WHERE id = ?`,
+      )
+      .bind(now, now, pending.id)
+      .run();
   }
 
   // ── getStages ────────────────────────────────────────────────
