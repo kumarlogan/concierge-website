@@ -7,7 +7,7 @@
 // └─────────────────────────────────────────────────────────────┘
 
 import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { patientAuth, ApiError } from "@/lib/patient-api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,6 @@ import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 type Status = "idle" | "verifying" | "success" | "error" | "missing";
 
 export default function EmailVerificationPage() {
-  const [location] = useLocation();
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const startedRef = useRef(false);
@@ -26,7 +25,10 @@ export default function EmailVerificationPage() {
     if (startedRef.current) return;
     startedRef.current = true;
 
-    const params = new URLSearchParams(location.split("?")[1] || "");
+    // NOTE: wouter's useLocation() returns ONLY the pathname (e.g. "/verify-email"),
+    // not the query string. Read the token directly from window.location.search so
+    // the ?token=... param is correctly captured.
+    const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
 
     if (!token) {
@@ -57,7 +59,7 @@ export default function EmailVerificationPage() {
         setStatus("error");
       }
     })();
-  }, [location]);
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
