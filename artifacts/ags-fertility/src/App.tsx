@@ -34,6 +34,7 @@ import RegisterPage from '@/pages/patient/RegisterPage';
 import ForgotPasswordPage from '@/pages/patient/ForgotPasswordPage';
 import MfaVerifyPage from '@/pages/patient/MfaVerifyPage';
 import EmailVerificationPage from '@/pages/patient/EmailVerificationPage';
+import ResetPasswordPage from '@/pages/patient/ResetPasswordPage';
 import DashboardPage from '@/pages/patient/DashboardPage';
 import ProfilePage from '@/pages/patient/ProfilePage';
 import SecuritySettingsPage from '@/pages/patient/SecuritySettingsPage';
@@ -121,6 +122,12 @@ function Router() {
           and calls POST /identity/email/verify/complete. */}
       <Route path="/verify-email">
         {() => <EmailVerificationPage />}
+      </Route>
+      {/* Password reset — reached via the link in the reset email.
+          No guard: the user is not yet authenticated. Reads ?token= and
+          calls POST /identity/password/change. */}
+      <Route path="/reset-password">
+        {() => <ResetPasswordPage />}
       </Route>
       <Route path="/patient/mfa">
         {() => <MfaVerifyPage />}

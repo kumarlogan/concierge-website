@@ -321,6 +321,14 @@ export const patientAuth = {
     });
   },
 
+  /** Validate a password-reset token (non-mutating GET) */
+  async validatePasswordReset(token: string): Promise<void> {
+    await apiRequest("/identity/password/reset", {
+      method: "GET",
+      body: { token },
+    });
+  },
+
   /** Change password (authenticated) */
   async changePassword(newPassword: string): Promise<void> {
     await apiRequest("/identity/password/update", {
