@@ -5,6 +5,7 @@
 // └─────────────────────────────────────────────────────────────┘
 
 import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,9 @@ import {
   Calendar,
   Trophy,
   Sparkles,
-  ArrowUpRight,
   ListChecks,
+  ClipboardList,
+  FileText,
   History,
   Eye,
   EyeOff,
@@ -35,7 +37,6 @@ import {
 } from "lucide-react";
 import {
   getTimeline,
-  advanceStage,
   getProgress,
   getMilestones,
   getEvents,
@@ -48,6 +49,21 @@ import type {
   IvfStage,
   ProgressSummary,
 } from "@/lib/timeline-api";
+
+// ── Stage → contextual next action (smart CTA) ───────────────
+// Instead of a blind "Advance Stage" mutation, the primary CTA takes the
+// patient to the page where they complete the action required to progress.
+const STAGE_NEXT_ACTION: Partial<
+  Record<IvfStage, { label: string; to: string; Icon: typeof Calendar }>
+> = {
+  registration:    { label: "Book Consultation",     to: "/patient/appointments", Icon: Calendar },
+  consultation:    { label: "View Consultations",    to: "/patient/appointments", Icon: Calendar },
+  treatment_plan:  { label: "Review Treatment Plan", to: "/patient/care-plan",    Icon: ClipboardList },
+  ivf_cycle:       { label: "View Cycle Tasks",      to: "/patient/tasks",        Icon: ListChecks },
+  retrieval:       { label: "Schedule Retrieval",    to: "/patient/appointments", Icon: Calendar },
+  transfer:        { label: "Schedule Transfer",     to: "/patient/appointments", Icon: Calendar },
+  follow_up:       { label: "View Results",          to: "/patient/documents",    Icon: FileText },
+};
 
 // ═══════════════════════════════════════════════════════════
 // Stage Colors & Icons
@@ -300,7 +316,7 @@ export default function JourneyTimelinePage() {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [advancing, setAdvancing] = useState(false);
+  const [, navigate] = useLocation();
   const [showEvents, setShowEvents] = useState(true);
   const [showMilestones, setShowMilestones] = useState(true);
 
@@ -328,18 +344,6 @@ export default function JourneyTimelinePage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  const handleAdvanceStage = async () => {
-    try {
-      setAdvancing(true);
-      await advanceStage("");
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to advance stage");
-    } finally {
-      setAdvancing(false);
-    }
-  };
 
   // Loading state
   if (loading) {
@@ -513,25 +517,18 @@ export default function JourneyTimelinePage() {
                     ? `Your next stage is ${pendingStage.label}.`
                     : "Your journey is in progress."}
             </div>
-            {activeStage && (
-              <Button
-                onClick={handleAdvanceStage}
-                disabled={advancing}
-                size="sm"
-              >
-                {advancing ? (
-                  <>
-                    <Spinner className="h-3 w-3 mr-1" />
-                    Advancing...
-                  </>
-                ) : (
-                  <>
-                    Advance Stage
-                    <ArrowUpRight className="h-3 w-3 ml-1" />
-                  </>
-                )}
-              </Button>
-            )}
+            {activeStage &&
+              (() => {
+                const action = STAGE_NEXT_ACTION[activeStage.stage];
+                if (!action) return null;
+                const { label, to, Icon } = action;
+                return (
+                  <Button size="sm" onClick={() => navigate(to)}>
+                    {label}
+                    <Icon className="h-3 w-3 ml-1" />
+                  </Button>
+                );
+              })()}
           </div>
         </CardContent>
       </Card>
