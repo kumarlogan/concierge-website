@@ -33,6 +33,7 @@ import LoginPage from '@/pages/patient/LoginPage';
 import RegisterPage from '@/pages/patient/RegisterPage';
 import ForgotPasswordPage from '@/pages/patient/ForgotPasswordPage';
 import MfaVerifyPage from '@/pages/patient/MfaVerifyPage';
+import EmailVerificationPage from '@/pages/patient/EmailVerificationPage';
 import DashboardPage from '@/pages/patient/DashboardPage';
 import ProfilePage from '@/pages/patient/ProfilePage';
 import SecuritySettingsPage from '@/pages/patient/SecuritySettingsPage';
@@ -114,6 +115,12 @@ function Router() {
             <ForgotPasswordPage />
           </GuestGuard>
         )}
+      </Route>
+      {/* Email verification — reached via the link in the verification email.
+          No guard: the user is not yet authenticated. The page reads ?token=
+          and calls POST /identity/email/verify/complete. */}
+      <Route path="/verify-email">
+        {() => <EmailVerificationPage />}
       </Route>
       <Route path="/patient/mfa">
         {() => <MfaVerifyPage />}
