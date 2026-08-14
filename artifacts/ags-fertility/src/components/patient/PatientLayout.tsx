@@ -56,7 +56,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                 </Badge>
               )}
             </a>
-            <a href="/patient/settings" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+            <a href="/patient/security" className="flex items-center gap-1.5 hover:text-primary transition-colors">
               <Settings className="h-4 w-4" />
               Settings
             </a>
@@ -91,7 +91,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
               </Badge>
             )}
           </a>
-          <a href="/patient/settings" className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-primary">
+          <a href="/patient/security" className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-primary">
             <Settings className="h-5 w-5" />
             Settings
           </a>
