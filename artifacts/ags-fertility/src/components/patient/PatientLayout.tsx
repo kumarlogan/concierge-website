@@ -34,7 +34,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
           <a href="/patient/dashboard" className="font-bold text-lg mr-6">
             Concierge
           </a>
-          <nav className="flex items-center gap-4 text-sm font-medium">
+          <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
             <a href="/patient/dashboard" className="flex items-center gap-1.5 hover:text-primary transition-colors">
               <Home className="h-4 w-4" />
               Dashboard
@@ -90,6 +90,10 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
                 {unreadCount > 99 ? "99+" : unreadCount}
               </Badge>
             )}
+          </a>
+          <a href="/patient/settings" className="flex flex-col items-center gap-0.5 text-xs text-muted-foreground hover:text-primary">
+            <Settings className="h-5 w-5" />
+            Settings
           </a>
         </div>
       </nav>
