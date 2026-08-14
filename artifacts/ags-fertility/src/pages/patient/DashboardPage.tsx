@@ -185,33 +185,37 @@ export default function DashboardPage() {
       )}
 
       {/* ── Journey Progress Section ── */}
-      <Card className="relative overflow-hidden">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Sparkles className="h-5 w-5 text-primary" />
+      <Link href="/patient/timeline">
+        <Card className="group relative overflow-hidden cursor-pointer transition-shadow hover:shadow-md">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                    Your Treatment Journey
+                  </CardTitle>
+                  <CardDescription>
+                    {currentPhaseName
+                      ? `Currently in: ${currentPhaseName}`
+                      : "Track your progress through treatment"}
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg">Your Treatment Journey</CardTitle>
-                <CardDescription>
-                  {currentPhaseName
-                    ? `Currently in: ${currentPhaseName}`
-                    : "Track your progress through treatment"}
-                </CardDescription>
-              </div>
+              <span className="text-2xl font-bold text-primary">{progressPercent}%</span>
             </div>
-            <span className="text-2xl font-bold text-primary">{progressPercent}%</span>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Progress value={progressPercent} className="h-3" aria-label={`Treatment journey ${progressPercent}% complete`} />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Registration</span>
-            <span>Ongoing Care</span>
-          </div>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Progress value={progressPercent} className="h-3" aria-label={`Treatment journey ${progressPercent}% complete`} />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Registration</span>
+              <span>Ongoing Care</span>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* ── Journey Widgets Row ── */}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -489,16 +493,6 @@ export default function DashboardPage() {
             </Link>
           </CardContent>
         </Card>
-      </div>
-
-      {/* ── Journey Timeline link ── */}
-      <div className="text-center">
-        <Link href="/patient/timeline">
-          <Button variant="outline" className="gap-2">
-            View Your Treatment Journey
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </Link>
       </div>
     </div>
   );
