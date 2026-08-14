@@ -31,8 +31,13 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center px-4">
-          <a href="/patient/dashboard" className="font-bold text-lg mr-6">
-            Concierge
+          <a href="/patient/dashboard" className="mr-6 flex flex-col leading-tight">
+            <span className="font-bold text-base tracking-tight">
+              AGS Fertility <span className="text-primary">Concierge</span>
+            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Patient Portal
+            </span>
           </a>
           <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
             <a href="/patient/dashboard" className="flex items-center gap-1.5 hover:text-primary transition-colors">
