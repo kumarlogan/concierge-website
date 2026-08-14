@@ -48,6 +48,20 @@ export class EmailVerificationManager {
   }
 
   /**
+   * Resolve an identity by email, then create a verification token for it.
+   * Used by the self-serve "resend verification email" / registration-confirm
+   * flow where only the email address is known to the caller.
+   * Throws NotFoundError (mapped to 404) when no identity uses that email.
+   */
+  async createVerificationByEmail(email: string): Promise<string> {
+    const identity = await this.repo.findIdentityByEmail(email);
+    if (!identity) {
+      throw new NotFoundError("No identity found for that email address");
+    }
+    return this.createVerification(identity.id, email);
+  }
+
+  /**
    * Complete email verification with the token.
    * Validates: exists → not expired → not already verified → confirms email.
    */

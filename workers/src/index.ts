@@ -225,7 +225,7 @@ function getIdentityRouter(env: Env): IdentityRouter {
     jwt,
     providers,
     emailService,
-    env.FRONTEND_URL,
+    env.FRONTEND_URL ?? env.APP_URL,
   );
 
   return _identityRouter;

@@ -97,6 +97,8 @@ export class IdentityRouter {
           return this.handleEmailVerificationGet(body);
         case method === "POST" && path === "/identity/email/verify":
           return this.handleEmailVerification(body);
+        case method === "POST" && path === "/identity/email/verify/request":
+          return this.handleEmailVerificationByEmail(body);
         case method === "POST" && path === "/identity/email/verify/complete":
           return this.handleEmailVerificationComplete(body);
 
@@ -210,7 +212,7 @@ export class IdentityRouter {
         resetUrl,
         patientName: email.split("@")[0],
       });
-      await this.emailService.sendEmail({
+      const result = await this.emailService.sendEmail({
         from: "support@agsynergy.ca",
         to: email,
         subject,
@@ -219,6 +221,15 @@ export class IdentityRouter {
         templateName: "password-reset",
         referenceId: email,
       });
+      // Surface the real provider outcome — never report GREEN when the
+      // email was not actually accepted by the provider.
+      if (!result.success) {
+        return error(
+          "Email provider rejected the password-reset message: " + (result.error ?? "unknown error"),
+          502,
+          "EMAIL_DELIVERY_FAILED",
+        );
+      }
     } else {
       // Fallback when email service is not configured
       await this.passwordReset.requestReset(email);
@@ -284,7 +295,7 @@ export class IdentityRouter {
         verificationUrl,
         patientName: email.split("@")[0],
       });
-      await this.emailService.sendEmail({
+      const result = await this.emailService.sendEmail({
         to: email,
         subject,
         html,
@@ -292,6 +303,49 @@ export class IdentityRouter {
         templateName: "verification",
         referenceId: identityId,
       });
+      // Surface the real provider outcome — never report GREEN when the
+      // email was not actually accepted by the provider.
+      if (!result.success) {
+        return error(
+          "Email provider rejected the verification message: " + (result.error ?? "unknown error"),
+          502,
+          "EMAIL_DELIVERY_FAILED",
+        );
+      }
+    }
+    return ok({ message: "Verification email sent" });
+  }
+
+  /**
+   * Self-serve verification-email trigger (TEST 1 path): caller supplies only
+   * the email address. Resolves the identity, mints a verification token, and
+   * sends the email. Returns 404 if no identity uses that email.
+   */
+  private async handleEmailVerificationByEmail(body: Record<string, unknown>): Promise<ApiResponse> {
+    const email = body.email as string;
+    const token = await this.emailVerification.createVerificationByEmail(email);
+
+    if (this.emailService) {
+      const verificationUrl = this.buildFrontendUrl("/verify-email", { token });
+      const { html, text, subject } = renderTemplate("verification", {
+        verificationUrl,
+        patientName: email.split("@")[0],
+      });
+      const result = await this.emailService.sendEmail({
+        to: email,
+        subject,
+        html,
+        text,
+        templateName: "verification",
+        referenceId: email,
+      });
+      if (!result.success) {
+        return error(
+          "Email provider rejected the verification message: " + (result.error ?? "unknown error"),
+          502,
+          "EMAIL_DELIVERY_FAILED",
+        );
+      }
     }
     return ok({ message: "Verification email sent" });
   }

@@ -424,10 +424,7 @@ describe("IdentityRouter GET endpoints", () => {
         authenticateIdentity: vi.fn(),
         socialLogin: vi.fn(),
         write_AuditEntry: vi.fn(),
-        Internal __setCredService__: vi.fn(),
-        Internal setCredService: vi.fn(),
         getCredService: vi.fn(),
-        Internal getSingleIdentity: vi.fn(),
         addIdentityHook: vi.fn(),
         setFlowStatusTo: vi.fn(),
         getFlowStatus: vi.fn(),
@@ -435,7 +432,7 @@ describe("IdentityRouter GET endpoints", () => {
         getProvider: vi.fn(),
         getCredentialsForIdentity: vi.fn(),
         getPublicIdentityFilters: vi.fn(),
-        internal_?.getAllCredentials: vi.fn(),
+        getAllCredentials: vi.fn(),
         setAudit: vi.fn(),
         write_Token: vi.fn(),
         write_User: vi.fn(),
@@ -446,9 +443,12 @@ describe("IdentityRouter GET endpoints", () => {
         createCollection: vi.fn(),
       } as IdentityRepository;
 
-      const mockRepo = {
+      mockRepo = {
+        findIdentityByEmail: vi.fn(async (email: string) => (email === "exists@example.com" ? { id: "identity-1", email } : null)),
         storeEmailVerification: vi.fn(async (r: any) => { storedVerifications.set(r.token_hash, r); }),
         findEmailVerification: vi.fn(async (h: string) => storedVerifications.get(h)),
+        storePasswordReset: vi.fn(async (r: any) => { storedResets.set(r.token_hash, r); }),
+        findPasswordReset: vi.fn(async (h: string) => storedResets.get(h) ?? null),
         verifyEmail: vi.fn(async (id: string) => {
           for (const v of storedVerifications.values()) {
             if (v.id === id) v.verified_at = new Date().toISOString();
@@ -467,7 +467,7 @@ describe("IdentityRouter GET endpoints", () => {
 
       const mockRepoIdentityTyped = mockRepoIdentity;
 
-      const sessions = new SessionManager(() => Promise.resolve(), mockRepo!");
+      const sessions = new SessionManager(mockRepo);
       const passwords = new PasswordManager();
       const jwt = new JwtManager();
       const providers = new IdentityProviderRegistry();
@@ -485,8 +485,6 @@ describe("IdentityRouter GET endpoints", () => {
       const magicLink = new MagicLinkManager(mockRepoIdentityTyped!, sessions, jwt, refreshTokens);
       const oauth = new OAuthService(mockRepoIdentityTyped!, sessions, jwt, refreshTokens);
       const mfa = new MFAManager(() => Promise.resolve(), (mockRepoIdentityTyped! as any), {});
-    
-      mockRepoIdentityTyped! = mockRepoIdentityTyped!;
 
       identityRouter = new IdentityRouter(
         identityService,
@@ -499,10 +497,6 @@ describe("IdentityRouter GET endpoints", () => {
         providers,
       );
     });
-      jwt,
-      providers,
-    );
-  });
 
   it("GET /identity/email/verify should NOT mutate state — returns token for UI", async () => {
     const token = await emailVerification.createVerification("identity-1", "test@example.com");
@@ -516,7 +510,7 @@ describe("IdentityRouter GET endpoints", () => {
     // by hashing the token and finding the record.
     const { EmailVerificationManager } = await import("../../src/platform/identity/email-verification.js");
     const mgr = new EmailVerificationManager({} as any);
-    const hash = mgr["hashToken"](token);
+    const hash = await mgr["hashToken"](token);
     const record = await mockRepo.findEmailVerification(hash);
     expect(record).not.toBeNull();
     expect(record.verified_at).toBeUndefined();

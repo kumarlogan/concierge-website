@@ -237,6 +237,7 @@ jobs:
             v.EMAIL_FROM = process.env.EMAIL_FROM;
             v.RESEND_API_KEY = process.env.RESEND_API_KEY;
             v.APP_URL    = process.env.APP_URL;
+            v.FRONTEND_URL = process.env.APP_URL;
             fs.writeFileSync(f, JSON.stringify(json, null, 2) + "\n");
             console.log("Injected JWT + email config vars (private key length=" + (process.env.JWT_PRIVATE_KEY ? process.env.JWT_PRIVATE_KEY.length : 0) + ")");
           '

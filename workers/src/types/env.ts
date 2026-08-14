@@ -49,6 +49,7 @@ export interface Env {
   RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
   FRONTEND_URL?: string;
+  APP_URL?: string;
 
   // Trust Runtime bindings — Phase 2, Wave 4
   POLICY_ENGINE: any;
