@@ -2,11 +2,14 @@
 // │ Concierge Product — Reset Password Page                     │
 // │ Reached via the link in the password-reset email:            │
 // │   https://www.agsynergy.ca/reset-password?token=<resetToken> │
-// │ Reads ?token=, lets the user set a new password, calls       │
-// │ POST /identity/password/change.                              │
+// │ Reads ?token= (from window.location.search — wouter's         │
+// │ useLocation() returns only the pathname), lets the user set  │
+// │ a new password, and calls POST /identity/password/change.    │
+// │ Token validity is enforced by the POST itself (NOT_FOUND for │
+// │ invalid/expired, AUTHENTICATION_ERROR for already-used).     │
 // └─────────────────────────────────────────────────────────────┘
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { patientAuth, ApiError } from "@/lib/patient-api";
 import { Button } from "@/components/ui/button";
@@ -15,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
 
-type Status = "loading" | "form" | "submitting" | "success" | "error";
+type Status = "form" | "submitting" | "success" | "error";
 
 // Must match backend password policy in password-manager.ts
 const PASSWORD_RULES = {
@@ -44,9 +47,10 @@ function validatePassword(password: string): string | null {
 }
 
 export default function ResetPasswordPage() {
-  // NOTE: wouter's useLocation() returns ONLY the pathname. Read the token
-  // directly from window.location.search.
+  // Read token from window.location.search (NOT wouter useLocation, which
+  // returns only the pathname and drops the query string).
   const token = new URLSearchParams(window.location.search).get("token") || "";
+
   const [status, setStatus] = useState<Status>(token ? "form" : "error");
   const [errorMessage, setErrorMessage] = useState<string | null>(
     token ? null : "The reset link is missing its token. Please use the full link from your email.",
@@ -56,34 +60,10 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Validate the token with a GET once on mount (non-mutating) so we can
-  // surface "expired/used" before the user types a password.
-  const validatedRef = useRef(false);
-  useEffect(() => {
-    if (!token || validatedRef.current) return;
-    validatedRef.current = true;
-    setStatus("loading");
-    patientAuth
-      .validatePasswordReset(token)
-      .then(() => setStatus("form"))
-      .catch((err) => {
-        if (err instanceof ApiError) {
-          if (err.code === "NOT_FOUND") {
-            setErrorMessage("This reset link is invalid or has expired.");
-          } else if (err.code === "AUTHENTICATION_ERROR") {
-            setErrorMessage("This reset link has already been used. Please request a new one.");
-          } else {
-            setErrorMessage(err.message || "This reset link is invalid.");
-          }
-        } else {
-          setErrorMessage("This reset link is invalid or has expired.");
-        }
-        setStatus("error");
-      });
-  }, [token]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match");
       return;
@@ -93,7 +73,7 @@ export default function ResetPasswordPage() {
       setErrorMessage(pwError);
       return;
     }
-    setErrorMessage(null);
+
     setStatus("submitting");
     try {
       await patientAuth.completePasswordReset(token, password);
@@ -101,7 +81,7 @@ export default function ResetPasswordPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === "NOT_FOUND") {
-          setErrorMessage("This reset link is invalid or has expired.");
+          setErrorMessage("This reset link is invalid or has expired. Please request a new one.");
         } else if (err.code === "AUTHENTICATION_ERROR") {
           setErrorMessage("This reset link has already been used. Please request a new one.");
         } else {
@@ -122,13 +102,6 @@ export default function ResetPasswordPage() {
           <CardDescription>AG Synergy patient portal</CardDescription>
         </CardHeader>
         <CardContent>
-          {status === "loading" && (
-            <div className="flex flex-col items-center gap-3 py-6">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Validating your link…</p>
-            </div>
-          )}
-
           {status === "success" && (
             <div className="flex flex-col items-center gap-3 py-6">
               <CheckCircle2 className="h-12 w-12 text-green-600" />
