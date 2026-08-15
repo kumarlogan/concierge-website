@@ -16,7 +16,7 @@ export class ResendProvider implements EmailProvider {
     this.fromAddress = fromAddress;
   }
 
-  async sendEmail(to: string, subject: string, html: string, text: string): Promise<SendResult> {
+  async sendEmail(to: string | string[], subject: string, html: string, text: string): Promise<SendResult> {
     const startTime = Date.now();
     try {
       const response = await fetch("https://api.resend.com/emails", {
@@ -27,7 +27,7 @@ export class ResendProvider implements EmailProvider {
         },
         body: JSON.stringify({
           from: this.fromAddress,
-          to: [to],
+          to: Array.isArray(to) ? to : [to],
           subject,
           html,
           text,

@@ -7,7 +7,7 @@
 
 export interface EmailProvider {
   readonly name: string;
-  sendEmail(to: string, subject: string, html: string, text: string): Promise<SendResult>;
+  sendEmail(to: string | string[], subject: string, html: string, text: string): Promise<SendResult>;
   getProviderHealth(): Promise<ProviderHealth>;
 }
 

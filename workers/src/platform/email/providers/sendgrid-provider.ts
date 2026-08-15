@@ -23,54 +23,63 @@ export class SendGridProvider implements EmailProvider {
   }
 
   async sendEmail(
-    to: string,
+    to: string | string[],
     subject: string,
     html: string,
     text: string,
   ): Promise<SendResult> {
     const startTime = Date.now();
-    try {
-      const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.sKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          personalizations: [{ to: [{ email: to }], subject }],
-          from: { email: this.fromAddress, name: "AG Synergy" },
-          content: [
-            { type: "text/plain", value: text },
-            { type: "text/html", value: html },
-          ],
-        }),
-      });
+    const recipients = Array.isArray(to) ? to : [to];
+    
+    // SendGrid requires individual sends per recipient (no batch to array in single call)
+    // We send sequentially and return the aggregate result.
+    // If any send fails, we return failure for the first error.
+    for (const recipient of recipients) {
+      try {
+        const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.sKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            personalizations: [{ to: [{ email: recipient }], subject }],
+            from: { email: this.fromAddress, name: "AG Synergy" },
+            content: [
+              { type: "text/plain", value: text },
+              { type: "text/html", value: html },
+            ],
+          }),
+        });
 
-      const latency = Date.now() - startTime;
+        const latency = Date.now() - startTime;
 
-      if (!response.ok) {
-        const errorBody = await response.text();
+        if (!response.ok) {
+          const errorBody = await response.text();
+          return {
+            success: false,
+            error: errorBody,
+            providerLatencyMs: latency,
+          };
+        }
+
+        // SendGrid returns X-Message-ID header on success
+        const messageId = response.headers.get("X-Message-ID") || undefined;
+        // Continue to next recipient - but we track success
+      } catch (err) {
         return {
           success: false,
-          error: errorBody,
-          providerLatencyMs: latency,
+          error: err instanceof Error ? err.message : String(err),
+          providerLatencyMs: Date.now() - startTime,
         };
       }
-
-      // SendGrid returns X-Message-ID header on success
-      const messageId = response.headers.get("X-Message-ID") || undefined;
-      return {
-        success: true,
-        messageId,
-        providerLatencyMs: latency,
-      };
-    } catch (err) {
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : String(err),
-        providerLatencyMs: Date.now() - startTime,
-      };
     }
+    
+    // All recipients sent successfully
+    return {
+      success: true,
+      providerLatencyMs: Date.now() - startTime,
+    };
   }
 
   async getProviderHealth(): Promise<ProviderHealth> {

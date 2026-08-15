@@ -50,6 +50,11 @@ export interface Env {
   EMAIL_FROM?: string;
   FRONTEND_URL?: string;
   APP_URL?: string;
+  // Phase P.1 — Multi-recipient routing configuration
+  SENDGRID_API_KEY?: string;
+  EMAIL_SUPPORT_TO?: string;
+  EMAIL_OPERATIONS_TO?: string;
+  EMAIL_SECURITY_TO?: string;
 
   // Trust Runtime bindings — Phase 2, Wave 4
   POLICY_ENGINE: any;

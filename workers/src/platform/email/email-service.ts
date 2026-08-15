@@ -8,7 +8,7 @@
 import { EmailProvider, SendResult, ProviderHealth } from "./email-provider.js";
 
 export interface EmailRequest {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
   text: string;
@@ -74,25 +74,33 @@ export class EmailService {
 
   async sendEmail(request: EmailRequest): Promise<SendResult> {
     const provider = this.resolveProvider(request);
-    const record: EmailDeliveryRecord = {
+    const recipients = Array.isArray(request.to) ? request.to : [request.to];
+    
+    // Create delivery record for each recipient
+    const records: EmailDeliveryRecord[] = recipients.map(to => ({
       id: crypto.randomUUID(),
       referenceId: request.referenceId ?? "",
       templateName: request.templateName ?? "unknown",
-      to: request.to,
+      to,
       subject: request.subject,
       from: request.from,
       providerName: provider.name,
-      status: "requested",
+      status: "requested" as const,
       createdAt: new Date().toISOString(),
-    };
-    this.deliveryLog.push(record);
+    }));
+    
+    this.deliveryLog.push(...records);
 
+    // Send to all recipients via the provider (handles single or multi)
     const result = await provider.sendEmail(request.to, request.subject, request.html, request.text);
 
-    record.status = result.success ? "sent" : "failed";
-    record.providerMessageId = result.messageId;
-    record.error = result.error;
-    record.completedAt = new Date().toISOString();
+    // Update all records with the result
+    for (const record of records) {
+      record.status = result.success ? "sent" : "failed";
+      record.providerMessageId = result.messageId;
+      record.error = result.error;
+      record.completedAt = new Date().toISOString();
+    }
 
     return result;
   }

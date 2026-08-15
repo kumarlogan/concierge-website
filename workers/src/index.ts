@@ -165,6 +165,7 @@ registerClinicMessageRoutes(router);
 import { IdentityRouter, IdentityService, IdentityRepository, SessionManager, PasswordManager, JwtManager, IdentityProviderRegistry, RefreshTokenManager, EmailVerificationManager, PasswordResetManager, MagicLinkManager, OAuthService, MFAManager } from "./platform/identity/index.js";
 import { EmailService } from "./platform/email/email-service.js";
 import { ResendProvider } from "./platform/email/resend-provider.js";
+import { SendGridProvider } from "./platform/email/providers/sendgrid-provider.js";
 
 // Identity router instance — constructed once at module init
 let _identityRouter: IdentityRouter | null = null;
@@ -205,9 +206,17 @@ function getIdentityRouter(env: Env): IdentityRouter {
   // Only instantiated when both RESEND_API_KEY and EMAIL_FROM (and
   // FRONTEND_URL) are present in the Worker environment. This makes
   // a broken/missing secret visible rather than silently skipping dispatch.
+  // Phase P.1: Multi-provider routing — Resend for subdomain, SendGrid for root domain
   let emailService: EmailService | undefined;
   if (env.RESEND_API_KEY && env.EMAIL_FROM) {
-    emailService = new EmailService(new ResendProvider(env.RESEND_API_KEY, env.EMAIL_FROM));
+    const resendProvider = new ResendProvider(env.RESEND_API_KEY, env.EMAIL_FROM);
+    const routing = {
+      default: resendProvider,
+      routes: {
+        "support@agsynergy.ca": new SendGridProvider(env.SENDGRID_API_KEY ?? "", "support@agsynergy.ca"),
+      },
+    };
+    emailService = new EmailService(routing);
   } else {
     console.warn(
       "[IdentityRouter] EmailService NOT instantiated — RESEND_API_KEY or EMAIL_FROM is missing. " +

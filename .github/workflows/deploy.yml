@@ -238,6 +238,11 @@ jobs:
             v.RESEND_API_KEY = process.env.RESEND_API_KEY;
             v.APP_URL    = process.env.APP_URL;
             v.FRONTEND_URL = process.env.APP_URL;
+            // Phase P.1 — Multi-recipient routing configuration
+            v.SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+            v.EMAIL_SUPPORT_TO = process.env.EMAIL_SUPPORT_TO;
+            v.EMAIL_OPERATIONS_TO = process.env.EMAIL_OPERATIONS_TO;
+            v.EMAIL_SECURITY_TO = process.env.EMAIL_SECURITY_TO;
             fs.writeFileSync(f, JSON.stringify(json, null, 2) + "\n");
             console.log("Injected JWT + email config vars (private key length=" + (process.env.JWT_PRIVATE_KEY ? process.env.JWT_PRIVATE_KEY.length : 0) + ")");
           '
@@ -248,6 +253,11 @@ jobs:
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           APP_URL: ${{ secrets.APP_URL }}
+          # Phase P.1 — Multi-recipient routing configuration
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          EMAIL_SUPPORT_TO: ${{ secrets.EMAIL_SUPPORT_TO }}
+          EMAIL_OPERATIONS_TO: ${{ secrets.EMAIL_OPERATIONS_TO }}
+          EMAIL_SECURITY_TO: ${{ secrets.EMAIL_SECURITY_TO }}
 
       - name: Deploy API (agsynergy-api → api.agsynergy.ca)
         uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.4.0
