@@ -4,7 +4,7 @@
 // │ Wave 7 — Notification & Engagement Platform                 │
 // └─────────────────────────────────────────────────────────────┘
 
-import { EmailService } from "../../email/email-service.js";
+import { EmailService } from "../email/email-service.js";
 import type { Notification } from "./notification-types.js";
 
 export class EmailDeliveryProvider {
