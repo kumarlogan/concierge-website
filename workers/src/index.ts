@@ -165,7 +165,7 @@ registerClinicMessageRoutes(router);
 import { IdentityRouter, IdentityService, IdentityRepository, SessionManager, PasswordManager, JwtManager, IdentityProviderRegistry, RefreshTokenManager, EmailVerificationManager, PasswordResetManager, MagicLinkManager, OAuthService, MFAManager } from "./platform/identity/index.js";
 import { EmailService } from "./platform/email/email-service.js";
 import { ResendProvider } from "./platform/email/resend-provider.js";
-import { SendGridProvider } from "./platform/email/providers/sendgrid-provider.js";
+import { MailpitProvider, createMailpitProviderFromEnv } from "./platform/email/providers/mailpit-provider.js";
 
 // Identity router instance — constructed once at module init
 let _identityRouter: IdentityRouter | null = null;
@@ -206,17 +206,39 @@ function getIdentityRouter(env: Env): IdentityRouter {
   // Only instantiated when both RESEND_API_KEY and EMAIL_FROM (and
   // FRONTEND_URL) are present in the Worker environment. This makes
   // a broken/missing secret visible rather than silently skipping dispatch.
-  // Phase P.1: Multi-provider routing — Resend for subdomain, SendGrid for root domain
+  // AUTH EMAIL POLICY (consolidation): Resend is the SINGLE authoritative
+  // provider for ALL authentication emails — registration verification,
+  // password reset, email verification, and magic links. SendGrid is NOT
+  // used on the authentication path. If Resend is unavailable or the
+  // credential is invalid, EmailService.sendEmail returns success:false and
+  // the route surfaces EMAIL_DELIVERY_FAILED (502) — it never reports an
+  // email as sent when it was not. There is no silent SendGrid fallback.
+  // Phase Q: Test/QA — MailpitProvider when MAILPIT_* env vars are explicitly set
+  // CRITICAL: Mailpit config MUST be explicit (all vars set) — never activate by default
   let emailService: EmailService | undefined;
-  if (env.RESEND_API_KEY && env.EMAIL_FROM) {
+
+  // Check for Mailpit test configuration FIRST — explicit opt-in only
+  const mailpitProvider = createMailpitProviderFromEnv({
+    MAILPIT_SMTP_HOST: env.MAILPIT_SMTP_HOST,
+    MAILPIT_SMTP_PORT: env.MAILPIT_SMTP_PORT,
+    MAILPIT_API_URL: env.MAILPIT_API_URL,
+    MAILPIT_FROM_ADDRESS: env.MAILPIT_FROM_ADDRESS,
+  });
+
+  if (mailpitProvider) {
+    // TEST/QA MODE: Use Mailpit as the single provider
+    // No routing needed — all test email goes to Mailpit
+    console.warn(
+      "[IdentityRouter] MailpitProvider ACTIVE — TEST/QA MODE. " +
+      "All email will be sent to Mailpit at " + mailpitProvider.getApiUrl(),
+    );
+    emailService = new EmailService(mailpitProvider);
+  } else if (env.RESEND_API_KEY && env.EMAIL_FROM) {
+    // PRODUCTION MODE: Resend ONLY for all authentication emails.
     const resendProvider = new ResendProvider(env.RESEND_API_KEY, env.EMAIL_FROM);
-    const routing = {
-      default: resendProvider,
-      routes: {
-        "support@agsynergy.ca": new SendGridProvider(env.SENDGRID_API_KEY ?? "", "support@agsynergy.ca"),
-      },
-    };
-    emailService = new EmailService(routing);
+    // Single-provider EmailService — no multi-provider routing, so there is
+    // no code path that could fall back to SendGrid on the auth flow.
+    emailService = new EmailService(resendProvider);
   } else {
     console.warn(
       "[IdentityRouter] EmailService NOT instantiated — RESEND_API_KEY or EMAIL_FROM is missing. " +
